@@ -1,0 +1,13 @@
+# Secrets — never commit these
+.env
+frontend/.env
+
+# Dependencies
+node_modules/
+
+# Uploads live on Cloudinary in production; local copies stay local
+backend/uploads/
+
+# Build output
+dist/
+.vercel

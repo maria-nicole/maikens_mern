@@ -1,0 +1,210 @@
+import { useEffect } from "react";
+import { Loader2, X } from "lucide-react";
+import { font, STATUS_TONE, PAYMENT_TONE, PRODUCT_TONE, DESIGN_TONE } from "./adminLib";
+
+export const inputCls =
+    "w-full rounded-lg border border-[#E3DACB] bg-white px-3 py-2 text-sm text-[#241F1A] outline-none transition placeholder:text-[#B4A88F] focus:border-[#9C7A3C] focus:ring-2 focus:ring-[#9C7A3C]/20 disabled:bg-[#FBF8F3] disabled:text-[#B4A88F]";
+
+export function StatCard({ label, value, sub, accent, onClick }) {
+    const Tag = onClick ? "button" : "div";
+    return (
+        <Tag
+            onClick={onClick}
+            className={`rounded-2xl border border-[#E3DACB] bg-white p-5 text-left ${onClick ? "transition hover:border-[#C9BBA3]" : ""}`}
+        >
+            <p className="text-xs uppercase tracking-wide text-[#8B8072]">{label}</p>
+            <p className="mt-2 text-3xl" style={{ ...font.display, color: "#241F1A" }}>{value}</p>
+            {sub && <p className="mt-1 text-xs" style={{ color: accent || "#5B6E58" }}>{sub}</p>}
+        </Tag>
+    );
+}
+
+export function SectionHeader({ eyebrow, title, action }) {
+    return (
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <div>
+                {eyebrow && <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#9C7A3C]">{eyebrow}</p>}
+                <h2 className="mt-1 text-2xl" style={{ ...font.display, color: "#241F1A" }}>{title}</h2>
+            </div>
+            {action}
+        </div>
+    );
+}
+
+export function PrimaryButton({ children, onClick, icon: IconEl, disabled, loading, type = "button", className = "" }) {
+    return (
+        <button
+            type={type}
+            onClick={onClick}
+            disabled={disabled || loading}
+            className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#241F1A] px-4 py-2 text-sm font-medium text-[#F5EFE4] transition hover:bg-[#3a3229] disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+        >
+            {loading ? <Loader2 size={15} className="animate-spin" /> : IconEl && <IconEl size={15} />}
+            {children}
+        </button>
+    );
+}
+
+export function GhostButton({ children, onClick, icon: IconEl, disabled, danger, type = "button", className = "" }) {
+    return (
+        <button
+            type={type}
+            onClick={onClick}
+            disabled={disabled}
+            className={`inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${danger
+                    ? "border-[#E8CFCB] text-[#6B3838] hover:bg-[#F3E4E2]"
+                    : "border-[#E3DACB] text-[#4A4136] hover:border-[#C9BBA3] hover:bg-[#FBF8F3]"
+                } ${className}`}
+        >
+            {IconEl && <IconEl size={13} />}
+            {children}
+        </button>
+    );
+}
+
+function DotPill({ tone, children }) {
+    return (
+        <span
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed px-2.5 py-1 text-xs font-medium"
+            style={{ background: tone.bg, color: tone.text, borderColor: tone.dot + "80" }}
+        >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: tone.dot }} />
+            {children}
+        </span>
+    );
+}
+
+export const StatusPill = ({ status }) => (
+    <DotPill tone={STATUS_TONE[status] || { dot: "#8a8a8a", bg: "#eee", text: "#444" }}>{status}</DotPill>
+);
+export const ProductPill = ({ status }) => {
+    const tone = PRODUCT_TONE[status] || PRODUCT_TONE.Active;
+    return <DotPill tone={tone}>{tone.label}</DotPill>;
+};
+export const DesignPill = ({ status }) => <DotPill tone={DESIGN_TONE[status] || DESIGN_TONE["Pending review"]}>{status}</DotPill>;
+
+export function PaymentPill({ status = "Unpaid" }) {
+    const tone = PAYMENT_TONE[status] || PAYMENT_TONE.Unpaid;
+    return (
+        <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium" style={{ background: tone.bg, color: tone.text }}>
+            {status}
+        </span>
+    );
+}
+
+export function EmptyState({ title, hint, action }) {
+    return (
+        <div className="px-5 py-12 text-center">
+            <p className="text-sm font-medium text-[#241F1A]">{title}</p>
+            {hint && <p className="mt-1 text-xs text-[#8B8072]">{hint}</p>}
+            {action && <div className="mt-4">{action}</div>}
+        </div>
+    );
+}
+
+export function Spinner({ label = "Loading…" }) {
+    return (
+        <div className="flex items-center justify-center gap-2 py-16 text-sm text-[#8B8072]">
+            <Loader2 size={18} className="animate-spin text-[#9C7A3C]" /> {label}
+        </div>
+    );
+}
+
+export function ErrorNote({ children, onRetry }) {
+    if (!children) return null;
+    return (
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#7C4A4A]/30 bg-[#F3E4E2] px-4 py-3 text-sm text-[#6B3838]">
+            <span>{children}</span>
+            {onRetry && <GhostButton onClick={onRetry}>Retry</GhostButton>}
+        </div>
+    );
+}
+
+export function Field({ label, htmlFor, hint, error, children }) {
+    return (
+        <div>
+            <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-medium text-[#241F1A]">{label}</label>
+            {children}
+            {error ? (
+                <p className="mt-1.5 text-xs text-[#7C4A4A]">{error}</p>
+            ) : (
+                hint && <p className="mt-1.5 text-xs text-[#8B8072]">{hint}</p>
+            )}
+        </div>
+    );
+}
+
+export function Segmented({ value, options, onChange, label }) {
+    return (
+        <div role="group" aria-label={label} className="flex w-fit gap-1 rounded-lg border border-[#E3DACB] bg-white p-1">
+            {options.map((opt) => {
+                const key = typeof opt === "string" ? opt : opt.value;
+                const text = typeof opt === "string" ? opt : opt.label;
+                return (
+                    <button
+                        key={key}
+                        type="button"
+                        aria-pressed={value === key}
+                        onClick={() => onChange(key)}
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${value === key ? "bg-[#241F1A] text-[#F5EFE4]" : "text-[#6B6153] hover:bg-[#FBF8F3]"
+                            }`}
+                    >
+                        {text}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}
+
+export function Modal({ label, onClose, children, maxWidth = "max-w-md" }) {
+    useEffect(() => {
+        const onKey = (e) => e.key === "Escape" && onClose();
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={label}
+                className={`max-h-[90vh] w-full ${maxWidth} overflow-y-auto rounded-2xl bg-white p-6`}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {children}
+            </div>
+        </div>
+    );
+}
+
+export function ModalHeader({ title, subtitle, onClose }) {
+    return (
+        <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+                <h3 className="text-lg text-[#241F1A]" style={font.display}>{title}</h3>
+                {subtitle && <p className="text-xs text-[#8B8072]">{subtitle}</p>}
+            </div>
+            <button onClick={onClose} aria-label="Close" className="rounded-md p-1 text-[#8B8072] hover:bg-[#FBF8F3]">
+                <X size={16} />
+            </button>
+        </div>
+    );
+}
+
+// "Are you sure?" for anything that can't be undone
+export function ConfirmDialog({ title, message, confirmLabel = "Confirm", danger, loading, onConfirm, onClose }) {
+    return (
+        <Modal label={title} onClose={loading ? () => { } : onClose} maxWidth="max-w-sm">
+            <ModalHeader title={title} onClose={onClose} />
+            <p className="text-sm text-[#4A4136]">{message}</p>
+            <div className="mt-5 flex justify-end gap-2">
+                <GhostButton onClick={onClose} disabled={loading}>Cancel</GhostButton>
+                <PrimaryButton onClick={onConfirm} loading={loading} className={danger ? "!bg-[#7C4A4A] hover:!bg-[#6B3838]" : ""}>
+                    {confirmLabel}
+                </PrimaryButton>
+            </div>
+        </Modal>
+    );
+}
