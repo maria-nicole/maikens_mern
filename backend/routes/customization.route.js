@@ -172,6 +172,7 @@ router.patch("/:id/status", protect, adminOnly, async (req, res) => {
           title: item.base,
           subtitle: `${item.source || "Custom design"} · ${item.status}`,
           detail: (item.notes || "").slice(0, 160),
+          image: item.previewImage || "",
         },
       });
     }

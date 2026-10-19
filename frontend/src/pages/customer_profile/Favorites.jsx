@@ -360,7 +360,10 @@ export default function Favorites() {
                               <Pencil size={11} /> Continue Editing
                             </Link>
                           ) : (
-                            <Link to="/message" className="text-xs font-medium text-gray-600 flex items-center gap-1 hover:underline">
+                            <Link
+                              to={`/message?share=customization&id=${design._id}`}
+                              className="text-xs font-medium text-gray-600 flex items-center gap-1 hover:underline"
+                            >
                               <MessageCircle size={11} /> Message the boutique
                             </Link>
                           )}

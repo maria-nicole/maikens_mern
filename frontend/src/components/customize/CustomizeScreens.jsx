@@ -46,7 +46,10 @@ export function SentScreen({ sent, onRestart }) {
                     />
                 )}
                 <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                    <Link to="/message" className={`px-6 py-2.5 text-sm ${primaryBtn}`}>
+                    <Link
+                        to={sent._id ? `/message?share=customization&id=${sent._id}` : "/message"}
+                        className={`px-6 py-2.5 text-sm ${primaryBtn}`}
+                    >
                         Message the boutique
                     </Link>
                     <button type="button" onClick={onRestart} className={`px-6 py-2.5 text-sm ${ghostBtn}`}>

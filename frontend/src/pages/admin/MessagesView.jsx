@@ -4,6 +4,8 @@ import { api, errMsg, assetUrl, formatWhen } from "./adminLib";
 import { SectionHeader, EmptyState, Spinner, ErrorNote, PrimaryButton, inputCls } from "./ui";
 
 const SHARE_LABEL = { product: "Shared product", customization: "Shared customization", order: "Shared order" };
+// Thumbnail height per kind, 3:4 like the product photos. Orders get the biggest.
+const SHARE_THUMB = { product: "h-16", customization: "h-20", order: "h-24" };
 const POLL_MS = 8000;
 
 export default function MessagesView({ notify, onChanged }) {
@@ -169,7 +171,7 @@ export default function MessagesView({ notify, onChanged }) {
                                             )}
                                             {msg.share && (
                                                 <div className={`flex gap-2.5 rounded-lg border border-[#E3DACB] bg-white p-2 text-[#241F1A] ${msg.body ? "mb-2" : ""}`}>
-                                                    {msg.share.image && <img src={assetUrl(msg.share.image)} alt="" className="h-16 w-12 shrink-0 rounded-md object-cover" />}
+                                                    {msg.share.image && <img src={assetUrl(msg.share.image)} alt="" className={`${SHARE_THUMB[msg.share.kind] || "h-16"} aspect-[3/4] shrink-0 rounded-md object-cover`} />}
                                                     <div className="min-w-0">
                                                         <p className="text-[11px] text-[#9C7A3C]">{SHARE_LABEL[msg.share.kind]}</p>
                                                         <p className="truncate text-sm font-medium">{msg.share.title}</p>

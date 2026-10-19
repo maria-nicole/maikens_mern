@@ -109,12 +109,14 @@ router.get("/shareables", protect, async (req, res) => {
         id: c._id,
         title: c.base,
         subtitle: `${c.source || "Custom design"} · ${c.status}`,
+        image: c.previewImage || "",
         createdAt: c.createdAt,
       })),
       orders: orders.map((o) => ({
         id: o._id,
         title: o.item,
         subtitle: `${orderNo(o)} · ${o.status}`,
+        image: o.items?.[0]?.image || "",
         createdAt: o.createdAt,
       })),
     });
@@ -179,7 +181,7 @@ async function buildShare(request, user) {
       title: c.base,
       subtitle: `${c.source || "Custom design"} · ${c.status}`,
       detail: (c.notes || "").slice(0, 160),
-      image: "",
+      image: c.previewImage || "",
     };
   }
 
@@ -193,7 +195,8 @@ async function buildShare(request, user) {
       title: o.item,
       subtitle: `${orderNo(o)} · ${o.status}`,
       detail: peso(o.total),
-      image: product?.images?.[0] || "",
+      // The design preview (made-to-order) first, then the catalog photo
+      image: o.items?.[0]?.image || product?.images?.[0] || "",
     };
   }
 

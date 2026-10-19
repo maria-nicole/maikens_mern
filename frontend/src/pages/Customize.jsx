@@ -305,6 +305,16 @@ export default function Customize() {
       const { data } = await axios({ method: editId ? "put" : "post", url, data: payload, headers: authHeader() });
       sessionStorage.removeItem(DRAFT_KEY);
       setSent({ ...data, edited: !!editId });
+
+      // Drop the new design into the chat too, so it shows up in Messages
+      // (and in the boutique's inbox) without the customer having to attach it.
+      if (!editId && data._id) {
+        const form = new FormData();
+        form.append("share", JSON.stringify({ kind: "customization", refId: data._id }));
+        axios.post(`${API_URL}/api/messages`, form, { headers: authHeader() }).catch(() => {
+          /* the design is already saved — a chat hiccup shouldn't matter */
+        });
+      }
     } catch (err) {
       setSubmitError(err.response?.data?.message || "Couldn't send your design. Please try again.");
     } finally {
