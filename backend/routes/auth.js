@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { sendVerificationEmail, sendWelcomeEmail } from "../mail/emails.js";
+import { hasMailProvider } from "../mail/mailer.js";
 
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -75,6 +76,14 @@ router.post("/register", signupLimit, async (req, res) => {
             user.password = password;
         } else {
             user = new User({ username, email, password, isVerified: false });
+        }
+
+        // Without a mail provider there is no way to send a code, so the account is
+        // created ready to use instead. Set BREVO_API_KEY and this stops happening.
+        if (!hasMailProvider()) {
+            user.isVerified = true;
+            await user.save();
+            return res.status(201).json({ needsVerification: false, ...session(user) });
         }
 
         const code = issueCode(user);
@@ -180,6 +189,13 @@ router.post("/login", loginLimit, async (req, res) => {
         }
 
         if (!user.isVerified) {
+            // No mail provider means no code can be sent, so there is nothing to wait
+            // for. Let the account in rather than stranding it.
+            if (!hasMailProvider()) {
+                user.isVerified = true;
+                await user.save();
+                return res.status(200).json(session(user));
+            }
             // Make sure they have a live code waiting for them on the verify page
             if (!codeIsLive(user)) {
                 const code = issueCode(user);

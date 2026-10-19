@@ -69,9 +69,12 @@ if (process.env.NODE_ENV === "production") {
       "CLIENT_URL is not set - links in emails will point to http://localhost:5173."
     );
   }
-  // Brevo refuses to send without an address to send from, so a missing one means no
-  // customer ever receives their code. Worth saying out loud rather than failing quietly.
-  if (hasMailProvider() && !hasSender()) {
+  if (!hasMailProvider()) {
+    console.warn(
+      "BREVO_API_KEY is not set - sign-up cannot email a code, so accounts are created " +
+        "without email verification. Set it to turn verification on."
+    );
+  } else if (!hasSender()) {
     console.warn(
       "MAIL_FROM_EMAIL is not set - Brevo has no address to send from. " +
         "Set it, and make sure that address is a verified sender in the Brevo dashboard."

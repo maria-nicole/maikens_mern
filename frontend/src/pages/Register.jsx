@@ -14,6 +14,9 @@ const PERKS = [
 
 const MIN_PASSWORD_LENGTH = 8;
 
+// Where each user level lands after signing in
+const ROLE_HOME = { admin: "/admin", staff: "/staff", customer: "/" };
+
 const inputClass =
   "w-full p-3 border border-gray-200 rounded-md bg-white text-sm text-neutral-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-yellow-500/89 focus:border-yellow-600/89 transition-colors";
 
@@ -70,11 +73,20 @@ const Register = ({ setUser }) => {
         password: formData.password,
       });
 
+      // With no mail provider the account is created ready to use, so sign them in.
+      if (!data.needsVerification) {
+        localStorage.setItem("token", data.token);
+        axios.defaults.headers.common.Authorization = `Bearer ${data.token}`;
+        setUser(data);
+        navigate(ROLE_HOME[data.role] || "/", { replace: true });
+        return;
+      }
+
       navigate("/verify-email", {
         state: { email: data.email, emailSent: data.emailSent },
         replace: true,
       });
-      
+
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {

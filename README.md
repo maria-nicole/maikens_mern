@@ -107,7 +107,7 @@ template; the frontend reads **`frontend/.env`** ([template](frontend/.env.examp
 | `MONGO_URI` | Required | Server exits if it can't connect |
 | `JWT_SECRET` | Required | Signs login tokens; any long random string |
 | `GOOGLE_CLIENT_ID` | Google sign-in | Must match `VITE_GOOGLE_CLIENT_ID` |
-| `BREVO_API_KEY` | Verification emails | Without it, sign-up can't send its code |
+| `BREVO_API_KEY` | Verification emails | Without it, accounts are created without email verification |
 | `GEMINI_API_KEY` | AI preview & try-on | Without it, those routes return an error |
 | `CLOUDINARY_CLOUD_NAME` `CLOUDINARY_API_KEY` `CLOUDINARY_API_SECRET` | Image uploads | **All three or none.** Missing → local disk, which is wiped on redeploy |
 | `CORS_ORIGIN` | Production | Comma-separated. Must match the frontend exactly |
@@ -138,7 +138,8 @@ takes three steps:
 
 Then set `MAIL_FROM_EMAIL` to that same address and `MAIL_FROM_NAME` to the boutique
 name. With those three set, sign-up emails a 6-digit code that the customer types in
-before the account can be used.
+before the account can be used. Until then the shop still works — accounts are simply
+created without email verification, and the server says so when it starts.
 
 ## Creating an admin account
 
@@ -242,6 +243,9 @@ The two halves deploy separately. Both build from a pushed commit.
 - **The verification code is printed to the backend console in development.** With
   `NODE_ENV` unset or `development`, sign-up logs `[dev] verification code for …`. In
   production the code is only emailed, so `BREVO_API_KEY` must be set.
+- **Without `BREVO_API_KEY`, verification is simply off.** Accounts are then created ready
+  to use and nobody is asked for a code, so the shop keeps working while email is being
+  set up. The server warns about this at boot in production.
 - **Uploads need Cloudinary in production.** Render's filesystem is ephemeral — without
   `CLOUDINARY_*` every image is lost on the next deploy. The server warns about this at
   boot.
