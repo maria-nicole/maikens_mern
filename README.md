@@ -113,6 +113,7 @@ template; the frontend reads **`frontend/.env`** ([template](frontend/.env.examp
 | `CORS_ORIGIN` | Production | Comma-separated. Must match the frontend exactly |
 | `CLIENT_URL` | Production | Base URL for links inside emails |
 | `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME` | Emails | The address mail comes from; must be a verified sender in Brevo |
+| `MAIL_API_URL` | Testing only | Sends mail somewhere else. The end-to-end tests point it at a stand-in so they can read the codes that were "sent" |
 | `GEMINI_IMAGE_MODEL` | AI previews | Optional; pins a specific model |
 | `GEMINI_MAX_PER_HOUR`, `TRYON_MAX_PER_HOUR` | AI limits | Default 10 and 6 |
 | `PORT` | Server | Default 5000 |
@@ -169,6 +170,22 @@ It inserts a few demo orders, customization requests and a message. It is
 empty, so it is safe to re-run. For the message it needs at least one non-admin account,
 so register a customer first.
 
+## Tests
+
+The shop has a set of **end-to-end tests** that drive a real browser, so you can see the
+whole thing working the way a customer would meet it — signing up, confirming the
+emailed code, ordering a gown and following it in the owner's console.
+
+```bash
+npm install
+npm run test:e2e
+```
+
+They start and stop everything they need, and they use their own database
+(`maikens_e2e`) so the shop's real orders and customers are never touched. Full
+details, including what to do when something fails, are in
+[`e2e/README.md`](e2e/README.md).
+
 ## Project structure
 
 ```
@@ -192,6 +209,7 @@ maikens_mern/
 │   │   ├── App.jsx             # all routes
 │   │   └── main.jsx            # entry point
 │   └── vercel.json             # SPA rewrite for Vercel
+├── e2e/                        # Selenium end-to-end tests (npm run test:e2e)
 ├── .env.example
 └── package.json                # backend package (Express + Mongoose)
 ```
@@ -276,6 +294,7 @@ Run from the repository root unless noted.
 | Command | What it does |
 | --- | --- |
 | `npm run dev` / `npm start` | Start the API (`node backend/server.js`) |
+| `npm run test:e2e` | Run the Selenium end-to-end tests (needs Chrome installed) |
 | `node backend/seed.js` | Insert optional sample data (safe to re-run) |
 | `node backend/scripts/generate-option-samples.js` | Regenerate the AI design option samples (needs `GEMINI_API_KEY`) |
 | `node backend/scripts/migrate-uploads-to-cloudinary.js` | Move existing local uploads to Cloudinary |

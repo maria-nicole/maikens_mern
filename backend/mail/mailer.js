@@ -13,9 +13,14 @@ import "../config/env.js"; // loads the root .env no matter where you start the 
    There is no domain of our own here, so the sender is a single personal address. Brevo
    signs with its own DKIM/SPF rather than that address, so a recipient's DMARC check will
    not line up. See the README for what that means in practice.
+
+   MAIL_API_URL points the sender somewhere else. It exists so the automated tests can
+   stand up a stand-in for Brevo and read back what was "sent"; leave it unset in
+   normal use.
 ------------------------------------------------------------------------------------------- */
 
 const BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
+const MAIL_ENDPOINT = process.env.MAIL_API_URL || BREVO_ENDPOINT;
 
 export const sender = {
     email: process.env.MAIL_FROM_EMAIL || "",
@@ -44,7 +49,7 @@ export async function sendMail({ to, subject, text, html }) {
         throw new Error("MAIL_FROM_EMAIL is not set, so there is no address to send from.");
     }
 
-    const response = await fetch(BREVO_ENDPOINT, {
+    const response = await fetch(MAIL_ENDPOINT, {
         method: "POST",
         headers: {
             "api-key": process.env.BREVO_API_KEY,

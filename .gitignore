@@ -11,3 +11,7 @@ backend/uploads/
 # Build output
 dist/
 .vercel
+
+# Screenshots left behind by a failed end-to-end test
+e2e/screenshots/*
+!e2e/screenshots/.gitkeep

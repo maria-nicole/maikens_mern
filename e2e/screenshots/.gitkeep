@@ -1,0 +1,2 @@
+// A folder for the screenshots a failed test leaves behind. The folder itself is in
+// .gitignore, so this file only makes sure it exists in a fresh checkout.
