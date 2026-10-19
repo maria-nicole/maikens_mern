@@ -3,8 +3,10 @@
    drops anything it doesn't recognise). Thumbnails are optional: if an image is missing,
    the option still shows as a labelled button.
    Images live in frontend/public/images/<group>/<name>.svg|jpg
-   - Silhouette / Neckline / Sleeves: line drawings (SVG) so the shape is unmistakable.
+   - Silhouette / Neckline / Sleeves / Barong Fit: line drawings (SVG) so the shape is unmistakable.
    - Fabric / Design details: close-up reference photos.
+   - Barong Sleeves reuse the gown sleeve drawings (the values are the same); the Barong
+     fabric + embroidery photos are barong-specific (pina/jusi/cotton, barong-*.jpg).
    Tip: the "Design details" labels are just names. Rename them (here AND in the backend)
    to match the pattern photos in /images/design.
 ------------------------------------------------------------------------------------------ */
@@ -30,6 +32,9 @@ const SLEEVES = [
     o("Long Sleeve", { img: "/images/sleeve/long.svg", desc: "Covers the whole arm to the wrist" }),
     o("Puff Sleeve", { img: "/images/sleeve/puff.svg", desc: "Rounded, gathered sleeve at the shoulder" }),
 ];
+
+// The barong only offers the two basic sleeves, so it reuses the gown's line drawings
+const BARONG_SLEEVES = ["Long Sleeve", "Short Sleeve"].map((v) => SLEEVES.find((s) => s.value === v));
 
 export const GROUPS = {
     Gown: [
@@ -92,34 +97,34 @@ export const GROUPS = {
     Barong: [
         { key: "color", title: "Color", hint: "The main color of the barong. Pick a swatch, or add a shade of your own.", required: true, kind: "swatch", options: BARONG_COLORS },
         {
-            key: "fit", title: "Fit", hint: "How the barong sits on the body.", required: true, kind: "chip",
+            key: "fit", title: "Fit", hint: "How the barong sits on the body.", required: true, kind: "image",
             options: [
-                o("Classic fit", { desc: "Straight, traditional cut" }),
-                o("Slim fit", { desc: "Trim and close to the body" }),
-                o("Relaxed fit", { desc: "Roomy and easy through the body" }),
+                o("Classic fit", { img: "/images/fit/classic.svg", desc: "Straight, traditional cut" }),
+                o("Slim fit", { img: "/images/fit/slim.svg", desc: "Trim and close to the body" }),
+                o("Relaxed fit", { img: "/images/fit/relaxed.svg", desc: "Roomy and easy through the body" }),
             ],
         },
         {
-            key: "fabric", title: "Fabric", hint: "What the barong is woven from.", kind: "chip",
+            key: "fabric", title: "Fabric", hint: "What the barong is woven from.", kind: "image",
             options: [
-                o("Piña", { desc: "Pineapple fibre, sheer and fine" }),
-                o("Jusi", { desc: "Silk-blend weave, finer and smoother" }),
-                o("Organza", { desc: "Crisp and sheer with body" }),
-                o("Cotton blend", { desc: "Soft, breathable and easy to wear" }),
+                o("Piña", { img: "/images/fabric/pina.jpg", desc: "Pineapple fibre, sheer and fine" }),
+                o("Jusi", { img: "/images/fabric/jusi.jpg", desc: "Silk-blend weave, finer and smoother" }),
+                o("Organza", { img: "/images/fabric/organza.jpg", desc: "Crisp and sheer with body" }),
+                o("Cotton blend", { img: "/images/fabric/cotton.jpg", desc: "Soft, breathable and easy to wear" }),
             ],
         },
         {
-            key: "sleeve", title: "Sleeves", hint: "Long or short sleeves.", kind: "chip",
-            options: [o("Long Sleeve", { desc: "Traditional full-length sleeve" }), o("Short Sleeve", { desc: "Casual, above the elbow" })],
+            key: "sleeve", title: "Sleeves", hint: "Long or short sleeves.", kind: "image",
+            options: BARONG_SLEEVES,
         },
         {
-            key: "design", title: "Embroidery", hint: "The embroidery style on the front.", kind: "chip",
+            key: "design", title: "Embroidery", hint: "The embroidery style on the front.", kind: "image",
             options: [
-                o("Plain", { desc: "No embroidery" }),
-                o("Floral embroidery", { desc: "Flower and vine motifs" }),
-                o("Geometric embroidery", { desc: "Repeating angular patterns" }),
-                o("Calado cutwork", { desc: "Openwork cut-out panels" }),
-                o("Border embroidery", { desc: "Embroidered edge along the front" }),
+                o("Plain", { img: "/images/design/barong-plain.jpg", desc: "No embroidery" }),
+                o("Floral embroidery", { img: "/images/design/barong-floral.jpg", desc: "Flower and vine motifs" }),
+                o("Geometric embroidery", { img: "/images/design/barong-geometric.jpg", desc: "Repeating angular patterns" }),
+                o("Calado cutwork", { img: "/images/design/barong-calado.jpg", desc: "Openwork cut-out panels" }),
+                o("Border embroidery", { img: "/images/design/barong-border.jpg", desc: "Embroidered edge along the front" }),
             ],
         },
     ],

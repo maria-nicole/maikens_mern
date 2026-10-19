@@ -48,9 +48,27 @@ const DESIGNS = [
     ["pattern6", "plain ivory satin with a clean, minimal finish"],
 ];
 
+// Barong (men's formal shirt) fabrics and embroidery, used by the Barong options in
+// designOptions.js. "Organza" is shared with the gowns, so it is not repeated here.
+const BARONG_FABRICS = [
+    ["pina", "sheer cream piña fabric woven from fine pineapple leaf fibres, delicate lustrous weave"],
+    ["jusi", "glossy ivory jusi fabric, smooth silk-blend weave with a soft sheen"],
+    ["cotton", "matte white cotton-blend fabric, plain tight even weave"],
+];
+
+const BARONG_DESIGNS = [
+    ["barong-plain", "plain cream barong shirt fabric, smooth and unembellished"],
+    ["barong-floral", "cream barong cloth with fine ivory floral embroidery in a vine pattern"],
+    ["barong-geometric", "cream barong cloth with ivory geometric embroidery, repeating angular motifs"],
+    ["barong-calado", "cream barong cloth with calado cutwork, openwork panels of drawn-thread lace"],
+    ["barong-border", "cream barong cloth with a decorative embroidered border band along the edge"],
+];
+
 const OPTIONS = [
     ...FABRICS.map(([file, subject]) => ({ group: "fabric", file: `${file}.jpg`, prompt: `${subject}, ${STYLE}` })),
     ...DESIGNS.map(([file, subject]) => ({ group: "design", file: `${file}.jpg`, prompt: `${subject}, ${STYLE}` })),
+    ...BARONG_FABRICS.map(([file, subject]) => ({ group: "fabric", file: `${file}.jpg`, prompt: `${subject}, ${STYLE}` })),
+    ...BARONG_DESIGNS.map(([file, subject]) => ({ group: "design", file: `${file}.jpg`, prompt: `${subject}, ${STYLE}` })),
 ];
 
 const args = process.argv.slice(2);

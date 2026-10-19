@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400" width="300" height="400" role="img">
+  <g fill="#EFEFEF" stroke="#3A3A3A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(300,0) scale(-1,1)"><path d="M 150,72 C 141,72 133,76 127,86 L 101,95 L 94,176 L 126,172 L 120,150 C 118,240 117,300 116,352 L 150,352 Z"/></g></g>
+  <g fill="none" stroke="#CFCFCF" stroke-width="2" stroke-linecap="round"><path d="M 150,96 L 150,352"/></g>
+  <!-- Classic fit -->
+</svg>
