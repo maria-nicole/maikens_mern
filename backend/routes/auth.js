@@ -4,11 +4,18 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/emails.js";
 
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const router = express.Router();
+
+// Throttle the endpoints an attacker would hammer. Generous enough that a real person
+// retyping a password never notices, tight enough to make guessing useless.
+const loginLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
+const signupLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 10 });
+const verifyLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
 const CODE_TTL_MS = 15 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -45,7 +52,7 @@ async function deliverCode(user, code) {
 }
 
 /* ------------------------------ Register ------------------------------ */
-router.post("/register", async (req, res) => {
+router.post("/register", signupLimit, async (req, res) => {
     try {
         const username = String(req.body?.username || "").trim();
         const email = String(req.body?.email || "").trim().toLowerCase();
@@ -91,7 +98,7 @@ router.post("/register", async (req, res) => {
 });
 
 /* ------------------------------ Verify email ------------------------------ */
-router.post("/verify-email", async (req, res) => {
+router.post("/verify-email", verifyLimit, async (req, res) => {
     try {
         const email = String(req.body?.email || "").trim().toLowerCase();
         const code = String(req.body?.code || "").trim();
@@ -129,7 +136,7 @@ router.post("/verify-email", async (req, res) => {
 });
 
 /* ------------------------------ Resend code ------------------------------ */
-router.post("/resend-verification", async (req, res) => {
+router.post("/resend-verification", signupLimit, async (req, res) => {
     const generic = { message: "If that account needs verification, a new code is on its way." };
     try {
         const email = String(req.body?.email || "").trim().toLowerCase();
@@ -158,7 +165,7 @@ router.post("/resend-verification", async (req, res) => {
 });
 
 /* ------------------------------ Login ------------------------------ */
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimit, async (req, res) => {
     try {
         const email = String(req.body?.email || "").trim().toLowerCase();
         const password = String(req.body?.password || "");

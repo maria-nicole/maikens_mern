@@ -22,6 +22,7 @@ import cartRoutes from "./routes/cart.route.js";
 import favoritesRoutes from "./routes/favorites.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import staffRoutes from "./routes/staff.route.js";
+import contactRoutes from "./routes/contact.route.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -67,6 +68,14 @@ if (process.env.NODE_ENV === "production") {
       "CLIENT_URL is not set - links in verification emails will point to http://localhost:5173."
     );
   }
+  // Mailtrap's sandbox captures mail instead of delivering it, and its default sender is on
+  // the sandbox domain. If that's still in use, real customers never receive a code.
+  if (!process.env.MAILTRAP_SENDER_EMAIL || /demomailtrap\.co$/i.test(process.env.MAILTRAP_SENDER_EMAIL)) {
+    console.warn(
+      "MAILTRAP_SENDER_EMAIL is unset or still on the sandbox domain (demomailtrap.co). " +
+        "Unless this is a sandbox token, verification emails won't reach real inboxes."
+    );
+  }
 }
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
@@ -83,6 +92,7 @@ app.use("/api/users", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/favorites", favoritesRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/contact", contactRoutes);
 
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
@@ -96,8 +106,17 @@ app.use("/api/staff", staffRoutes);
 
 app.use("/api/try-on", tryOnRoutes);
 
-app.use("/api/users", authRoutes);
 app.use("/api", generateRouter);
+
+// Unknown API paths answer in JSON, not Express's default HTML page
+app.use("/api", (req, res) => res.status(404).json({ message: "Not found." }));
+
+// Last stop for anything that threw: log it and answer in JSON either way
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ message: err.status ? err.message : "Something went wrong." });
+});
 
 connectDB();
 
