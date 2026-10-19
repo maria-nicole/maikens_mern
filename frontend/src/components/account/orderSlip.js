@@ -26,11 +26,15 @@ const HAIRLINE = "#E7E5E4";
 const PAGE = "#FFFFFF";
 const FOOT_BG = "#FAFAF9";
 const PLACEHOLDER = "#F5F5F4";
+/* The same green and maroon the rest of the app uses for "paid" and "money owed" */
+const GOOD = "#3E4E3B";
+const DUE = "#6B3838";
 
 /* Status pill tones. Everything sits in the house gold except a cancelled order, which
    the boutique needs to be able to spot at a glance. */
 const PILL_DEFAULT = { bg: PILL_BG, border: PILL_BORDER, text: GOLD_DARK };
 const PILL_TONES = { Cancelled: { bg: "#FEF2F2", border: "#FECACA", text: "#B91C1C" } };
+const CANCELLED_TEXT = PILL_TONES.Cancelled.text;
 
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -74,6 +78,42 @@ const deliveryLine = (order) =>
   order?.deliveryMethod === "Pick-up"
     ? `Pick-up on ${slipDate(order.pickupDate) || "a date to be agreed"}`
     : order?.address || "To be arranged with the boutique";
+
+const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+
+/* ── Money received ──
+   What the customer has paid, and what is left to settle. The slip and the order
+   card in My Account both read from this one function so they can never disagree.
+
+   The payment ledger is the source of truth: the rows printed on the slip always
+   add up to the "paid to date" shown beneath them. Orders taken before the ledger
+   existed only carry amountPaid, which is the fallback.
+
+   `tendered` is the cash handed across the counter, which includes the change given
+   back — it is not money the shop kept, so it never counts towards the total paid. */
+export const paymentSummary = (order) => {
+  const rows = (order?.payments || [])
+    .filter((p) => Number(p?.amount) > 0)
+    .map((p) => ({
+      at: p?.at || order?.createdAt,
+      method: p?.method || "",
+      amount: round2(p.amount),
+    }));
+
+  const ledgerTotal = rows.reduce((sum, p) => sum + p.amount, 0);
+  const paid = round2(rows.length ? ledgerTotal : order?.amountPaid);
+  const total = round2(order?.total);
+
+  return {
+    rows,
+    paid,
+    total,
+    balance: Math.max(0, round2(total - paid)),
+    hasLedger: rows.length > 0,
+    // A cancelled order is never "paid in full", however much money came in.
+    cancelled: order?.status === "Cancelled",
+  };
+};
 
 /* ── Text measuring and wrapping ── */
 
@@ -240,6 +280,67 @@ export function slipLayout(order, { measure = roughMeasure, resolveImage = (p) =
   by += 28;
   text({ x: labelX, y: by, text: "Total", font: font(14, 600), color: INK });
   text({ x: right, y: by, text: peso(order?.total), font: font(19, 700, SERIF), color: GOLD_DARK, align: "right" });
+
+  /* ── Payments received ──
+     Charges, then money in, then what is left — the order a statement reads in. */
+  const money = paymentSummary(order);
+
+  by += 30;
+  rule(PAD, by, contentW);
+
+  by += 26;
+  text({ x: PAD, y: by, text: "PAYMENTS RECEIVED", font: font(11, 700), color: MUTED });
+
+  const payFont = font(13.5);
+  if (money.hasLedger) {
+    money.rows.forEach((row, i) => {
+      const label = [slipDate(row.at), row.method].filter(Boolean).join(" · ");
+      const y = by + 22 + i * 20;
+      text({ x: PAD, y, text: label, font: payFont, color: INK_SOFT });
+      text({ x: right, y, text: peso(row.amount), font: font(13.5, 500), color: INK, align: "right" });
+    });
+    by += 22 + money.rows.length * 20;
+  } else {
+    // Orders taken before the ledger existed still count what was paid, with no rows to show.
+    text({
+      x: PAD,
+      y: by + 22,
+      text: money.paid > 0 ? "Recorded at the boutique." : "No payment recorded yet.",
+      font: payFont,
+      color: MUTED,
+    });
+    by += 42;
+  }
+
+  by += 10;
+  rule(PAD, by, contentW);
+
+  by += 24;
+  text({ x: PAD, y: by, text: "Paid to date", font: font(13.5), color: MUTED });
+  text({ x: right, y: by, text: peso(money.paid), font: font(13.5, 600), color: INK, align: "right" });
+
+  by += 22;
+  if (money.cancelled) {
+    // Money may have changed hands, so it is shown — but a cancelled order is never
+    // "paid in full"; it is money to sort out with the boutique.
+    const notice =
+      money.paid > 0
+        ? `Cancelled — ${peso(money.paid)} received. Message us about a refund.`
+        : "Cancelled. No payment was received.";
+    const noticeFont = font(13, 600);
+    const noticeLines = wrapText(notice, noticeFont, contentW, m, 2);
+    noticeLines.forEach((line, i) =>
+      text({ x: PAD, y: by + i * 18, text: line, font: noticeFont, color: CANCELLED_TEXT })
+    );
+    by += (noticeLines.length - 1) * 18;
+  } else if (money.balance > 0) {
+    text({ x: PAD, y: by, text: "Balance due", font: font(13.5), color: MUTED });
+    text({ x: right, y: by, text: peso(money.balance), font: font(13.5, 600), color: DUE, align: "right" });
+  } else if (money.paid > 0) {
+    text({ x: PAD, y: by, text: "Paid in full", font: font(13.5, 600), color: GOOD });
+  } else {
+    text({ x: PAD, y: by, text: "Nothing due", font: font(13.5), color: MUTED });
+  }
 
   /* ── Footer band ── */
   const footTop = by + 34;
@@ -410,6 +511,7 @@ export async function buildOrderSlip(order, { assetUrl } = {}) {
 /** The same order as plain text, for pasting into a chat instead of attaching a file. */
 export function slipText(order) {
   const rows = itemsOf(order);
+  const money = paymentSummary(order);
   const lines = [
     "MAIKENS Gown & Barong — Order Slip",
     `${slipNo(order)} · ${slipDate(order?.createdAt)}`,
@@ -428,6 +530,24 @@ export function slipText(order) {
     `Subtotal: ${peso(subtotalOf(rows))}`,
     `Shipping: ${order?.shippingFee ? peso(order.shippingFee) : "Free (Pick-up)"}`,
     `Total: ${peso(order?.total)}`,
+    "",
+    ...(money.rows.length
+      ? [
+          "Payments received",
+          ...money.rows.map((p) => `• ${slipDate(p.at)} · ${p.method} — ${peso(p.amount)}`),
+          "",
+        ]
+      : []),
+    `Paid to date: ${peso(money.paid)}`,
+    money.cancelled
+      ? money.paid > 0
+        ? `Cancelled — ${peso(money.paid)} received. Message us about a refund.`
+        : "Cancelled. No payment was received."
+      : money.balance > 0
+        ? `Balance due: ${peso(money.balance)}`
+        : money.paid > 0
+          ? "Paid in full"
+          : "Nothing due",
     "",
     order?.deliveryMethod === "Pick-up" ? `Pick-up: ${slipDate(order?.pickupDate)}` : `Delivery: ${deliveryLine(order)}`,
     `Payment: ${paymentLine(order)}`,

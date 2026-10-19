@@ -4,7 +4,34 @@ import { Clock, Package, Star } from "lucide-react";
 import { cardClass, fmt, formatDate, orderNo, primaryLink } from "./accountShared";
 import { EmptyState, OrderProgress, OrderThumb, Skeleton, StatusPill } from "./atoms";
 import SaveOrderButton from "./SaveOrderButton";
+import { paymentSummary } from "./orderSlip";
 import ReviewForm from "../reviews/ReviewForm";
+
+/* What the customer has paid, and what is left — the short version of the slip's
+   payment block. A cancelled order is never shown as settled, even if money came in. */
+function PaymentLine({ order }) {
+  const { paid, balance, cancelled } = paymentSummary(order);
+
+  if (cancelled) {
+    return (
+      <p className="text-xs mt-0.5 text-red-700">
+        {paid > 0 ? `Cancelled · ${fmt(paid)} received — message us about a refund` : "Cancelled · no payment received"}
+      </p>
+    );
+  }
+
+  if (balance > 0) {
+    return (
+      <p className="text-xs mt-0.5 text-gray-500">
+        {paid > 0 ? `Paid ${fmt(paid)} · ` : "Nothing paid yet · "}
+        <span className="font-medium text-[#6B3838]">Balance {fmt(balance)}</span>
+      </p>
+    );
+  }
+
+  if (paid > 0) return <p className="text-xs mt-0.5 font-medium text-[#3E4E3B]">Paid in full</p>;
+  return <p className="text-xs mt-0.5 text-gray-400">Nothing due</p>;
+}
 
 /**
  * Every order this customer has placed, newest first (the API sorts them).
@@ -110,6 +137,7 @@ export default function OrdersPanel({ orders, loading, reviewable = [], onSaveRe
                   {[order.fulfillment, order.deliveryMethod].filter(Boolean).join(" · ")}
                 </p>
                 <p className="text-yellow-700/89 font-semibold text-sm mt-1.5">{fmt(order.total)}</p>
+                <PaymentLine order={order} />
               </div>
 
               <StatusPill status={order.status} />
