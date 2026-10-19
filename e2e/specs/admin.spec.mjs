@@ -1,10 +1,10 @@
 // The owner's console: seeing the shop's orders and looking after its accounts.
 import assert from "node:assert/strict";
 import { By, Select } from "selenium-webdriver";
-import { ADMIN, CUSTOMER, PENDING, FRONTEND_URL } from "../config.mjs";
+import { ADMIN, CUSTOMER, OUTSIDER, PENDING, FRONTEND_URL } from "../config.mjs";
 import { seeded } from "../fixtures.mjs";
 import {
-    getDriver, waitFor, waitForVisible, waitForText, clickText, login, clearSession,
+    getDriver, waitFor, waitForVisible, waitForText, clickText, login, clearSession, waitForToastToClear,
 } from "../helpers.mjs";
 
 const rowFor = (name) => By.xpath(`//tr[contains(., '${name}')]`);
@@ -17,6 +17,11 @@ describe("Owner console", () => {
         // The owner lands in the console, which has its own layout rather than the
         // shop's navbar, so wait for the console itself.
         await waitForText(d, /admin console/i);
+    });
+
+    // The console's toast sits over the buttons in its tables, so let it go first.
+    beforeEach(async () => {
+        await waitForToastToClear(getDriver());
     });
 
     it("lets the owner into the console", async () => {
@@ -75,6 +80,7 @@ describe("Owner console", () => {
             "the account should show as deactivated");
 
         // And back again.
+        await waitForToastToClear(d);
         const reactivate = await row.findElement(By.xpath(".//button[contains(normalize-space(.), 'Reactivate')]"));
         await reactivate.click();
         const dialog2 = await waitForVisible(d, By.css('div[role="dialog"]'));
@@ -88,7 +94,7 @@ describe("Owner console", () => {
     it("keeps a customer out of the owner console", async () => {
         const d = getDriver();
         await clearSession(d);
-        await login(d, CUSTOMER);
+        await login(d, OUTSIDER);
         // Wait for the sign-in to finish, or we would race it with the next page.
         await d.wait(async () => !(await d.getCurrentUrl()).includes("/login"), 15000,
             "the sign-in never finished");

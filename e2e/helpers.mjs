@@ -156,6 +156,13 @@ export const signUpAndVerify = async (d, { username, email, password }) => {
     return code;
 };
 
+// The admin console pops a little toast in the corner after an action, and it sits
+// right over the buttons in the table. Wait for it to fade before clicking again.
+export const waitForToastToClear = async (d, timeout = 8000) => {
+    await d.wait(async () => (await d.findElements(By.css('div[role="status"]'))).length === 0, timeout,
+        "the toast never went away");
+};
+
 // Forgets who is signed in: no cookies, no saved token. The page has to be on the
 // shop's own address first, otherwise the browser will not let us touch its storage.
 export const clearSession = async (d) => {

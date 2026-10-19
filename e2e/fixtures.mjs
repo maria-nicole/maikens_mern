@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 import User from "../backend/models/User.js";
 import { Product } from "../backend/models/product.model.js";
 import { Order } from "../backend/models/order.model.js";
-import { ADMIN, CUSTOMER, PENDING, GOWN, GOWN_IMAGE, TEST_DB_NAME } from "./config.mjs";
+import { ADMIN, CUSTOMER, OUTSIDER, PENDING, GOWN, GOWN_IMAGE, TEST_DB_NAME } from "./config.mjs";
 
 // What the seed created, so the specs know the ids they are looking for.
 export const seeded = {
@@ -62,6 +62,13 @@ export const seedTestDatabase = async (uri) => {
         password: PENDING.password,
         role: "customer",
         isVerified: false,
+    });
+    await User.create({
+        username: OUTSIDER.username,
+        email: OUTSIDER.email,
+        password: OUTSIDER.password,
+        role: "customer",
+        isVerified: true,
     });
 
     const product = await Product.create({

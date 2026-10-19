@@ -35,6 +35,13 @@ export const PENDING = {
     password: "Pendingpass1",
 };
 
+// A customer who is not in the owner's circle, kept for the "kept out" test.
+export const OUTSIDER = {
+    username: "SeleniumOutsider",
+    email: "outsider@maikens.test",
+    password: "Outsiderpass1",
+};
+
 export const GOWN = {
     name: "Selenium Test Gown",
     category: "Gown",
