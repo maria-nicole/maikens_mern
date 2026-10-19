@@ -65,7 +65,16 @@ export default function Profile({ setUser }) {
 
           {section === "overview" && <OverviewPanel account={account} form={form} />}
 
-          {section === "orders" && <OrdersPanel orders={account.orders} loading={account.activityLoading} />}
+          {section === "orders" && (
+            <OrdersPanel
+              orders={account.orders}
+              loading={account.activityLoading}
+              reviewable={account.reviewable}
+              onSaveReview={account.saveReview}
+              onRemoveReview={account.removeReview}
+              notify={account.notify}
+            />
+          )}
 
           {section === "designs" && (
             <DesignsPanel designs={account.designs} loading={account.activityLoading} onRemove={account.removeDesign} />

@@ -15,6 +15,7 @@ import {
   X,
   Check,
   Package,
+  Star,
 } from "lucide-react";
 import { font, api, errMsg, initials } from "./adminLib";
 import { PrimaryButton, Spinner } from "./ui";
@@ -24,6 +25,7 @@ import ProductsView from "./ProductsView";
 import OrdersView from "./OrdersView";
 import CustomizationsView from "./CustomizationsView";
 import MessagesView from "./MessagesView";
+import ReviewsView from "./ReviewsView";
 import UsersView from "./UsersView";
 import ReportsView from "./ReportsView";
 
@@ -40,6 +42,7 @@ const NAV = [
   { key: "orders", label: "Orders", icon: ClipboardList },
   { key: "customizations", label: "Customizations", icon: Sparkles },
   { key: "messages", label: "Messages", icon: MessageSquare },
+  { key: "reviews", label: "Reviews", icon: Star },
   { key: "users", label: "Users", icon: Users },
   { key: "reports", label: "Reports", icon: BarChart3 },
 ];
@@ -246,6 +249,7 @@ export default function Admin({ setUser }) {
           {tab === "orders" && <OrdersView notify={notify} onChanged={loadOverview} />}
           {tab === "customizations" && <CustomizationsView notify={notify} onChanged={loadOverview} />}
           {tab === "messages" && <MessagesView notify={notify} onChanged={loadOverview} />}
+          {tab === "reviews" && <ReviewsView notify={notify} />}
           {tab === "users" && <UsersView me={me} notify={notify} />}
           {tab === "reports" && <ReportsView notify={notify} />}
         </div>

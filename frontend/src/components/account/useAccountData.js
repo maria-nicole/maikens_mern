@@ -4,9 +4,9 @@ import { API_URL, asArray, announceCart, authHeader, EMPTY_CART, isLoggedIn } fr
 
 /**
  * One loader for everything the My Account page shows: profile, orders, custom
- * designs, favorites and the cart.
+ * designs, favorites, the cart and the reviews the customer may write.
  *
- * The five requests go out together (Promise.allSettled), so one broken list never
+ * The six requests go out together (Promise.allSettled), so one broken list never
  * stops the rest and the page has a single loading state instead of three.
  * Used to be spread over Profile.jsx, Favorites.jsx and MyCart.jsx.
  */
@@ -22,6 +22,8 @@ export default function useAccountData({ setUser } = {}) {
   const [designs, setDesigns] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState(EMPTY_CART);
+  // Which purchased products this customer may review, with their review if any
+  const [reviewable, setReviewable] = useState([]);
   const [activityLoading, setActivityLoading] = useState(isLoggedIn);
   const [activityError, setActivityError] = useState("");
 
@@ -56,6 +58,7 @@ export default function useAccountData({ setUser } = {}) {
         axios.get(`${API_URL}/api/customizations/mine`, { headers }),
         axios.get(`${API_URL}/api/favorites`, { headers }),
         axios.get(`${API_URL}/api/cart`, { headers }),
+        axios.get(`${API_URL}/api/reviews/reviewable`, { headers }),
       ]);
       if (ignore) return;
 
@@ -64,7 +67,7 @@ export default function useAccountData({ setUser } = {}) {
         return;
       }
 
-      const [profileRes, ordersRes, designsRes, favsRes, cartRes] = results;
+      const [profileRes, ordersRes, designsRes, favsRes, cartRes, reviewsRes] = results;
 
       if (profileRes.status === "fulfilled") setProfile(profileRes.value.data);
       else setProfileError("We couldn't load your profile. Please try again.");
@@ -72,6 +75,7 @@ export default function useAccountData({ setUser } = {}) {
       if (ordersRes.status === "fulfilled") setOrders(asArray(ordersRes.value.data));
       if (designsRes.status === "fulfilled") setDesigns(asArray(designsRes.value.data));
       if (favsRes.status === "fulfilled") setFavorites(asArray(favsRes.value.data));
+      if (reviewsRes.status === "fulfilled") setReviewable(asArray(reviewsRes.value.data));
       if (cartRes.status === "fulfilled") {
         setCart(cartRes.value.data || EMPTY_CART);
         announceCart(cartRes.value.data);
@@ -186,6 +190,33 @@ export default function useAccountData({ setUser } = {}) {
     [notify]
   );
 
+  // ── Reviews ──
+  const reloadReviewable = useCallback(async () => {
+    const { data } = await axios.get(`${API_URL}/api/reviews/reviewable`, { headers: authHeader() });
+    setReviewable(asArray(data));
+    return asArray(data);
+  }, []);
+
+  // Creates the review the first time and edits it afterwards. Errors are left to the
+  // form to show, so the message lands next to the fields it belongs to.
+  const saveReview = useCallback(
+    async ({ reviewId, product, rating, title, body }) => {
+      const payload = { rating, title, body };
+      if (reviewId) await axios.put(`${API_URL}/api/reviews/${reviewId}`, payload, { headers: authHeader() });
+      else await axios.post(`${API_URL}/api/reviews`, { ...payload, product }, { headers: authHeader() });
+      await reloadReviewable();
+    },
+    [reloadReviewable]
+  );
+
+  const removeReview = useCallback(
+    async (reviewId) => {
+      await axios.delete(`${API_URL}/api/reviews/${reviewId}`, { headers: authHeader() });
+      await reloadReviewable();
+    },
+    [reloadReviewable]
+  );
+
   return {
     loggedIn,
     loading,
@@ -196,6 +227,7 @@ export default function useAccountData({ setUser } = {}) {
     favorites,
     cart,
     setCart,
+    reviewable,
     activityLoading,
     activityError,
     busyId,
@@ -206,9 +238,12 @@ export default function useAccountData({ setUser } = {}) {
     removeDesign,
     changeQty,
     removeItem,
+    saveReview,
+    removeReview,
     reloadOrders,
     reloadFavorites,
     reloadCart,
+    reloadReviewable,
     expireSession,
   };
 }

@@ -20,6 +20,7 @@ import reportRoutes from "./routes/report.route.js";
 import profileRoutes from "./routes/profile.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import favoritesRoutes from "./routes/favorites.route.js";
+import reviewRoutes from "./routes/review.route.js";
 import staffRoutes from "./routes/staff.route.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -81,6 +82,7 @@ app.use("/api/users", authRoutes);
 
 app.use("/api/cart", cartRoutes);
 app.use("/api/favorites", favoritesRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);

@@ -1,14 +1,41 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, Package } from "lucide-react";
+import { Clock, Package, Star } from "lucide-react";
 import { cardClass, fmt, formatDate, orderNo, primaryLink } from "./accountShared";
 import { EmptyState, OrderProgress, OrderThumb, Skeleton, StatusPill } from "./atoms";
 import SaveOrderButton from "./SaveOrderButton";
+import ReviewForm from "../reviews/ReviewForm";
 
 /**
  * Every order this customer has placed, newest first (the API sorts them).
  * Moved out of the old /profile "Order History" tab.
+ *
+ * Items on an order that has been completed carry a "Write a review" link; the
+ * review itself is then readable by anyone on the product page.
  */
-export default function OrdersPanel({ orders, loading }) {
+export default function OrdersPanel({ orders, loading, reviewable = [], onSaveReview, onRemoveReview, notify }) {
+  // { product, name, review } for the item whose form is open
+  const [writing, setWriting] = useState(null);
+
+  // Keyed by order + product, so the link sits on the order that earned the right to
+  // review rather than on every order that happens to contain the same piece.
+  const byPurchase = useMemo(
+    () => new Map((reviewable || []).map((row) => [`${row.orderId}:${row.productId}`, row])),
+    [reviewable]
+  );
+
+  const save = async (values) => {
+    await onSaveReview({ reviewId: writing?.review?._id, product: writing?.product, ...values });
+    notify?.(writing?.review ? "Your review was updated." : "Thanks — your review is posted.");
+    setWriting(null);
+  };
+
+  const remove = async () => {
+    await onRemoveReview(writing?.review?._id);
+    notify?.("Your review was removed.");
+    setWriting(null);
+  };
+
   if (loading) {
     return (
       <div className="grid lg:grid-cols-2 gap-4">
@@ -49,15 +76,28 @@ export default function OrdersPanel({ orders, loading }) {
               <div className="flex-1 min-w-0">
                 {order.items?.length > 0 ? (
                   <ul className="space-y-0.5">
-                    {order.items.map((it, idx) => (
-                      <li key={idx} className="text-sm font-semibold text-neutral-800">
-                        {it.name}
-                        <span className="font-normal text-gray-400">
-                          {it.size ? ` · ${it.size}` : ""}
-                          {it.quantity > 1 ? ` · ×${it.quantity}` : ""}
-                        </span>
-                      </li>
-                    ))}
+                    {order.items.map((it, idx) => {
+                      const bought = it.product ? byPurchase.get(`${order._id}:${it.product}`) : null;
+                      return (
+                        <li key={idx} className="text-sm font-semibold text-neutral-800">
+                          {it.name}
+                          <span className="font-normal text-gray-400">
+                            {it.size ? ` · ${it.size}` : ""}
+                            {it.quantity > 1 ? ` · ×${it.quantity}` : ""}
+                          </span>
+                          {bought && (
+                            <button
+                              type="button"
+                              onClick={() => setWriting({ product: it.product, name: it.name, review: bought.review })}
+                              className="ml-2 inline-flex items-center gap-1 align-middle text-xs font-medium text-yellow-700/89 hover:text-yellow-800"
+                            >
+                              <Star size={11} className="fill-current" />
+                              {bought.review ? "Edit your review" : "Write a review"}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-sm font-semibold text-neutral-800">{order.item}</p>
@@ -84,6 +124,16 @@ export default function OrdersPanel({ orders, loading }) {
           </div>
         ))}
       </div>
+
+      {writing && (
+        <ReviewForm
+          productName={writing.name}
+          initial={writing.review}
+          onSave={save}
+          onDelete={remove}
+          onClose={() => setWriting(null)}
+        />
+      )}
     </div>
   );
 }

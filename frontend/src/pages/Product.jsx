@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { BsFacebook } from "react-icons/bs";
 import { announceCart } from "../components/account/accountShared";
+import ReviewsSection from "../components/reviews/ReviewsSection";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -727,6 +728,9 @@ export default function Product() {
           )}
         </div>
       </div>
+
+      {/* Customer reviews (keyed by product so switching pages starts clean) */}
+      <ReviewsSection key={id} productId={id} />
 
       {/* Related products */}
       {related.length > 0 && (

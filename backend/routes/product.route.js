@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import { Product } from "../models/product.model.js";
+import { Review } from "../models/review.model.js";
 import { upload, fileUrl } from "../middleware/upload.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
@@ -132,6 +133,8 @@ router.patch("/:id/status", protect, adminOnly, async (req, res) => {
 router.delete("/:id", protect, adminOnly, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
+    // A deleted product has no page left to show its reviews on
+    await Review.deleteMany({ product: req.params.id });
     res.json({ message: "Deleted" });
   } catch (err) {
     res.status(400).json({ message: err.message });
