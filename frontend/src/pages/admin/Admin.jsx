@@ -16,6 +16,7 @@ import {
   Check,
   Package,
   Star,
+  Mail,
 } from "lucide-react";
 import { font, api, errMsg, initials } from "./adminLib";
 import { PrimaryButton, Spinner } from "./ui";
@@ -25,6 +26,7 @@ import ProductsView from "./ProductsView";
 import OrdersView from "./OrdersView";
 import CustomizationsView from "./CustomizationsView";
 import MessagesView from "./MessagesView";
+import InquiriesView from "./InquiriesView";
 import ReviewsView from "./ReviewsView";
 import UsersView from "./UsersView";
 import ReportsView from "./ReportsView";
@@ -42,6 +44,7 @@ const NAV = [
   { key: "orders", label: "Orders", icon: ClipboardList },
   { key: "customizations", label: "Customizations", icon: Sparkles },
   { key: "messages", label: "Messages", icon: MessageSquare },
+  { key: "inquiries", label: "Inquiries", icon: Mail },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "users", label: "Users", icon: Users },
   { key: "reports", label: "Reports", icon: BarChart3 },
@@ -121,8 +124,9 @@ export default function Admin({ setUser }) {
       orders: overview?.newOrders,
       customizations: overview?.pendingDesigns,
       messages: overview?.unreadMessages,
+      inquiries: overview?.newInquiries,
     })[key] || 0;
-  const totalAlerts = badge("orders") + badge("customizations") + badge("messages");
+  const totalAlerts = badge("orders") + badge("customizations") + badge("messages") + badge("inquiries");
   const activeLabel = NAV.find((n) => n.key === tab)?.label ?? "";
 
   /* ---- gates ---- */
@@ -225,7 +229,7 @@ export default function Admin({ setUser }) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setTab(badge("messages") ? "messages" : badge("customizations") ? "customizations" : "orders")}
+              onClick={() => setTab(badge("messages") ? "messages" : badge("customizations") ? "customizations" : badge("inquiries") ? "inquiries" : "orders")}
               aria-label={totalAlerts ? `${totalAlerts} items need attention` : "Nothing needs attention"}
               className="relative rounded-lg p-2 text-[#4A4136] hover:bg-white"
             >
@@ -249,6 +253,7 @@ export default function Admin({ setUser }) {
           {tab === "orders" && <OrdersView notify={notify} onChanged={loadOverview} />}
           {tab === "customizations" && <CustomizationsView notify={notify} onChanged={loadOverview} />}
           {tab === "messages" && <MessagesView notify={notify} onChanged={loadOverview} />}
+          {tab === "inquiries" && <InquiriesView notify={notify} onChanged={loadOverview} />}
           {tab === "reviews" && <ReviewsView notify={notify} />}
           {tab === "users" && <UsersView me={me} notify={notify} />}
           {tab === "reports" && <ReportsView notify={notify} />}

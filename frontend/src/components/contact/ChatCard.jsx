@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { BsFacebook, BsMessenger } from "react-icons/bs";
 import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 
-// TODO: replace the "#" links with your real Facebook page and Messenger link.
 const SOCIALS = [
     { Icon: BsFacebook, href: "https://www.facebook.com/share/18GpBdBoog", label: "Facebook" },
     { Icon: BsMessenger, href: "https://www.facebook.com/share/18GpBdBoog", label: "Messenger" },

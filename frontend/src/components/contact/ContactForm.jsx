@@ -1,5 +1,9 @@
 import { useState } from "react";
+import axios from "axios";
 import { Loader2 } from "lucide-react";
+
+// Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const EMPTY_FORM = { name: "", email: "", subject: "", message: "" };
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -8,12 +12,9 @@ const inputClass =
     "block w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-neutral-800 shadow-xs " +
     "placeholder:text-stone-400 outline-none focus:border-yellow-600/89 focus:ring-2 focus:ring-yellow-600/30";
 
-// TODO: connect this to your backend. Right now it only simulates a send, so NO message
-// is actually delivered. Replace the body with something like:
-//   await axios.post(`${API_URL}/api/messages`, values);
+// Saved by the backend so the boutique sees it in the admin console
 async function sendMessage(values) {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    return values;
+    await axios.post(`${API_URL}/api/contact`, values);
 }
 
 function Field({ id, label, optional, error, children }) {
