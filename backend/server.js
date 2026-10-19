@@ -23,6 +23,7 @@ import favoritesRoutes from "./routes/favorites.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import staffRoutes from "./routes/staff.route.js";
 import contactRoutes from "./routes/contact.route.js";
+import { hasMailProvider, isTestSender } from "./mail/mailer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -43,7 +44,7 @@ const ENV_PURPOSE = {
   MONGO_URI: "database connection",
   JWT_SECRET: "login sessions",
   GOOGLE_CLIENT_ID: "Google sign-in",
-  MAILTRAP_TOKEN: "verification emails",
+  RESEND_API_KEY: "verification emails",
   GEMINI_API_KEY: "AI design generation",
   CLOUDINARY_CLOUD_NAME: "image uploads (falls back to local disk)",
   CLOUDINARY_API_KEY: "image uploads (falls back to local disk)",
@@ -68,12 +69,12 @@ if (process.env.NODE_ENV === "production") {
       "CLIENT_URL is not set - links in verification emails will point to http://localhost:5173."
     );
   }
-  // Mailtrap's sandbox captures mail instead of delivering it, and its default sender is on
-  // the sandbox domain. If that's still in use, real customers never receive a code.
-  if (!process.env.MAILTRAP_SENDER_EMAIL || /demomailtrap\.co$/i.test(process.env.MAILTRAP_SENDER_EMAIL)) {
+  // Resend's shared test sender only delivers to the address on the account that owns the
+  // key, so real customers never receive a code until a domain is verified.
+  if (hasMailProvider() && isTestSender()) {
     console.warn(
-      "MAILTRAP_SENDER_EMAIL is unset or still on the sandbox domain (demomailtrap.co). " +
-        "Unless this is a sandbox token, verification emails won't reach real inboxes."
+      "MAIL_FROM_EMAIL is unset or still on resend.dev, Resend's test sender. " +
+        "It only delivers to your own address - verify your domain and set MAIL_FROM_EMAIL."
     );
   }
 }

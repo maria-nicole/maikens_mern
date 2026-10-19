@@ -21,7 +21,6 @@
     "express": "^5.2.1",
     "google-auth-library": "^11.2.0",
     "jsonwebtoken": "^9.0.3",
-    "mailtrap": "^4.5.1",
     "mongoose": "^9.10.3",
     "multer": "^2.4.0"
   },

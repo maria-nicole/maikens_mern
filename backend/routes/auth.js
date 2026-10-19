@@ -5,7 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
-import { sendVerificationEmail, sendWelcomeEmail } from "../mailtrap/emails.js";
+import { sendVerificationEmail, sendWelcomeEmail } from "../mail/emails.js";
 
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
