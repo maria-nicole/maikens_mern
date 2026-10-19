@@ -39,7 +39,7 @@ customer dues and money received today.
 | Backend | Node.js, Express 5, Mongoose 9 (MongoDB) |
 | Auth | JWT (30-day tokens), bcryptjs, Google OAuth |
 | Uploads | Multer → Cloudinary, with a local-disk fallback |
-| Email | Resend (6-digit verification codes) |
+| Email | Resend (optional welcome email) |
 | AI | `@google/genai` (Gemini) for design previews and virtual try-on |
 | Frontend | React 19, Vite 8, React Router 7, Tailwind CSS 4, Axios |
 
@@ -53,8 +53,8 @@ customer dues and money received today.
 - **npm**
 
 Only `MONGO_URI` is strictly required to boot. Everything else you can add as you go;
-sign-in by Google, emails and the AI features each stay switched off until their keys
-are set.
+sign-in by Google, the optional welcome email and the AI features each stay switched off
+until their keys are set.
 
 ## Quickstart
 
@@ -107,12 +107,12 @@ template; the frontend reads **`frontend/.env`** ([template](frontend/.env.examp
 | `MONGO_URI` | Required | Server exits if it can't connect |
 | `JWT_SECRET` | Required | Signs login tokens; any long random string |
 | `GOOGLE_CLIENT_ID` | Google sign-in | Must match `VITE_GOOGLE_CLIENT_ID` |
-| `RESEND_API_KEY` | Verification emails | Without it, sign-up can't send its code |
+| `RESEND_API_KEY` | Welcome email | Optional. Without it no email is sent, and nothing else changes |
 | `GEMINI_API_KEY` | AI preview & try-on | Without it, those routes return an error |
 | `CLOUDINARY_CLOUD_NAME` `CLOUDINARY_API_KEY` `CLOUDINARY_API_SECRET` | Image uploads | **All three or none.** Missing → local disk, which is wiped on redeploy |
 | `CORS_ORIGIN` | Production | Comma-separated. Must match the frontend exactly |
-| `CLIENT_URL` | Production | Base URL for links inside verification emails |
-| `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME` | Emails | Default to Resend's test sender; set a verified domain for real customers |
+| `CLIENT_URL` | Production | Base URL for links inside the welcome email |
+| `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME` | Welcome email | Default to Resend's test sender; set a verified domain so customers can receive it |
 | `GEMINI_IMAGE_MODEL` | AI previews | Optional; pins a specific model |
 | `GEMINI_MAX_PER_HOUR`, `TRYON_MAX_PER_HOUR` | AI limits | Default 10 and 6 |
 | `PORT` | Server | Default 5000 |
@@ -131,7 +131,7 @@ There is deliberately no self-service route to an admin role — `POST /api/admi
 requires you to already be an admin, so a fresh setup has a chicken-and-egg problem.
 Register normally, then promote that account once:
 
-1. Sign up through `/register` and verify the email.
+1. Sign up through `/register` — the account is created and usable straight away.
 2. Open your cluster in **MongoDB Atlas** (or `mongosh`) and find the `users` collection.
 3. Set `role` on your document from `"customer"` to `"admin"`.
 4. Sign out and sign in again — the new role is read from the token issued at login.
@@ -162,7 +162,7 @@ maikens_mern/
 │   ├── middleware/             # JWT auth guards, Multer upload handling
 │   ├── models/                 # Mongoose schemas
 │   ├── routes/                 # one router per resource
-│   ├── mail/                   # Resend mailer, and the verification & welcome templates
+│   ├── mail/                   # Resend mailer and the welcome email template
 │   ├── utils/                  # shared logic (review rules, stock, Gemini, uploads)
 │   ├── scripts/                # one-off maintenance scripts
 │   ├── uploads/                # local image fallback (gitignored)
@@ -188,7 +188,7 @@ token; **auth** requires any logged-in account.
 | Mount | Purpose |
 | --- | --- |
 | `GET /health` | Uptime check (outside `/api`) |
-| `/api/users` | Register, verify email, log in, Google sign-in |
+| `/api/users` | Register, log in, Google sign-in |
 | `/api/users/profile` | Read and update your own profile and avatar |
 | `/api/products` | Public catalog; **owner** create, update, delete |
 | `/api/orders` | **auth** place and list your orders; staff/owner status changes |
@@ -224,9 +224,9 @@ The two halves deploy separately. Both build from a pushed commit.
 
 ## Things worth knowing
 
-- **The verification code is printed to the backend console in development.** With
-  `NODE_ENV` unset or `development`, sign-up logs `[dev] verification code for …`. In
-  production the code is only emailed, so `RESEND_API_KEY` must be set.
+- **Accounts are ready the moment they are created.** There is no email-verification
+  step: signing up with an email and password signs you straight in, and logging in
+  never asks for a code. Google sign-in was always instant.
 - **Uploads need Cloudinary in production.** Render's filesystem is ephemeral — without
   `CLOUDINARY_*` every image is lost on the next deploy. The server warns about this at
   boot.
@@ -235,10 +235,11 @@ The two halves deploy separately. Both build from a pushed commit.
   cancelled order never qualifies, and walk-in sales are not tied to an account.
 - **Cloudinary is optional, Mongo is not.** Missing Cloudinary only downgrades uploads;
   a missing `MONGO_URI` stops the server.
-- **Resend's test sender does not reach customers.** `MAIL_FROM_EMAIL` defaults to
-  `onboarding@resend.dev`, which only delivers to the address on your own Resend account.
-  Verify your domain, set `MAIL_FROM_EMAIL` to an address on it, then real customers can
-  receive verification codes. The server warns about this at boot in production.
+- **The welcome email is optional, and Resend's test sender does not reach customers.**
+  `MAIL_FROM_EMAIL` defaults to `onboarding@resend.dev`, which only delivers to the
+  address on your own Resend account. Verify your domain and set `MAIL_FROM_EMAIL` to an
+  address on it, then customers can receive the welcome email. The server warns about
+  this at boot in production.
 - **Cancelling an order returns its stock.** Taking an order off `Cancelled` takes that
   stock again, and refuses if it is no longer available. Orders placed before this was
   tracked fall back to the product to work out what they were holding.

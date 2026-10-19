@@ -26,11 +26,9 @@ import NotFound from "./components/NotFound";
 import Forbidden from "./components/Forbidden";
 import RoleGate from "./components/RoleGate";
 
-import VerifyEmail from "./pages/VerifyEmail";
-
 
 const ROLE_HOME = { admin: "/admin", staff: "/staff", customer: "/" };
-const HIDDEN_NAVBAR_PATHS = ["/login", "/register", "/verify-email", "/admin", "/staff"];
+const HIDDEN_NAVBAR_PATHS = ["/login", "/register", "/admin", "/staff"];
 // Who may open the staff console. The owner keeps full access to everything.
 const STAFF_ROLES = ["staff", "admin"];
 
@@ -98,10 +96,6 @@ function Layout({ user, setUser }) {
         <Route
           path="/register"
           element={user ? <Navigate to={ROLE_HOME[user.role] || "/"} /> : <Register setUser={setUser} />}
-        />
-        <Route
-          path="/verify-email"
-          element={user ? <Navigate to={ROLE_HOME[user.role] || "/"} /> : <VerifyEmail setUser={setUser} />}
         />
         <Route path="*" element={<NotFound />} />
       </Routes>

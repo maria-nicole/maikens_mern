@@ -221,7 +221,7 @@ function AddUserModal({ onClose, onCreated }) {
     return (
         <Modal label="Add user" onClose={onClose}>
             <form onSubmit={submit} className="space-y-4">
-                <ModalHeader title="Add user" subtitle="Creates a verified account they can log in with right away." onClose={onClose} />
+                <ModalHeader title="Add user" subtitle="Creates an account they can log in with right away." onClose={onClose} />
                 <Field label="Username" htmlFor="u-name">
                     <input id="u-name" value={form.username} onChange={set("username")} className={inputCls} required autoFocus />
                 </Field>

@@ -9,6 +9,9 @@ import "../config/env.js"; // loads the root .env no matter where you start the 
      RESEND_API_KEY   required to actually send anything
      MAIL_FROM_EMAIL  must be on a domain you have verified at Resend
      MAIL_FROM_NAME   defaults to the boutique name
+
+   Email is optional: accounts are created and usable without it. These only control
+   the welcome email sent after sign-up.
 ------------------------------------------------------------------------------------------- */
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
@@ -28,11 +31,11 @@ export const hasMailProvider = () => Boolean(process.env.RESEND_API_KEY);
 export const isTestSender = () => sender.email === TEST_SENDER;
 
 // Sends one email. Throws when the provider rejects it or nothing is configured, so the
-// caller can tell the customer the code didn't go out instead of leaving them waiting.
+// caller can log the failure instead of silently losing the message.
 export async function sendMail({ to, subject, text, html }) {
     if (!hasMailProvider()) {
-        // In development the verification code is logged to the console before we get here,
-        // so sign-up can still be finished; anywhere else this is a real failure.
+        // In development the message is logged instead of sent, so the flow can still be
+        // walked through; anywhere else this is a real failure.
         if (process.env.NODE_ENV !== "production") {
             console.warn(`[dev] RESEND_API_KEY is not set - "${subject}" to ${to} was not sent.`);
             return { skipped: true };

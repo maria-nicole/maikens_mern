@@ -38,7 +38,7 @@ router.post("/", async (req, res) => {
     if (password.length < 8 || !/\d/.test(password)) throw httpError(400, "Password needs at least 8 characters and a number.");
     if (!ROLES.includes(role)) throw httpError(400, "Choose a role.");
 
-    const user = await User.create({ username, email, password, role, isVerified: true });
+    const user = await User.create({ username, email, password, role });
     const { password: _omit, ...safe } = user.toObject();
     res.status(201).json(safe);
   } catch (err) {

@@ -44,7 +44,6 @@ const ENV_PURPOSE = {
   MONGO_URI: "database connection",
   JWT_SECRET: "login sessions",
   GOOGLE_CLIENT_ID: "Google sign-in",
-  RESEND_API_KEY: "verification emails",
   GEMINI_API_KEY: "AI design generation",
   CLOUDINARY_CLOUD_NAME: "image uploads (falls back to local disk)",
   CLOUDINARY_API_KEY: "image uploads (falls back to local disk)",
@@ -66,15 +65,15 @@ if (process.env.NODE_ENV === "production") {
   }
   if (!process.env.CLIENT_URL) {
     console.warn(
-      "CLIENT_URL is not set - links in verification emails will point to http://localhost:5173."
+      "CLIENT_URL is not set - links in the welcome email will point to http://localhost:5173."
     );
   }
-  // Resend's shared test sender only delivers to the address on the account that owns the
-  // key, so real customers never receive a code until a domain is verified.
+  // Email is optional, but if it is switched on with an unverified sender, welcome emails
+  // only reach the account owner. Worth saying out loud so the silence is not a mystery.
   if (hasMailProvider() && isTestSender()) {
     console.warn(
       "MAIL_FROM_EMAIL is unset or still on resend.dev, Resend's test sender. " +
-        "It only delivers to your own address - verify your domain and set MAIL_FROM_EMAIL."
+        "Welcome emails will only reach your own address - verify your domain and set MAIL_FROM_EMAIL."
     );
   }
 }
