@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Clock, Package } from "lucide-react";
 import { cardClass, fmt, formatDate, orderNo, primaryLink } from "./accountShared";
 import { EmptyState, OrderProgress, OrderThumb, Skeleton, StatusPill } from "./atoms";
+import SaveOrderButton from "./SaveOrderButton";
 
 /**
  * Every order this customer has placed, newest first (the API sorts them).
@@ -74,7 +75,12 @@ export default function OrdersPanel({ orders, loading }) {
               <StatusPill status={order.status} />
             </div>
 
-            <OrderProgress status={order.status} />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <OrderProgress status={order.status} />
+              </div>
+              <SaveOrderButton order={order} />
+            </div>
           </div>
         ))}
       </div>

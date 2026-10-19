@@ -33,6 +33,7 @@ import {
   today,
 } from "./accountShared";
 import { EmptyState } from "./atoms";
+import SaveOrderButton from "./SaveOrderButton";
 
 const CHECKOUT_STEPS = [
   { key: "cart", label: "Cart" },
@@ -146,7 +147,11 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
           >
             Keep Shopping
           </Link>
+          <SaveOrderButton order={placed} variant="page" />
         </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Save your order slip and send it to us on Messenger to confirm your order.
+        </p>
       </div>
     );
   }

@@ -14,6 +14,10 @@ import { colorLabel, selectionList, swatchFor } from "../../lib/colors";
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+// The boutique's Facebook page — where the saved order slips get sent.
+// (Same link the Contact page uses.)
+export const MESSENGER_URL = "https://www.facebook.com/share/18GpBdBoog";
+
 export const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
 export const assetUrl = (path) => (!path ? "" : /^https?:\/\//i.test(path) ? path : `${API_URL}${path}`);
 export const isLoggedIn = () => !!localStorage.getItem("token");
