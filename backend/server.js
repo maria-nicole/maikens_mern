@@ -23,7 +23,7 @@ import favoritesRoutes from "./routes/favorites.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import staffRoutes from "./routes/staff.route.js";
 import contactRoutes from "./routes/contact.route.js";
-import { hasMailProvider, isTestSender } from "./mail/mailer.js";
+import { hasMailProvider, hasSender } from "./mail/mailer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -44,6 +44,7 @@ const ENV_PURPOSE = {
   MONGO_URI: "database connection",
   JWT_SECRET: "login sessions",
   GOOGLE_CLIENT_ID: "Google sign-in",
+  BREVO_API_KEY: "verification emails",
   GEMINI_API_KEY: "AI design generation",
   CLOUDINARY_CLOUD_NAME: "image uploads (falls back to local disk)",
   CLOUDINARY_API_KEY: "image uploads (falls back to local disk)",
@@ -65,15 +66,15 @@ if (process.env.NODE_ENV === "production") {
   }
   if (!process.env.CLIENT_URL) {
     console.warn(
-      "CLIENT_URL is not set - links in the welcome email will point to http://localhost:5173."
+      "CLIENT_URL is not set - links in emails will point to http://localhost:5173."
     );
   }
-  // Email is optional, but if it is switched on with an unverified sender, welcome emails
-  // only reach the account owner. Worth saying out loud so the silence is not a mystery.
-  if (hasMailProvider() && isTestSender()) {
+  // Brevo refuses to send without an address to send from, so a missing one means no
+  // customer ever receives their code. Worth saying out loud rather than failing quietly.
+  if (hasMailProvider() && !hasSender()) {
     console.warn(
-      "MAIL_FROM_EMAIL is unset or still on resend.dev, Resend's test sender. " +
-        "Welcome emails will only reach your own address - verify your domain and set MAIL_FROM_EMAIL."
+      "MAIL_FROM_EMAIL is not set - Brevo has no address to send from. " +
+        "Set it, and make sure that address is a verified sender in the Brevo dashboard."
     );
   }
 }

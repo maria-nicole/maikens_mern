@@ -38,7 +38,7 @@ router.post("/", async (req, res) => {
     if (password.length < 8 || !/\d/.test(password)) throw httpError(400, "Password needs at least 8 characters and a number.");
     if (!ROLES.includes(role)) throw httpError(400, "Choose a role.");
 
-    const user = await User.create({ username, email, password, role });
+    const user = await User.create({ username, email, password, role, isVerified: true });
     const { password: _omit, ...safe } = user.toObject();
     res.status(201).json(safe);
   } catch (err) {
@@ -54,6 +54,26 @@ router.patch("/:id/status", async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { isActive: Boolean(req.body.isActive) },
+      { returnDocument: "after" }
+    ).select("-password");
+    if (!user) throw httpError(404, "User not found.");
+    res.json(user);
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+// Mark an account as verified by hand. This is the way out for a customer whose
+// verification email never arrived: the owner confirms them and they can sign in.
+router.patch("/:id/verify", async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, "User not found.");
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: { isVerified: true },
+        $unset: { verificationToken: 1, verificationTokenExpiresAt: 1, verificationAttempts: 1 },
+      },
       { returnDocument: "after" }
     ).select("-password");
     if (!user) throw httpError(404, "User not found.");

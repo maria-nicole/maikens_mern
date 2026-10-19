@@ -125,8 +125,9 @@ export default function Admin({ setUser }) {
       customizations: overview?.pendingDesigns,
       messages: overview?.unreadMessages,
       inquiries: overview?.newInquiries,
+      users: overview?.unverifiedUsers,
     })[key] || 0;
-  const totalAlerts = badge("orders") + badge("customizations") + badge("messages") + badge("inquiries");
+  const totalAlerts = badge("orders") + badge("customizations") + badge("messages") + badge("inquiries") + badge("users");
   const activeLabel = NAV.find((n) => n.key === tab)?.label ?? "";
 
   /* ---- gates ---- */
@@ -229,7 +230,7 @@ export default function Admin({ setUser }) {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setTab(badge("messages") ? "messages" : badge("customizations") ? "customizations" : badge("inquiries") ? "inquiries" : "orders")}
+              onClick={() => setTab(badge("messages") ? "messages" : badge("users") ? "users" : badge("customizations") ? "customizations" : badge("inquiries") ? "inquiries" : "orders")}
               aria-label={totalAlerts ? `${totalAlerts} items need attention` : "Nothing needs attention"}
               className="relative rounded-lg p-2 text-[#4A4136] hover:bg-white"
             >

@@ -12,6 +12,7 @@ const C = {
 };
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif";
+const MONO = "'Courier New', Courier, monospace";
 
 const esc = (s = "") =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -62,12 +63,28 @@ const layout = ({ preheader = "", content }) => `<!DOCTYPE html>
 </body>
 </html>`;
 
+export const verificationEmailTemplate = ({ name, code }) =>
+  layout({
+    preheader: `Your Maikens verification code is ${code}`,
+    content: `
+      ${heading(`Welcome${name ? `, ${esc(name)}` : ""}`)}
+      ${paragraph("Thank you for joining Maikens Gown &amp; Barong. Enter this code to verify your email and finish creating your account:")}
+      <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:28px auto;">
+        <tr><td align="center" style="background:${C.cream};border:1px dashed ${C.gold};border-radius:12px;padding:18px 32px;">
+          <span style="font-family:${MONO};font-size:36px;font-weight:bold;letter-spacing:10px;color:${C.ink};">${esc(code)}</span>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 16px;text-align:center;font-size:13px;color:${C.muted};">This code expires in 15 minutes.</p>
+      ${paragraph("If you didn't create an account with us, you can safely ignore this email.")}
+      <p style="margin:24px 0 0;">Warm regards,<br><span style="font-family:${SERIF};color:${C.goldDark};">The Maikens Team</span></p>`,
+  });
+
 export const welcomeEmailTemplate = ({ name }) =>
   layout({
-    preheader: "Welcome to Maikens.",
+    preheader: "Your email is verified. Welcome to Maikens.",
     content: `
       ${heading(`You're all set${name ? `, ${esc(name)}` : ""}`)}
-      ${paragraph("Your account is ready. Here's what you can do now:")}
+      ${paragraph("Your email is verified and your account is ready. Here's what you can do now:")}
       <ul style="margin:0 0 16px;padding-left:20px;">
         <li style="margin-bottom:6px;">Browse our gowns and barong</li>
         <li style="margin-bottom:6px;">Design your own piece with an AI-generated preview</li>

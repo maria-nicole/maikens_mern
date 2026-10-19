@@ -4,6 +4,7 @@ import { Product } from "../models/product.model.js";
 import { Customization } from "../models/customization.model.js";
 import { Message } from "../models/message.model.js";
 import { ContactMessage } from "../models/contactMessage.model.js";
+import User from "../models/User.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 
 const router = express.Router();
@@ -44,7 +45,7 @@ const money = (n) => Math.round((Number(n) || 0) * 100) / 100;
 router.get("/dashboard", async (req, res) => {
     try {
         const since = dayStart(manilaDay(Date.now()));
-        const [today, active, toProcess, pendingDesigns, unread, inquiries, lowStock, recent, balances] = await Promise.all([
+        const [today, active, toProcess, pendingDesigns, unread, inquiries, unverified, lowStock, recent, balances] = await Promise.all([
             Order.aggregate([
                 { $match: { createdAt: { $gte: since }, status: { $ne: CANCELLED } } },
                 { $group: { _id: null, count: { $sum: 1 }, total: { $sum: "$total" } } },
@@ -54,6 +55,7 @@ router.get("/dashboard", async (req, res) => {
             Customization.countDocuments({ status: "Pending review" }),
             Message.countDocuments({ sender: "customer", read: false }),
             ContactMessage.countDocuments({ handled: false }),
+            User.countDocuments({ isVerified: false }),
             Product.find({ status: { $in: ["Low stock", "Out of stock"] } })
                 .select("name category totalStock status images")
                 .sort({ totalStock: 1 })
@@ -78,6 +80,7 @@ router.get("/dashboard", async (req, res) => {
             pendingDesigns,
             unreadMessages: unread,
             newInquiries: inquiries,
+            unverifiedUsers: unverified,
             balances: { count: balances[0]?.count || 0, due: money(balances[0]?.due) },
             lowStock,
             recent,

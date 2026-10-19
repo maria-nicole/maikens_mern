@@ -65,6 +65,20 @@ export default function UsersView({ me, notify }) {
         }
     };
 
+    // Confirm an account by hand, for a customer whose verification email never arrived.
+    const verifyUser = async (user) => {
+        setBusyId(user._id);
+        try {
+            const { data } = await api.patch(`/admin/users/${user._id}/verify`);
+            replace(data);
+            notify("success", `${user.username} can now log in.`);
+        } catch (err) {
+            notify("error", errMsg(err));
+        } finally {
+            setBusyId(null);
+        }
+    };
+
     const confirmText = () => {
         if (!confirm) return {};
         const { user, kind, value } = confirm;
@@ -156,13 +170,23 @@ export default function UsersView({ me, notify }) {
                                         <td className="px-5 py-3 text-[#8B8072]">{u.createdAt ? formatDate(u.createdAt) : "—"}</td>
                                         <td className="px-5 py-3">
                                             <span className={`text-xs font-medium ${active ? "text-[#3E4E3B]" : "text-[#7C4A4A]"}`}>{active ? "Active" : "Deactivated"}</span>
+                                            {u.isVerified === false && (
+                                                <span className="ml-2 rounded-full bg-[#F7EBD9] px-2 py-0.5 text-xs font-medium text-[#6B5426]">Not verified</span>
+                                            )}
                                         </td>
                                         <td className="px-5 py-3 text-right">
-                                            {!isMe && (
-                                                <GhostButton danger={active} onClick={() => setConfirm({ user: u, kind: "status", value: !active })}>
-                                                    {active ? "Deactivate" : "Reactivate"}
-                                                </GhostButton>
-                                            )}
+                                            <div className="flex justify-end gap-2">
+                                                {u.isVerified === false && (
+                                                    <GhostButton onClick={() => verifyUser(u)} disabled={busyId === u._id}>
+                                                        Verify
+                                                    </GhostButton>
+                                                )}
+                                                {!isMe && (
+                                                    <GhostButton danger={active} onClick={() => setConfirm({ user: u, kind: "status", value: !active })}>
+                                                        {active ? "Deactivate" : "Reactivate"}
+                                                    </GhostButton>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 );
@@ -221,7 +245,7 @@ function AddUserModal({ onClose, onCreated }) {
     return (
         <Modal label="Add user" onClose={onClose}>
             <form onSubmit={submit} className="space-y-4">
-                <ModalHeader title="Add user" subtitle="Creates an account they can log in with right away." onClose={onClose} />
+                <ModalHeader title="Add user" subtitle="Creates a verified account they can log in with right away." onClose={onClose} />
                 <Field label="Username" htmlFor="u-name">
                     <input id="u-name" value={form.username} onChange={set("username")} className={inputCls} required autoFocus />
                 </Field>

@@ -32,6 +32,24 @@ const userSchema = new mongoose.Schema({
         default: "customer"
     },
 
+    isVerified: {
+        type: Boolean,
+        default: true
+    },
+    verificationToken: {
+        type: String,
+        select: false
+    },
+    verificationTokenExpiresAt: {
+        type: Date,
+        select: false
+    },
+    verificationAttempts: {
+        type: Number,
+        default: 0,
+        select: false
+    },
+
     isActive: { type: Boolean, default: true },
 
     phone: { type: String, default: "" },

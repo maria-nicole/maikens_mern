@@ -58,6 +58,12 @@ const Login = ({ setUser }) => {
       navigate(cameFrom || ROLE_HOME[res.data.role] || "/", { replace: true });
 
     } catch (err) {
+      if (err.response?.data?.needsVerification) {
+        navigate("/verify-email", {
+          state: { email: err.response.data.email, from: location.state?.from?.pathname },
+        });
+        return;
+      }
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
