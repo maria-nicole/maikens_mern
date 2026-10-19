@@ -15,6 +15,7 @@ import {
   API_URL,
   asArray,
   assetUrl,
+  announceCart,
   authHeader,
   cardClass,
   DELIVERY_FEE,
@@ -114,6 +115,7 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
       );
       setPlaced(data);
       setCart(EMPTY_CART);
+      announceCart(EMPTY_CART);
       reloadOrders?.().catch(() => {});
     } catch (err) {
       setError(err.response?.data?.message || "Couldn't place your order. Please try again.");

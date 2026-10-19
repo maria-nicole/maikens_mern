@@ -18,6 +18,12 @@ export const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem
 export const assetUrl = (path) => (!path ? "" : /^https?:\/\//i.test(path) ? path : `${API_URL}${path}`);
 export const isLoggedIn = () => !!localStorage.getItem("token");
 
+/* Every place that changes the cart announces the new cart on window, so the
+   navbar badge follows along without asking the server again. */
+export const CART_EVENT = "maikens:cart";
+export const announceCart = (cart) =>
+  window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: cart || { items: [] } }));
+
 export const asArray = (value) => (Array.isArray(value) ? value : []);
 
 export const fmt = (n) => `₱${Number(n || 0).toLocaleString("en-PH")}`;

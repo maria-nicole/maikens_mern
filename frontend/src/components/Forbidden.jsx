@@ -16,7 +16,7 @@ const Forbidden = ({ message, onSignIn }) => {
         <h1 className="text-3xl font-bold text-neutral-800 mb-3">Access Denied</h1>
         <p className="text-zinc-600 mb-8">
           {message ||
-            "You don't have access to this page. It belongs to the shop's staff area and your account can't open it."}
+            "You don't have access to this page. It belongs to the shop's admin and staff area and your account can't open it."}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

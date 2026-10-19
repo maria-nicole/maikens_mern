@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { API_URL, asArray, authHeader, EMPTY_CART, isLoggedIn } from "./accountShared";
+import { API_URL, asArray, announceCart, authHeader, EMPTY_CART, isLoggedIn } from "./accountShared";
 
 /**
  * One loader for everything the My Account page shows: profile, orders, custom
@@ -72,7 +72,10 @@ export default function useAccountData({ setUser } = {}) {
       if (ordersRes.status === "fulfilled") setOrders(asArray(ordersRes.value.data));
       if (designsRes.status === "fulfilled") setDesigns(asArray(designsRes.value.data));
       if (favsRes.status === "fulfilled") setFavorites(asArray(favsRes.value.data));
-      if (cartRes.status === "fulfilled") setCart(cartRes.value.data || EMPTY_CART);
+      if (cartRes.status === "fulfilled") {
+        setCart(cartRes.value.data || EMPTY_CART);
+        announceCart(cartRes.value.data);
+      }
 
       if (results.some((r) => r.status === "rejected")) {
         setActivityError("Some of your activity couldn't be loaded. Please refresh to try again.");
@@ -101,6 +104,7 @@ export default function useAccountData({ setUser } = {}) {
   const reloadCart = useCallback(async () => {
     const { data } = await axios.get(`${API_URL}/api/cart`, { headers: authHeader() });
     setCart(data || EMPTY_CART);
+    announceCart(data);
     return data;
   }, []);
 
@@ -156,6 +160,7 @@ export default function useAccountData({ setUser } = {}) {
       try {
         const { data } = await axios.patch(`${API_URL}/api/cart/${item._id}`, { quantity: next }, { headers: authHeader() });
         setCart(data);
+        announceCart(data);
       } catch (err) {
         notify(err.response?.data?.message || "Couldn't update the quantity.");
       } finally {
@@ -171,6 +176,7 @@ export default function useAccountData({ setUser } = {}) {
       try {
         const { data } = await axios.delete(`${API_URL}/api/cart/${item._id}`, { headers: authHeader() });
         setCart(data);
+        announceCart(data);
       } catch (err) {
         notify(err.response?.data?.message || "Couldn't remove that item.");
       } finally {

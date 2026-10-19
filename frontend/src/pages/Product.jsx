@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { BsFacebook } from "react-icons/bs";
+import { announceCart } from "../components/account/accountShared";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -260,11 +261,12 @@ export default function Product() {
 
     setAdding(true);
     try {
-      await axios.post(
+      const { data } = await axios.post(
         `${API_URL}/api/cart`,
         { productId: product._id, size: selectedSize || "", quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      announceCart(data); // keeps the navbar's cart badge in step
       setToast(`Added ${quantity} × ${product.name}${selectedSize ? ` (${selectedSize})` : ""} to your cart`);
     } catch (err) {
       if (err.response?.status === 401) return goToLogin();
