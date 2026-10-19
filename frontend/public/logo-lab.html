@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maikens logo lab</title>
+    <style>
+      :root {
+        --gold: #ca8a04;
+        --ink: #241f1a;
+        --muted: #8b8072;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 40px 24px 80px;
+        background: #faf7f2;
+        color: var(--ink);
+        font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      h1 { font: 700 26px/1.2 Georgia, "Times New Roman", serif; margin: 0 0 6px; }
+      h2 {
+        font: 700 15px/1.2 ui-sans-serif, system-ui, sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 40px 0 14px;
+      }
+      .lede { color: var(--muted); margin: 0 0 8px; max-width: 62ch; }
+      .note { background: #fff; border: 1px solid #eadfcc; border-radius: 10px; padding: 14px 16px; max-width: 62ch; }
+      .note strong { color: var(--gold); }
+      .row { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-end; }
+      .cell { text-align: center; }
+      .cell span { display: block; font-size: 11px; color: var(--muted); margin-top: 8px; }
+      .tile { display: inline-block; border-radius: 8px; }
+      .white { background: #fff; }
+      .dark { background: #241f1a; }
+      .tint { background: var(--gold); }
+      .pad { padding: 18px; border-radius: 12px; }
+      /* A stand-in for the real navbar, so the mark can be judged next to the wordmark. */
+      .navbar {
+        display: flex; align-items: center; justify-content: space-between; gap: 24px;
+        background: #fff; border-bottom: 1px solid #eab308; padding: 12px 20px; border-radius: 12px 12px 0 0;
+      }
+      .brand { display: flex; align-items: center; gap: 10px; }
+      .wordmark { font: 700 26px/1 Georgia, "Times New Roman", serif; letter-spacing: 0.01em; white-space: nowrap; }
+      .wordmark i { font-style: normal; color: #b45309; }
+      .links { display: flex; gap: 18px; font-size: 14px; color: #57534e; }
+      .avatar { width: 36px; height: 36px; border-radius: 999px; background: #d6d3d1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #57534e; }
+      pre { background: #241f1a; color: #f5f5f4; padding: 14px 16px; border-radius: 10px; overflow-x: auto; font-size: 12.5px; }
+      .stack { display: grid; gap: 14px; }
+      .pair { display: flex; align-items: center; gap: 14px; }
+      .tag { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); width: 42px; }
+      @media (prefers-color-scheme: dark) { body { background: #faf7f2; } }
+    </style>
+  </head>
+  <body>
+    <h1>Maikens logo lab</h1>
+    <p class="lede">The new "M as gown" mark next to the one you have now, at the sizes it actually gets used.</p>
+    <p class="note">
+      Temporary page — delete <code>public/logo-lab.html</code> once you're happy with it.
+      <strong>M as gown</strong> is the one already installed in the navbar, the tab icon and the home-screen icon.
+    </p>
+
+    <h2>In the navbar</h2>
+    <div class="navbar">
+      <div class="brand" id="brand-new"></div>
+      <div class="links"><span>Home</span><span>Catalog</span><span>Customize</span><span>Contact</span></div>
+      <div class="avatar">A</div>
+    </div>
+    <div class="navbar" style="border-radius: 0 0 12px 12px; border-top: 1px solid #f1ece3; border-bottom: 1px solid #eab308">
+      <div class="brand" id="brand-old"></div>
+      <div class="links"><span>Home</span><span>Catalog</span><span>Customize</span><span>Contact</span></div>
+      <div class="avatar">A</div>
+    </div>
+
+    <h2>Size ladder (as your browser tab, at 16px)</h2>
+    <div class="row">
+      <div class="cell"><span class="tile" data-mark="new" data-size="16"></span><span>16px new</span></div>
+      <div class="cell"><span class="tile" data-mark="old" data-size="16"></span><span>16px old</span></div>
+      <div class="cell"><span class="tile" data-mark="new" data-size="24"></span><span>24px new</span></div>
+      <div class="cell"><span class="tile" data-mark="old" data-size="24"></span><span>24px old</span></div>
+      <div class="cell"><span class="tile" data-mark="new" data-size="32"></span><span>32px new</span></div>
+      <div class="cell"><span class="tile" data-mark="old" data-size="32"></span><span>32px old</span></div>
+    </div>
+
+    <h2>Navbar size, on different backgrounds</h2>
+    <div class="row">
+      <div class="cell"><span class="tile pad white" data-mark="new" data-size="36"></span><span>on white</span></div>
+      <div class="cell"><span class="tile pad dark" data-mark="new" data-size="36"></span><span>on dark</span></div>
+      <div class="cell"><span class="tile pad tint" data-mark="new" data-size="36"></span><span>on gold</span></div>
+      <div class="cell"><span class="tile pad white" data-mark="new" data-size="64"></span><span>64px</span></div>
+      <div class="cell"><span class="tile pad white" data-mark="new" data-size="180"></span><span>180px (home screen)</span></div>
+    </div>
+
+    <h2>Side by side stack</h2>
+    <div class="stack">
+      <div class="pair"><span class="tag">new</span><span data-mark="new" data-size="40"></span></div>
+      <div class="pair"><span class="tag">old</span><span data-mark="old" data-size="40"></span></div>
+    </div>
+
+    <h2>The SVG</h2>
+    <pre id="source"></pre>
+
+    <script>
+      const MARK_NEW =
+        "M 17,45 C 18.5,34 20,26 20,21 Q 20,17.5 24,19.5 L 32,34 L 40,19.5 Q 44,17.5 44,21 C 44,26 45.5,34 47,45";
+      const MARK_OLD = "M 20,45 V 19 L 32,33 L 44,19 V 45";
+
+      const svg = (mark, size, weight) =>
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${size}" height="${size}">
+           <rect width="64" height="64" rx="14" fill="#CA8A04"/>
+           <path d="${mark}" fill="none" stroke="#FFFFFF" stroke-width="${weight}" stroke-linecap="round" stroke-linejoin="round"/>
+         </svg>`;
+
+      const marks = {
+        new: { mark: MARK_NEW, weight: 5 },
+        old: { mark: MARK_OLD, weight: 8 },
+      };
+
+      document.querySelectorAll("[data-mark]").forEach((el) => {
+        const { mark, weight } = marks[el.dataset.mark];
+        el.innerHTML = svg(mark, Number(el.dataset.size), weight);
+      });
+
+      // The navbar mock-ups, with the wordmark in the serif the real navbar uses.
+      for (const [key, label] of [["new", "New mark"], ["old", "Current mark"]]) {
+        const { mark, weight } = marks[key];
+        document.getElementById(`brand-${key}`).innerHTML =
+          svg(mark, 36, weight) +
+          `<span class="wordmark">Maikens <i>Gown &amp; Barong</i></span>` +
+          `<span style="font-size:11px;color:#8b8072;align-self:flex-end;padding-bottom:4px">${label}</span>`;
+      }
+
+      document.getElementById("source").textContent = svg(MARK_NEW, 64, 5).trim();
+    </script>
+  </body>
+</html>
