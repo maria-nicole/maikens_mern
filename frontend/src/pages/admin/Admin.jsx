@@ -17,7 +17,8 @@ import {
   Package,
 } from "lucide-react";
 import { font, api, errMsg, initials } from "./adminLib";
-import { PrimaryButton, GhostButton, Spinner } from "./ui";
+import { PrimaryButton, Spinner } from "./ui";
+import Forbidden from "../../components/Forbidden";
 import DashboardView from "./DashboardView";
 import ProductsView from "./ProductsView";
 import OrdersView from "./OrdersView";
@@ -130,34 +131,24 @@ export default function Admin({ setUser }) {
     );
   }
 
-  if (auth !== "ok") {
-    const offline = auth === "offline";
-    const loggedIn = !!localStorage.getItem("token");
+  if (auth === "offline") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#EFE9E3] px-4">
         <div className="w-full max-w-md rounded-2xl border border-[#E3DACB] bg-white p-8 text-center">
           <h1 className="text-xl text-[#241F1A]" style={font.display}>
-            {offline ? "Can't reach the server" : "Admin access needed"}
+            Can&apos;t reach the server
           </h1>
-          <p className="mt-2 text-sm text-[#8B8072]">
-            {offline
-              ? "Make sure the backend is running, then try again."
-              : loggedIn
-                ? "This account isn't an admin account. Log in with the owner account to continue."
-                : "Log in with the owner account to continue."}
-          </p>
+          <p className="mt-2 text-sm text-[#8B8072]">Make sure the backend is running, then try again.</p>
           <div className="mt-5 flex justify-center gap-2">
-            {offline ? (
-              <PrimaryButton onClick={() => window.location.reload()}>Try again</PrimaryButton>
-            ) : (
-              <PrimaryButton onClick={signOut}>Go to login</PrimaryButton>
-            )}
-            {!offline && <GhostButton onClick={() => navigate("/")}>Back to the shop</GhostButton>}
+            <PrimaryButton onClick={() => window.location.reload()}>Try again</PrimaryButton>
           </div>
         </div>
       </div>
     );
   }
+
+  // Signed in, but this account isn't the owner's
+  if (auth !== "ok") return <Forbidden onSignIn={signOut} />;
 
   return (
     <div className="min-h-screen bg-[#EFE9E3]">

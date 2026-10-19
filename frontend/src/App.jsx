@@ -13,9 +13,8 @@ import Register from "./pages/Register";
 import Catalog from "./pages/Catalog";
 import Contact from "./pages/Contact";
 import Product from "./pages/Product";
-import MyCart from "./pages/customer_profile/MyCart";
 import Profile from "./pages/customer_profile/Profile";
-import Favorites from "./pages/customer_profile/Favorites";
+import { FavoritesRedirect, MyCartRedirect } from "./components/account/AccountRedirects";
 import Message from "./pages/Message";
 import Customize from "./pages/Customize";
 import Test from "./pages/Test";
@@ -25,12 +24,16 @@ import Staff from "./pages/staff/Staff";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import NotFound from "./components/NotFound";
+import Forbidden from "./components/Forbidden";
+import RoleGate from "./components/RoleGate";
 
 import VerifyEmail from "./pages/VerifyEmail";
 
 
 const ROLE_HOME = { admin: "/admin", staff: "/staff", customer: "/" };
 const HIDDEN_NAVBAR_PATHS = ["/login", "/register", "/verify-email", "/admin", "/staff"];
+// Who may open the staff console. The owner keeps full access to everything.
+const STAFF_ROLES = ["staff", "admin"];
 
 function Layout({ user, setUser }) {
   const location = useLocation();
@@ -46,20 +49,50 @@ function Layout({ user, setUser }) {
       <Routes>
         <Route path="/" element={<Home user={user} />} />
         <Route path="/catalog" element={<Catalog user={user} />} />
-        <Route path="/mycart" element={<MyCart user={user} />} />
-        <Route path="/profile" element={<Profile user={user} setUser={setUser} />} />
-        <Route path="/favorites" element={<Favorites user={user} />} />
+        <Route path="/mycart" element={<MyCartRedirect />} />
+        <Route path="/profile" element={<Profile setUser={setUser} />} />
+        <Route path="/favorites" element={<FavoritesRedirect />} />
         <Route path="/contact" element={<Contact user={user} />} />
         <Route path="/product/:id" element={<Product user={user} />} />
         <Route path="/message" element={<Message user={user} />} />
         <Route path="/customize" element={<Customize user={user} />} />
         <Route path="/testpage" element={<Test user={user} />} />
 
-        <Route path="/admin" element={<Admin setUser={setUser} />} />
-        <Route path="/admin/products/new" element={<ProductForm to="/productform" />} />
-        <Route path="/admin/products/:id/edit" element={<ProductForm to="/productform" />} />
+        <Route
+          path="/admin"
+          element={
+            <RoleGate user={user} roles={["admin"]}>
+              <Admin setUser={setUser} />
+            </RoleGate>
+          }
+        />
+        <Route
+          path="/admin/products/new"
+          element={
+            <RoleGate user={user} roles={["admin"]}>
+              <ProductForm to="/productform" />
+            </RoleGate>
+          }
+        />
+        <Route
+          path="/admin/products/:id/edit"
+          element={
+            <RoleGate user={user} roles={["admin"]}>
+              <ProductForm to="/productform" />
+            </RoleGate>
+          }
+        />
 
-        <Route path="/staff" element={<Staff setUser={setUser} />} />
+        <Route
+          path="/staff"
+          element={
+            <RoleGate user={user} roles={STAFF_ROLES}>
+              <Staff setUser={setUser} />
+            </RoleGate>
+          }
+        />
+
+        <Route path="/403" element={<Forbidden />} />
         <Route
           path="/login"
           element={user ? <Navigate to={ROLE_HOME[user.role] || "/"} /> : <Login setUser={setUser} />}

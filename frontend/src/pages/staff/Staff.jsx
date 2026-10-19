@@ -15,7 +15,8 @@ import {
   Check,
 } from "lucide-react";
 import { font, api, errMsg, initials } from "./staffLib";
-import { PrimaryButton, GhostButton, Spinner } from "./ui";
+import { PrimaryButton, Spinner } from "./ui";
+import Forbidden from "../../components/Forbidden";
 import DashboardView from "./DashboardView";
 import NewSaleView from "./NewSaleView";
 import OrdersView from "./OrdersView";
@@ -146,34 +147,24 @@ export default function Staff({ setUser }) {
     );
   }
 
-  if (auth !== "ok") {
-    const offline = auth === "offline";
-    const loggedIn = !!localStorage.getItem("token");
+  if (auth === "offline") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#EFE9E3] px-4">
         <div className="w-full max-w-md rounded-2xl border border-[#E3DACB] bg-white p-8 text-center">
           <h1 className="text-xl text-[#241F1A]" style={font.display}>
-            {offline ? "Can't reach the server" : "Staff access needed"}
+            Can&apos;t reach the server
           </h1>
-          <p className="mt-2 text-sm text-[#8B8072]">
-            {offline
-              ? "Make sure the backend is running, then try again."
-              : loggedIn
-                ? "This account isn't a staff account. Log in with a staff or admin account to continue."
-                : "Log in with a staff account to continue."}
-          </p>
+          <p className="mt-2 text-sm text-[#8B8072]">Make sure the backend is running, then try again.</p>
           <div className="mt-5 flex justify-center gap-2">
-            {offline ? (
-              <PrimaryButton onClick={() => window.location.reload()}>Try again</PrimaryButton>
-            ) : (
-              <PrimaryButton onClick={signOut}>Go to login</PrimaryButton>
-            )}
-            {!offline && <GhostButton onClick={() => navigate("/")}>Back to the shop</GhostButton>}
+            <PrimaryButton onClick={() => window.location.reload()}>Try again</PrimaryButton>
           </div>
         </div>
       </div>
     );
   }
+
+  // Signed in, but this account isn't staff
+  if (auth !== "ok") return <Forbidden onSignIn={signOut} />;
 
   return (
     <div className="min-h-screen bg-[#EFE9E3]">

@@ -15,7 +15,7 @@ const FEATURES = [
         title: "Track your order",
         description:
             "See where your order is, from received and in production to ready for pick-up or delivery, without having to ask for updates.",
-        link: "/profile?tab=history",
+        link: "/profile?tab=orders",
         cta: "Track an order",
     },
     {

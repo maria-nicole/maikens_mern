@@ -64,17 +64,7 @@ const Navbar = ({ user, error, setUser }) => {
             <ul className="p-2 text-sm text-body font-medium" aria-labelledby="user-menu-button">
               <li>
                 <Link to="/profile" className="block w-full p-2 rounded hover:bg-stone-100 hover:text-amber-800 transition-colors duration-150">
-                  Profile
-                </Link>
-              </li>
-              <li>
-                <Link to="/mycart" className="block w-full p-2 rounded hover:bg-stone-100 hover:text-amber-800 transition-colors duration-150">
-                  My Cart
-                </Link>
-              </li>
-              <li>
-                <Link to="/favorites" className="block w-full p-2 rounded hover:bg-stone-100 hover:text-amber-800 transition-colors duration-150">
-                  Favorites
+                  My Account
                 </Link>
               </li>
               <li>
