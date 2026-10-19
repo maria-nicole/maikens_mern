@@ -23,9 +23,11 @@ over the counter. This is the whole system in one repo.
 - **Virtual try-on** — see how a piece looks before committing.
 - **Reviews** — once an order is completed, rate the piece 1–5 stars and write about it.
 - **Messaging** — a single thread with the boutique, tied to your account.
+- **Contact form** — write to the boutique without signing in; the message reaches the
+  owner's console.
 
-**For the owner (`/admin`)** — products, orders, customizations, messages, reviews,
-user accounts, and a sales dashboard with CSV export.
+**For the owner (`/admin`)** — products, orders, customizations, messages, inquiries
+from the contact form, reviews, user accounts, and a sales dashboard with CSV export.
 
 **For staff (`/staff`)** — a counter console for walk-in sales, ready-to-wear stock,
 customer dues and money received today.
@@ -193,6 +195,7 @@ token; **auth** requires any logged-in account.
 | `/api/customizations` | **auth** design requests and their discussion |
 | `/api/cart`, `/api/favorites` | **auth** the signed-in customer's cart and saved items |
 | `/api/reviews` | Public read; **auth** write/edit; **owner** moderate |
+| `/api/contact` | Public contact form (rate limited); **owner** read and clear |
 | `/api/messages` | **auth** customer thread; staff/owner reply |
 | `/api/admin/users` | **owner** list, create, promote, deactivate accounts |
 | `/api/reports` | **owner** dashboard figures and CSV export |
@@ -232,6 +235,12 @@ The two halves deploy separately. Both build from a pushed commit.
   cancelled order never qualifies, and walk-in sales are not tied to an account.
 - **Cloudinary is optional, Mongo is not.** Missing Cloudinary only downgrades uploads;
   a missing `MONGO_URI` stops the server.
+- **Mailtrap's sandbox does not deliver mail.** If `MAILTRAP_SENDER_EMAIL` is unset or
+  still on `demomailtrap.co`, verification codes are captured rather than sent and real
+  customers cannot finish signing up. The server warns about this at boot in production.
+- **Cancelling an order returns its stock.** Taking an order off `Cancelled` takes that
+  stock again, and refuses if it is no longer available. Orders placed before this was
+  tracked fall back to the product to work out what they were holding.
 - **The lint baseline is not clean.** `npm run lint` in `frontend/` reports pre-existing
   errors concentrated in the admin and staff views; they are known and unrelated to any
   given change.

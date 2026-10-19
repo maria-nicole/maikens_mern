@@ -17,7 +17,6 @@ import Profile from "./pages/customer_profile/Profile";
 import { FavoritesRedirect, MyCartRedirect } from "./components/account/AccountRedirects";
 import Message from "./pages/Message";
 import Customize from "./pages/Customize";
-import Test from "./pages/Test";
 import Admin from "./pages/admin/Admin";
 import ProductForm from "./pages/admin/ProductForm";
 import Staff from "./pages/staff/Staff";
@@ -56,7 +55,6 @@ function Layout({ user, setUser }) {
         <Route path="/product/:id" element={<Product user={user} />} />
         <Route path="/message" element={<Message user={user} />} />
         <Route path="/customize" element={<Customize user={user} />} />
-        <Route path="/testpage" element={<Test user={user} />} />
 
         <Route
           path="/admin"

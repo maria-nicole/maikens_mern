@@ -10,7 +10,8 @@
   "keywords": [],
   "author": "",
   "type": "module",
-  "license": "ISC",
+  "private": true,
+  "license": "UNLICENSED",
   "dependencies": {
     "@google/genai": "^2.19.0",
     "bcryptjs": "^3.0.3",
@@ -22,8 +23,7 @@
     "jsonwebtoken": "^9.0.3",
     "mailtrap": "^4.5.1",
     "mongoose": "^9.10.3",
-    "multer": "^2.4.0",
-    "node-fetch": "^3.3.2"
+    "multer": "^2.4.0"
   },
   "allowScripts": {
     "@google/genai@2.23.0": true,
