@@ -40,18 +40,7 @@ export default function HeroCarousel() {
                     ))}
                 </div>
 
-                {/* Slide indicators */}
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
-                    {SLIDES.map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setCurrent(i)}
-                            aria-label={`Go to slide ${i + 1}`}
-                            className={`h-1.5 rounded-full transition-all ${i === current ? "w-6 bg-yellow-600/89" : "w-1.5 bg-gray-300"
-                                }`}
-                        />
-                    ))}
-                </div>
+                
             </div>
         </div>
     );

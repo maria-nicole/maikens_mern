@@ -167,7 +167,6 @@ const Navbar = ({ user, error, setUser }) => {
 
         {/* Brand */}
         <Link to="/" onClick={closeMenus} className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="" className="h-9 w-9" />
           <span className="whitespace-nowrap font-serif text-2xl font-bold tracking-wide text-stone-800 md:text-[1.7rem]">
             Maikens <span className="text-amber-700">Gown &amp; Barong</span>
           </span>
