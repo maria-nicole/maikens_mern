@@ -51,7 +51,7 @@ export default function OptionPicker({ group, value, onChange, disabled }) {
     if (group.kind === "image") {
         return (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" role="group" aria-label={group.title}>
-                {group.options.map(({ value: v, img }) => {
+                {group.options.map(({ value: v, img, desc }) => {
                     const selected = value === v;
                     return (
                         <button
@@ -71,7 +71,10 @@ export default function OptionPicker({ group, value, onChange, disabled }) {
                                     <Check size={12} />
                                 </span>
                             )}
-                            <span className="block px-0.5 py-2 text-xs font-medium text-gray-700">{v}</span>
+                            <span className="block px-1 py-2">
+                                <span className="block text-xs font-medium text-gray-700">{v}</span>
+                                {desc && <span className="mt-0.5 block text-[11px] leading-snug text-gray-500">{desc}</span>}
+                            </span>
                         </button>
                     );
                 })}
@@ -81,12 +84,13 @@ export default function OptionPicker({ group, value, onChange, disabled }) {
 
     return (
         <div className="flex flex-wrap gap-2" role="group" aria-label={group.title}>
-            {group.options.map(({ value: v }) => (
+            {group.options.map(({ value: v, desc }) => (
                 <button
                     key={v}
                     type="button"
                     onClick={() => pick(v)}
                     disabled={disabled}
+                    title={desc || v}
                     aria-pressed={value === v}
                     className={chipClass(value === v)}
                 >
