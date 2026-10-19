@@ -35,6 +35,39 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// A missing variable used to surface much later as a confusing "sign-in failed"
+// popup in the browser, so report it in the boot log instead.
+const ENV_PURPOSE = {
+  MONGO_URI: "database connection",
+  JWT_SECRET: "login sessions",
+  GOOGLE_CLIENT_ID: "Google sign-in",
+  MAILTRAP_TOKEN: "verification emails",
+  GEMINI_API_KEY: "AI design generation",
+  CLOUDINARY_CLOUD_NAME: "image uploads (falls back to local disk)",
+  CLOUDINARY_API_KEY: "image uploads (falls back to local disk)",
+  CLOUDINARY_API_SECRET: "image uploads (falls back to local disk)",
+};
+
+const missingEnv = Object.keys(ENV_PURPOSE).filter((key) => !process.env[key]);
+if (missingEnv.length) {
+  console.warn("Missing environment variables:");
+  missingEnv.forEach((key) => console.warn(`  - ${key} (needed for ${ENV_PURPOSE[key]})`));
+}
+
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.CORS_ORIGIN) {
+    console.warn(
+      "CORS_ORIGIN is not set - the deployed frontend will be blocked by CORS. " +
+        "Set it to the exact frontend URL, e.g. https://your-app.vercel.app"
+    );
+  }
+  if (!process.env.CLIENT_URL) {
+    console.warn(
+      "CLIENT_URL is not set - links in verification emails will point to http://localhost:5173."
+    );
+  }
+}
+
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
