@@ -176,3 +176,22 @@ export function CloseButton({ onClose }) {
         </button>
     );
 }
+
+// "Are you sure?" for anything costly to get wrong
+export function ConfirmDialog({ title, message, confirmLabel = "Confirm", danger, onConfirm, onClose }) {
+    return (
+        <Modal label={title} onClose={onClose} maxWidth="max-w-sm">
+            <div className="mb-2 flex items-start justify-between gap-3">
+                <h3 className="text-lg text-[#241F1A]" style={font.display}>{title}</h3>
+                <CloseButton onClose={onClose} />
+            </div>
+            <p className="text-sm text-[#4A4136]">{message}</p>
+            <div className="mt-5 flex justify-end gap-2">
+                <GhostButton onClick={onClose}>Cancel</GhostButton>
+                <PrimaryButton onClick={onConfirm} className={danger ? "!bg-[#7C4A4A] hover:!bg-[#6B3838]" : ""}>
+                    {confirmLabel}
+                </PrimaryButton>
+            </div>
+        </Modal>
+    );
+}

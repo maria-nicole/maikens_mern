@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import {
     Order,
     ORDER_STATUSES,
+    CANCELLED,
     PAYMENT_STATUSES,
     PAYMENT_METHODS,
     paymentStatusFor,
@@ -53,7 +54,7 @@ router.get("/dashboard", async (req, res) => {
         const since = startOfToday();
         const [walkIns, collected, toProcess, inProgress, balances, lowStock, recent] = await Promise.all([
             Order.aggregate([
-                { $match: { channel: "Walk-in", createdAt: { $gte: since } } },
+                { $match: { channel: "Walk-in", createdAt: { $gte: since }, status: { $ne: CANCELLED } } },
                 { $group: { _id: null, count: { $sum: 1 }, total: { $sum: "$total" } } },
             ]),
             // Money actually received today (deposits and balances included)
@@ -65,7 +66,7 @@ router.get("/dashboard", async (req, res) => {
             Order.countDocuments({ channel: "Online", status: "Order Received" }),
             Order.countDocuments({ status: { $in: ["In Production", "Preparing"] } }),
             Order.aggregate([
-                { $match: { paymentStatus: { $ne: "Paid" } } },
+                { $match: { paymentStatus: { $ne: "Paid" }, status: { $ne: CANCELLED } } },
                 {
                     $group: {
                         _id: null,
@@ -303,7 +304,7 @@ router.post("/orders/:id/payments", async (req, res) => {
 // Built from orders, so walk-ins without an account show up too.
 router.get("/customers", async (req, res) => {
     try {
-        const match = {};
+        const match = { status: { $ne: CANCELLED } }; // a cancelled order is not money this customer spent
         if (req.query.scope === "today") match.createdAt = { $gte: startOfToday() };
         const q = String(req.query.q || "").trim().slice(0, 60);
         if (q) match.customerName = new RegExp(escapeRegex(q), "i");

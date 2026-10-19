@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
 
 // NOTE: "Completed" is new. Walk-in ready-to-wear sales are handed over on the spot.
-// Keep the frontend lists (Admin.jsx, Profile.jsx, staff/staffLib.js) in sync with this.
+// "Cancelled" is off the production path — it is excluded from sales and money-owed
+// figures in the reports, so keep that in mind when adding new aggregates.
+// Keep the frontend lists (admin/adminLib.js, staff/staffLib.js, account/accountShared.js)
+// in sync with this.
 export const ORDER_STATUSES = [
   "Order Received",
   "In Production",
@@ -10,7 +13,12 @@ export const ORDER_STATUSES = [
   "Ready for Pick-Up",
   "Ready for Delivery",
   "Completed",
+  "Cancelled",
 ];
+
+// Statuses that mean the order was called off. Its money must not be counted as
+// sold, and it must not be chased as a balance.
+export const CANCELLED = "Cancelled";
 
 export const PAYMENT_STATUSES = ["Unpaid", "Partial", "Paid"];
 export const PAYMENT_METHODS = ["Cash", "GCash"];

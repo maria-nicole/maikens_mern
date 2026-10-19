@@ -58,6 +58,8 @@ export const today = (() => {
 })();
 
 // Order stages. "step" is how far along production the order is (1 to 5), for the progress bar.
+// A cancelled order isn't anywhere on that path, so it carries no step and the bar is
+// drawn flat rather than filled (see OrderProgress).
 export const ORDER_STATUS = {
   "Order Received": { step: 1, color: "text-gray-700 bg-gray-50 border-gray-200" },
   "In Production": { step: 2, color: "text-blue-700 bg-blue-50 border-blue-200" },
@@ -66,6 +68,7 @@ export const ORDER_STATUS = {
   "Ready for Pick-Up": { step: 5, color: "text-teal-700 bg-teal-50 border-teal-200" },
   "Ready for Delivery": { step: 5, color: "text-teal-700 bg-teal-50 border-teal-200" },
   Completed: { step: 5, color: "text-green-700 bg-green-50 border-green-200" },
+  Cancelled: { step: 0, cancelled: true, color: "text-red-700 bg-red-50 border-red-200" },
 };
 export const FALLBACK_STATUS = { step: 1, color: "text-gray-700 bg-gray-50 border-gray-200" };
 

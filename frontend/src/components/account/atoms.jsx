@@ -120,17 +120,33 @@ export function StatusPill({ status }) {
 }
 
 export function OrderProgress({ status }) {
-  const step = (ORDER_STATUS[status] || FALLBACK_STATUS).step;
+  const tone = ORDER_STATUS[status] || FALLBACK_STATUS;
+
+  // A cancelled order never reached a stage, so an empty or full bar would both mislead:
+  // show a flat bar that reads as stopped.
+  if (tone.cancelled) {
+    return (
+      <div
+        className="h-1.5 w-full rounded-full bg-red-100"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={5}
+        aria-valuenow={0}
+        aria-label={`Order progress: ${status}`}
+      />
+    );
+  }
+
   return (
     <div
       className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden"
       role="progressbar"
       aria-valuemin={1}
       aria-valuemax={5}
-      aria-valuenow={step}
+      aria-valuenow={tone.step}
       aria-label={`Order progress: ${status}`}
     >
-      <div className="h-full rounded-full bg-yellow-600/89 transition-all" style={{ width: `${(step / 5) * 100}%` }} />
+      <div className="h-full rounded-full bg-yellow-600/89 transition-all" style={{ width: `${(tone.step / 5) * 100}%` }} />
     </div>
   );
 }

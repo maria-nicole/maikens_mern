@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Search, Receipt, HandCoins, RefreshCw } from "lucide-react";
 import { font, api, errMsg, peso, orderNo, balanceOf, formatDate, formatTime, ORDER_STATUSES } from "./staffLib";
-import { SectionHeader, GhostButton, StatusPill, PaymentPill, EmptyState, Spinner, ErrorNote, inputCls } from "./ui";
+import { SectionHeader, GhostButton, StatusPill, PaymentPill, EmptyState, Spinner, ErrorNote, ConfirmDialog, inputCls } from "./ui";
 import ReceiptModal from "./ReceiptModal";
 import CollectPaymentModal from "./CollectPaymentModal";
 
@@ -17,6 +17,7 @@ export default function OrdersView({ notify, onChanged }) {
     const [tick, setTick] = useState(0); // bump to reload
     const [receipt, setReceipt] = useState(null);
     const [collecting, setCollecting] = useState(null);
+    const [cancelling, setCancelling] = useState(null); // the order awaiting a "mark as cancelled" confirmation
 
     useEffect(() => {
         const t = setTimeout(() => {
@@ -176,7 +177,17 @@ export default function OrdersView({ notify, onChanged }) {
                                                 <StatusPill status={o.status} />
                                                 <select
                                                     value={o.status}
-                                                    onChange={(e) => updateStatus(o, e.target.value)}
+                                                    onChange={(e) => {
+                                                        const next = e.target.value;
+                                                        if (next === "Cancelled") {
+                                                            // The select is controlled and the order hasn't changed yet,
+                                                            // so put it back until the dialog is confirmed.
+                                                            e.target.value = o.status;
+                                                            setCancelling(o);
+                                                            return;
+                                                        }
+                                                        updateStatus(o, next);
+                                                    }}
                                                     aria-label={`Update status of ${orderNo(o)}`}
                                                     className="rounded-lg border border-[#E3DACB] bg-white py-1 pl-2 pr-6 text-xs text-[#4A4136] outline-none focus:border-[#9C7A3C]"
                                                 >
@@ -216,6 +227,19 @@ export default function OrdersView({ notify, onChanged }) {
 
             <ReceiptModal order={receipt} onClose={() => setReceipt(null)} />
             {collecting && <CollectPaymentModal order={collecting} onClose={() => setCollecting(null)} onDone={paymentDone} />}
+            {cancelling && (
+                <ConfirmDialog
+                    title="Mark this order as Cancelled?"
+                    message={`${orderNo(cancelling)} will be left out of sales totals and the money-owed figures. You can still set it back to another status afterwards.`}
+                    confirmLabel="Mark as cancelled"
+                    danger
+                    onConfirm={() => {
+                        updateStatus(cancelling, "Cancelled");
+                        setCancelling(null);
+                    }}
+                    onClose={() => setCancelling(null)}
+                />
+            )}
         </div>
     );
 }

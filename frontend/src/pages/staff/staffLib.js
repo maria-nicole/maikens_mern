@@ -55,6 +55,7 @@ export const ORDER_STATUSES = [
     "Ready for Pick-Up",
     "Ready for Delivery",
     "Completed",
+    "Cancelled",
 ];
 
 export const STATUS_TONE = {
@@ -65,6 +66,8 @@ export const STATUS_TONE = {
     "Ready for Pick-Up": { dot: "#3E6E8E", bg: "#E2ECF1", text: "#2C4E64" },
     "Ready for Delivery": { dot: "#3E6E8E", bg: "#E2ECF1", text: "#2C4E64" },
     Completed: { dot: "#5B6E58", bg: "#E7EDE3", text: "#3E4E3B" },
+    // Off the production path, so it doesn't read as progress
+    Cancelled: { dot: "#8C5555", bg: "#F0E6E6", text: "#6E3B3B" },
 };
 
 export const PAYMENT_TONE = {

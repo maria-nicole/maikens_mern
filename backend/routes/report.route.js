@@ -1,5 +1,5 @@
 import express from "express";
-import { Order, ORDER_STATUSES } from "../models/order.model.js";
+import { Order, ORDER_STATUSES, CANCELLED } from "../models/order.model.js";
 import { Product } from "../models/product.model.js";
 import { Customization } from "../models/customization.model.js";
 import { Message } from "../models/message.model.js";
@@ -45,7 +45,7 @@ router.get("/dashboard", async (req, res) => {
         const since = dayStart(manilaDay(Date.now()));
         const [today, active, toProcess, pendingDesigns, unread, lowStock, recent, balances] = await Promise.all([
             Order.aggregate([
-                { $match: { createdAt: { $gte: since } } },
+                { $match: { createdAt: { $gte: since }, status: { $ne: CANCELLED } } },
                 { $group: { _id: null, count: { $sum: 1 }, total: { $sum: "$total" } } },
             ]),
             Order.countDocuments({ status: { $in: IN_PROGRESS } }),
@@ -58,7 +58,7 @@ router.get("/dashboard", async (req, res) => {
                 .limit(8),
             Order.find().sort({ createdAt: -1 }).limit(6),
             Order.aggregate([
-                { $match: { $expr: { $lt: [{ $ifNull: ["$amountPaid", 0] }, "$total"] } } },
+                { $match: { status: { $ne: CANCELLED }, $expr: { $lt: [{ $ifNull: ["$amountPaid", 0] }, "$total"] } } },
                 {
                     $group: {
                         _id: null,
@@ -89,10 +89,14 @@ router.get("/summary", async (req, res) => {
     try {
         const { from, to, start, end } = parseRange(req.query);
         const match = { createdAt: { $gte: start, $lte: end } };
+        // Cancelled orders still appear in the status breakdown (which uses `match`), but
+        // they must not inflate sales, the daily chart, top products, or the totals
+        // derived from them.
+        const billable = { ...match, status: { $ne: CANCELLED } };
 
         const [byChannel, daily, byStatus, topProducts, listed, designs] = await Promise.all([
             Order.aggregate([
-                { $match: match },
+                { $match: billable },
                 {
                     $group: {
                         _id: "$channel",
@@ -103,7 +107,7 @@ router.get("/summary", async (req, res) => {
                 },
             ]),
             Order.aggregate([
-                { $match: match },
+                { $match: billable },
                 {
                     $group: {
                         _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt", timezone: TZ } },
@@ -112,9 +116,10 @@ router.get("/summary", async (req, res) => {
                     },
                 },
             ]),
+            // Deliberately unfiltered: cancelled orders are counted here so the shop can see them
             Order.aggregate([{ $match: match }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
             Order.aggregate([
-                { $match: match },
+                { $match: billable },
                 { $unwind: "$items" },
                 {
                     $group: {

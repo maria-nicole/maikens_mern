@@ -27,6 +27,11 @@ const PAGE = "#FFFFFF";
 const FOOT_BG = "#FAFAF9";
 const PLACEHOLDER = "#F5F5F4";
 
+/* Status pill tones. Everything sits in the house gold except a cancelled order, which
+   the boutique needs to be able to spot at a glance. */
+const PILL_DEFAULT = { bg: PILL_BG, border: PILL_BORDER, text: GOLD_DARK };
+const PILL_TONES = { Cancelled: { bg: "#FEF2F2", border: "#FECACA", text: "#B91C1C" } };
+
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const font = (size, weight = 400, family = SANS) => `${weight} ${size}px ${family}`;
@@ -149,13 +154,14 @@ export function slipLayout(order, { measure = roughMeasure, resolveImage = (p) =
   text({ x: PAD, y: by, text: slipNo(order), font: font(30, 700, SERIF), color: INK });
 
   const pillText = order?.status || "Order Received";
+  const pill = PILL_TONES[order?.status] || PILL_DEFAULT;
   const pillFont = font(12.5, 600);
   const pillW = Math.round(m(pillText, pillFont)) + 26;
   const pillH = 26;
   const pillY = by - 25;
-  rect(right - pillW, pillY, pillW, pillH, PILL_BG, pillH / 2);
-  parts.push({ type: "rect", x: right - pillW, y: pillY, w: pillW, h: pillH, r: pillH / 2, fill: "none", stroke: PILL_BORDER });
-  text({ x: right - pillW / 2, y: pillY + 18, text: pillText, font: pillFont, color: GOLD_DARK, align: "center" });
+  rect(right - pillW, pillY, pillW, pillH, pill.bg, pillH / 2);
+  parts.push({ type: "rect", x: right - pillW, y: pillY, w: pillW, h: pillH, r: pillH / 2, fill: "none", stroke: pill.border });
+  text({ x: right - pillW / 2, y: pillY + 18, text: pillText, font: pillFont, color: pill.text, align: "center" });
 
   by += 26;
   text({ x: PAD, y: by, text: `Prepared for ${order?.customerName || "you"}`, font: font(13.5, 500), color: INK_SOFT });
