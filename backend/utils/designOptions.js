@@ -2,9 +2,14 @@
 // The frontend (Customize.jsx) shows the same values with thumbnails: if you add
 // or rename an option here, change it there too. Anything not listed is dropped,
 // so a customer can't put arbitrary text into the AI prompt through the options.
+//
+// Colors are the one exception: besides the named shade below, a customer may send a
+// shade of their own. A custom color is accepted as a valid #RRGGBB hex (selections.colorHex)
+// plus an optional short name (selections.color). Anything else is dropped.
 
 export const CATEGORIES = ["Gown", "Barong"];
 
+// Must match PALETTE in frontend/src/lib/colors.js
 const COLORS = [
   "White", "Ivory", "Cream", "Champagne", "Blush", "Dusty Rose", "Peach", "Coral", "Red", "Wine",
   "Mauve", "Lavender", "Lilac", "Sky Blue", "Royal Blue", "Navy", "Sage Green", "Emerald", "Mustard",
@@ -54,10 +59,46 @@ export const LABELS = {
 export const normalizeCategory = (value) => (CATEGORIES.includes(value) ? value : "Gown");
 
 // Keeps only keys/values that exist for this category
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+// "#7b2d26" -> "#7B2D26", anything else -> ""
+const cleanHex = (value) => {
+  const hex = String(value ?? "").trim();
+  return HEX_RE.test(hex) ? hex.toUpperCase() : "";
+};
+
+// A custom shade name is customer text, so keep it short and plain: letters, digits and a
+// few punctuation marks only. Empty when nothing usable is left.
+const cleanName = (value) =>
+  String(value ?? "")
+    .replace(/[^\w .#'-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 24);
+
+// A color is either one of our named shades, or a custom shade the customer picked
+// (which must come with a valid hex). null means "not something we can use".
+function sanitizeColor(raw) {
+  const hex = cleanHex(raw?.colorHex);
+  const wanted = String(raw?.color ?? "").trim().toLowerCase();
+  const preset = COLORS.find((name) => name.toLowerCase() === wanted);
+  if (preset) return hex ? { color: preset, colorHex: hex } : { color: preset };
+  if (!hex) return null;
+  const name = cleanName(raw?.color);
+  return { color: name || hex, colorHex: hex };
+}
+
+// Keeps only keys/values that exist for this category
 export function sanitizeSelections(category, raw) {
   const allowed = CATEGORY_OPTIONS[normalizeCategory(category)];
   const out = {};
   for (const [key, values] of Object.entries(allowed)) {
+    // Color is validated on its own, so a custom shade can come through too
+    if (key === "color") {
+      const color = sanitizeColor(raw);
+      if (color) Object.assign(out, color);
+      continue;
+    }
     const v = String(raw?.[key] ?? "").trim();
     if (v && values.includes(v)) out[key] = v;
   }
@@ -70,11 +111,17 @@ export function missingRequired(category, selections) {
     .map((key) => LABELS[key].toLowerCase());
 }
 
-// ["Color: Ivory", "Silhouette: A-Line", ...] in a stable, readable order
+// "Color: Dusty Teal (#7B2D26); Silhouette: A-Line" - one readable pair per choice.
+// Custom shades carry their hex, so the prompt knows the exact color, not just a name.
 export function describeSelections(category, selections) {
   return Object.keys(CATEGORY_OPTIONS[normalizeCategory(category)])
     .filter((key) => selections[key])
-    .map((key) => `${LABELS[key]}: ${selections[key]}`);
+    .map((key) => {
+      const hex = key === "color" ? cleanHex(selections.colorHex) : "";
+      if (!hex) return `${LABELS[key]}: ${selections[key]}`;
+      if (selections[key] === hex) return `${LABELS[key]}: ${hex} (custom shade)`;
+      return `${LABELS[key]}: ${selections[key]} (${hex})`;
+    });
 }
 
 // roles = { base: bool, content: bool, style: bool } tells the model which images are attached.

@@ -4,6 +4,7 @@ import axios from "axios";
 
 import { API_URL, imageUrl } from "../components/customize/customizeShared";
 import { GROUPS, buildRows, prefillFromProduct } from "../components/customize/designOptions";
+import { hexForName, normalizeHex } from "../lib/colors";
 import CustomizeHeader from "../components/customize/CustomizeHeader";
 import StartStep from "../components/customize/StartStep";
 import DesignStep from "../components/customize/DesignStep";
@@ -197,7 +198,17 @@ export default function Customize() {
   const canSend = !!token && !locked && !generating && !submitting && !stale && !refsNeedUpload;
 
   /* ---- handlers ---- */
-  const setOption = (key, value) => setSelections((prev) => ({ ...prev, [key]: value }));
+  // `extra` carries the exact shade when the customer picks a custom color
+  const setOption = (key, value, extra) =>
+    setSelections((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === "color") {
+        const hex = normalizeHex(extra?.colorHex) || hexForName(value) || normalizeHex(value);
+        if (hex) next.colorHex = hex;
+        else delete next.colorHex;
+      }
+      return next;
+    });
   const resetChoices = () => setSelections(baseProduct ? prefillFromProduct(baseProduct) : {});
   const goToSection = (id) => {
     setSection(id);

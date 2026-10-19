@@ -3,6 +3,7 @@ import { ArrowLeft, ImagePlus, X, ChevronLeft, ChevronRight, Check, Loader2, Ale
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { font, api, errMsg, assetUrl, peso } from "./adminLib";
 import { Spinner } from "./ui";
+import { PALETTE } from "../../lib/colors";
 
 /**
  * Add a product (/admin/products/new) or edit one (/admin/products/:id/edit).
@@ -19,16 +20,6 @@ const SIZES_BY_CATEGORY = {
 const EVENT_TYPES = ["Wedding", "Ninang / Sponsor", "Debut", "Prom / School event", "Party", "Formal"];
 const SLEEVES = ["Sleeveless", "Cap sleeve", "Short sleeve", "Long sleeve", "Off-shoulder", "Barrel cuff"];
 const LENGTHS = ["Mini", "Knee", "Midi", "Maxi", "Floor-length", "Cathedral train"];
-const COLORS = [
-    { name: "Ivory", hex: "#F3EBDD" },
-    { name: "Champagne", hex: "#D9C7A3" },
-    { name: "Blush", hex: "#E7C3BE" },
-    { name: "Slate gray", hex: "#8A8D91" },
-    { name: "Wine", hex: "#6B1F2A" },
-    { name: "Emerald", hex: "#2F5D50" },
-    { name: "Navy", hex: "#1F2A44" },
-    { name: "Black", hex: "#241F1A" },
-];
 const LOW_STOCK_AT = 2; // matches the rule in product.route.js
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -94,6 +85,7 @@ export default function ProductForm() {
     const [eventTypes, setEventTypes] = useState([]);
     const [colors, setColors] = useState([]);
     const [customHex, setCustomHex] = useState("#9C7A3C");
+    const [customName, setCustomName] = useState("");
     const [sizeStock, setSizeStock] = useState({}); // { M: 3, L: 1 }
     // Photos: existing ones { id, path, url } and new ones { id, file, url }, in display order
     const [images, setImages] = useState([]);
@@ -161,8 +153,20 @@ export default function ProductForm() {
         });
     }
 
+    // A color counts as chosen when the shade matches, or when the name does (so a product
+    // saved with a palette name but a slightly different hex still shows as selected)
+    const hasColor = (c) =>
+        colors.some(
+            (x) => (x.hex || "").toLowerCase() === c.hex.toLowerCase() || (x.name || "").toLowerCase() === c.name.toLowerCase()
+        );
+
+    function togglePaletteColor(c) {
+        if (hasColor(c)) setColors(colors.filter((x) => (x.hex || "").toLowerCase() !== c.hex.toLowerCase() && (x.name || "").toLowerCase() !== c.name.toLowerCase()));
+        else addColor(c);
+    }
+
     function addColor(c) {
-        if (colors.some((x) => x.hex.toLowerCase() === c.hex.toLowerCase())) return;
+        if (hasColor(c)) return;
         setColors([...colors, c]);
     }
 
@@ -270,7 +274,13 @@ export default function ProductForm() {
     }
 
     const cover = images[0]?.url;
-    const customColors = colors.filter((c) => !COLORS.some((x) => x.hex === c.hex));
+    // Shades the admin added themselves (anything that isn't one of the shared presets)
+    const customColors = colors.filter(
+        (c) =>
+            !PALETTE.some(
+                (x) => x.hex.toLowerCase() === (c.hex || "").toLowerCase() || x.name.toLowerCase() === (c.name || "").toLowerCase()
+            )
+    );
 
     return (
         <div className="min-h-screen bg-[#EFE9E3] text-[#241F1A]" style={{ fontFamily: "'Work Sans', system-ui, sans-serif" }}>
@@ -469,15 +479,15 @@ export default function ProductForm() {
                                 </Field>
                             </div>
 
-                            <Field label="Colors" hint="Tap a swatch to add it, or pick a custom shade.">
+                            <Field label="Colors" hint="Tap a swatch to add it, or pick a shade of your own. These are the same colors customers can choose in the customizer.">
                                 <div className="flex flex-wrap items-center gap-2.5">
-                                    {COLORS.map((c) => {
-                                        const on = colors.some((x) => x.hex === c.hex);
+                                    {PALETTE.map((c) => {
+                                        const on = hasColor(c);
                                         return (
                                             <button
                                                 key={c.hex}
                                                 type="button"
-                                                onClick={() => (on ? setColors(colors.filter((x) => x.hex !== c.hex)) : addColor(c))}
+                                                onClick={() => togglePaletteColor(c)}
                                                 aria-pressed={on}
                                                 title={c.name}
                                                 className={`flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs transition ${on ? "border-[#241F1A] bg-[#FBF8F3]" : "border-[#E3DACB] bg-white hover:border-[#C9BBA3]"}`}
@@ -489,11 +499,23 @@ export default function ProductForm() {
                                         );
                                     })}
                                 </div>
-                                <div className="mt-3 flex items-center gap-2">
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
                                     <input type="color" value={customHex} onChange={(e) => setCustomHex(e.target.value)} aria-label="Custom color" className="h-8 w-10 cursor-pointer rounded border border-[#E3DACB] bg-white p-0.5" />
+                                    <input
+                                        type="text"
+                                        value={customName}
+                                        onChange={(e) => setCustomName(e.target.value)}
+                                        maxLength={24}
+                                        placeholder="Name this shade (optional)"
+                                        aria-label="Custom color name"
+                                        className="w-44 rounded-lg border border-[#E3DACB] bg-white px-3 py-1.5 text-xs text-[#4A4136] outline-none focus:border-[#C9BBA3]"
+                                    />
                                     <button
                                         type="button"
-                                        onClick={() => addColor({ name: customHex.toUpperCase(), hex: customHex })}
+                                        onClick={() => {
+                                            addColor({ name: customName.trim() || customHex.toUpperCase(), hex: customHex });
+                                            setCustomName("");
+                                        }}
                                         className="rounded-lg border border-[#E3DACB] bg-white px-3 py-1.5 text-xs font-medium text-[#4A4136] hover:bg-[#FBF8F3]"
                                     >
                                         Add custom color
@@ -502,10 +524,10 @@ export default function ProductForm() {
                                 {customColors.length > 0 && (
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         {customColors.map((c) => (
-                                            <span key={c.hex} className="inline-flex items-center gap-2 rounded-full border border-[#E3DACB] py-1 pl-1 pr-2 text-xs">
+                                            <span key={`${c.hex}-${c.name}`} className="inline-flex items-center gap-2 rounded-full border border-[#E3DACB] py-1 pl-1 pr-2 text-xs">
                                                 <span className="h-5 w-5 rounded-full border border-black/10" style={{ background: c.hex }} />
                                                 <span style={font.mono}>{c.name}</span>
-                                                <button type="button" aria-label={`Remove ${c.name}`} onClick={() => setColors(colors.filter((x) => x.hex !== c.hex))}>
+                                                <button type="button" aria-label={`Remove ${c.name}`} onClick={() => setColors(colors.filter((x) => !((x.hex || "").toLowerCase() === (c.hex || "").toLowerCase() && (x.name || "").toLowerCase() === (c.name || "").toLowerCase())))}>
                                                     <X size={12} className="text-[#8B8072]" />
                                                 </button>
                                             </span>

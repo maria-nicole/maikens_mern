@@ -5,6 +5,7 @@ import {
   Heart, Sparkles, ShoppingBag, Trash2, Pencil, X, Check,
   Clock, Plus, Lock, Loader2, MessageCircle,
 } from "lucide-react";
+import { colorLabel, selectionList, swatchFor } from "../../lib/colors";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -30,8 +31,13 @@ const primaryLink =
   "inline-flex items-center gap-2 px-5 py-2.5 bg-yellow-600/89 text-white text-sm font-medium rounded-md border border-yellow-600/89 hover:bg-white hover:text-yellow-600/89 duration-200";
 
 // "Ivory · A-Line · Lace": the choices a customer made, in a readable order
-const chosenOptions = (selections = {}) =>
-  ["color", "silhouette", "fit", "neckline", "sleeve", "fabric", "design"].map((k) => selections[k]).filter(Boolean);
+// (colorHex describes the color rather than being a choice, so it is never listed)
+const chosenOptions = (selections = {}) => selectionList(selections);
+
+const selectionChip = (key, value, colorHex) => {
+  const dot = key === "color" ? swatchFor(value, colorHex) : "";
+  return { dot, label: key === "color" ? colorLabel(value, colorHex) : value };
+};
 
 export default function Favorites() {
   const location = useLocation();
@@ -331,11 +337,15 @@ export default function Favorites() {
                         </div>
                         {options.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-2">
-                            {options.map((opt) => (
-                              <span key={opt} className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5">
-                                {opt}
-                              </span>
-                            ))}
+                            {options.map(({ key, value }) => {
+                              const { dot, label } = selectionChip(key, value, design.selections?.colorHex);
+                              return (
+                                <span key={key} className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5">
+                                  {dot && <span className="h-3 w-3 rounded-full border border-black/15" style={{ background: dot }} aria-hidden="true" />}
+                                  {label}
+                                </span>
+                              );
+                            })}
                           </div>
                         )}
                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-1.5">
@@ -412,13 +422,16 @@ export default function Favorites() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-gray-600">
-                {Object.entries(preview.selections || {})
-                  .filter(([, v]) => v)
-                  .map(([k, v]) => (
-                    <p key={k}>
-                      <span className="text-gray-400 capitalize">{k}:</span> {v}
+                {selectionList(preview.selections).map(({ key, value }) => {
+                  const { dot, label } = selectionChip(key, value, preview.selections?.colorHex);
+                  return (
+                    <p key={key} className="flex items-center gap-1.5">
+                      <span className="text-gray-400 capitalize">{key}:</span>
+                      {dot && <span className="h-2.5 w-2.5 rounded-full border border-black/15" style={{ background: dot }} aria-hidden="true" />}
+                      <span>{label}</span>
                     </p>
-                  ))}
+                  );
+                })}
               </div>
               {preview.customerNotes && (
                 <p className="mt-3 text-xs text-gray-600">

@@ -8,18 +8,15 @@
    Tip: the "Design details" labels are just names. Rename them (here AND in the backend)
    to match the pattern photos in /images/design.
 ------------------------------------------------------------------------------------------ */
+import { PALETTE, isHex, normalizeHex, swatchFor } from "../../lib/colors";
+
 const o = (value, extra = {}) => ({ value, ...extra });
 
-const COLORS = [
-    o("White", { swatch: "#FFFFFF" }), o("Ivory", { swatch: "#F5F2EB" }), o("Cream", { swatch: "#F2E8D5" }),
-    o("Champagne", { swatch: "#E6D7C3" }), o("Blush", { swatch: "#F3CFC6" }), o("Dusty Rose", { swatch: "#C99B96" }),
-    o("Peach", { swatch: "#F3B88C" }), o("Coral", { swatch: "#E8785A" }), o("Red", { swatch: "#B3232E" }),
-    o("Wine", { swatch: "#6B1F2A" }), o("Mauve", { swatch: "#9C7A8C" }), o("Lavender", { swatch: "#D8B4FE" }),
-    o("Lilac", { swatch: "#C6A8D8" }), o("Sky Blue", { swatch: "#8EC5E8" }), o("Royal Blue", { swatch: "#2148A3" }),
-    o("Navy", { swatch: "#1B2A4A" }), o("Sage Green", { swatch: "#A8B79C" }), o("Emerald", { swatch: "#1E6E52" }),
-    o("Mustard", { swatch: "#D9A441" }), o("Gold", { swatch: "#C9A24B" }), o("Slate gray", { swatch: "#8A8D91" }),
-    o("Charcoal", { swatch: "#3A3A3A" }), o("Black", { swatch: "#111111" }),
-];
+// The same shades the admin product form and the catalog use (src/lib/colors.js).
+// Customers can also add a shade of their own: it is kept as selections.color (a name or
+// the hex they typed) plus selections.colorHex, which is what the server checks.
+const COLORS = PALETTE.map(({ name, hex }) => o(name, { swatch: hex }));
+
 const BARONG_COLORS = COLORS.filter((c) =>
     ["White", "Ivory", "Cream", "Champagne", "Sky Blue", "Sage Green", "Navy", "Charcoal", "Black", "Wine"].includes(c.value)
 );
@@ -36,7 +33,7 @@ const SLEEVES = [
 
 export const GROUPS = {
     Gown: [
-        { key: "color", title: "Color", hint: "The main color of the gown.", required: true, kind: "swatch", options: COLORS },
+        { key: "color", title: "Color", hint: "The main color of the gown. Pick a swatch, or add a shade of your own.", required: true, kind: "swatch", options: COLORS },
         {
             key: "silhouette", title: "Silhouette", hint: "The overall shape of the gown.", required: true, kind: "image",
             options: [
@@ -93,7 +90,7 @@ export const GROUPS = {
         },
     ],
     Barong: [
-        { key: "color", title: "Color", hint: "The main color of the barong.", required: true, kind: "swatch", options: BARONG_COLORS },
+        { key: "color", title: "Color", hint: "The main color of the barong. Pick a swatch, or add a shade of your own.", required: true, kind: "swatch", options: BARONG_COLORS },
         {
             key: "fit", title: "Fit", hint: "How the barong sits on the body.", required: true, kind: "chip",
             options: [
@@ -136,6 +133,25 @@ const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z]/g, "");
 export function prefillFromProduct(product) {
     const groups = GROUPS[product.category] || [];
     const out = {};
+
+    // Color first: keep the product's exact shade, even when it isn't one of our presets
+    const shade = product.colors?.[0];
+    if (shade) {
+        const name = String(shade.name || "").trim();
+        const hex = normalizeHex(shade.hex);
+        const preset = PALETTE.find((c) => c.name.toLowerCase() === name.toLowerCase());
+        if (preset) {
+            out.color = preset.name;
+            out.colorHex = hex || preset.hex;
+        } else if (name) {
+            out.color = isHex(name) ? normalizeHex(name) : name;
+            out.colorHex = hex;
+        } else if (hex) {
+            out.color = hex;
+            out.colorHex = hex;
+        }
+    }
+
     const find = (key, text, loose) => {
         const group = groups.find((g) => g.key === key);
         if (!group || !text) return;
@@ -143,14 +159,14 @@ export function prefillFromProduct(product) {
         const hit = group.options.find((opt) => (loose ? t.includes(norm(opt.value)) : norm(opt.value) === t));
         if (hit) out[key] = hit.value;
     };
-    find("color", product.colors?.[0]?.name);
     find("sleeve", product.sleeve);
     find("fabric", product.material, true);
     return out;
 }
 
 // One row per section of the workbench: every option group, then "Photos & notes".
-// Used by the section list and by the summary on the last step.
+// Used by the section list and by the summary on the last step. The color row shows the
+// exact shade the customer settled on, their own custom shade included.
 export function buildRows(groups, selections, extrasText) {
     return [
         ...groups.map((g) => ({
@@ -158,7 +174,7 @@ export function buildRows(groups, selections, extrasText) {
             title: g.title,
             required: !!g.required,
             value: selections[g.key] || "",
-            swatch: g.kind === "swatch" ? g.options.find((opt) => opt.value === selections[g.key])?.swatch : undefined,
+            swatch: g.kind === "swatch" ? swatchFor(selections[g.key], selections.colorHex) : undefined,
         })),
         { id: EXTRAS_ID, title: "Photos & notes", required: false, value: extrasText, swatch: undefined },
     ];

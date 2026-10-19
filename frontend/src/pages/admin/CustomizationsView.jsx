@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, MessageSquare, ShoppingBag, RefreshCw, X } from "lucide-react";
 import { font, api, errMsg, assetUrl, peso, shortId, shortDate } from "./adminLib";
+import { colorLabel, selectionList, swatchFor } from "../../lib/colors";
 import {
     SectionHeader, GhostButton, PrimaryButton, DesignPill, EmptyState, Spinner, ErrorNote, Modal, ModalHeader, Field, inputCls,
 } from "./ui";
 
 const FILTERS = ["All", "Pending review", "In discussion", "Approved"];
-const OPTION_KEYS = ["color", "silhouette", "fit", "neckline", "sleeve", "fabric", "design"];
 
 export default function CustomizationsView({ notify, onChanged }) {
     const [items, setItems] = useState(null);
@@ -95,7 +95,7 @@ export default function CustomizationsView({ notify, onChanged }) {
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     {shown.map((c) => {
                         const busy = busyId === c._id;
-                        const chosen = OPTION_KEYS.map((k) => c.selections?.[k]).filter(Boolean);
+                        const chosen = selectionList(c.selections);
                         const refs = [c.references?.content, c.references?.style].filter(Boolean);
                         return (
                             <div key={c._id} className={`rounded-2xl border border-[#E3DACB] bg-white p-5 ${busy ? "opacity-60" : ""}`}>
@@ -124,9 +124,17 @@ export default function CustomizationsView({ notify, onChanged }) {
                                         <p className="mt-2 text-xs font-medium uppercase tracking-wide text-[#9C7A3C]">{c.base}</p>
                                         {chosen.length > 0 && (
                                             <div className="mt-2 flex flex-wrap gap-1.5">
-                                                {chosen.map((v) => (
-                                                    <span key={v} className="rounded-full border border-[#E3DACB] bg-[#FBF8F3] px-2 py-0.5 text-xs text-[#4A4136]">{v}</span>
-                                                ))}
+                                                {chosen.map(({ key, value }) => {
+                                                    const dot = key === "color" ? swatchFor(value, c.selections?.colorHex) : "";
+                                                    return (
+                                                        <span key={key} className="flex items-center gap-1.5 rounded-full border border-[#E3DACB] bg-[#FBF8F3] px-2 py-0.5 text-xs text-[#4A4136]">
+                                                            {dot && (
+                                                                <span className="h-3 w-3 rounded-full border border-black/15" style={{ background: dot }} aria-hidden="true" />
+                                                            )}
+                                                            {key === "color" ? colorLabel(value, c.selections?.colorHex) : value}
+                                                        </span>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                         {c.customerNotes && <p className="mt-2 text-sm text-[#4A4136]">“{c.customerNotes}”</p>}

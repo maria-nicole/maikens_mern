@@ -20,8 +20,10 @@ const customizationSchema = new mongoose.Schema(
     source: { type: String, default: "", trim: true },
 
     // Structured choices, so the request can be edited and re-previewed later
+    // colorHex is the exact shade behind "color" ("" for the older requests that predate it)
     selections: {
       color: { type: String, default: "" },
+      colorHex: { type: String, default: "" },
       silhouette: { type: String, default: "" },
       fit: { type: String, default: "" },
       neckline: { type: String, default: "" },

@@ -81,14 +81,24 @@ export default function DesignStep({
                 </div>
 
                 {group && row.value && (
-                    <p className="mt-4 text-sm text-gray-500">
-                        Selected: <span className="font-medium text-neutral-800">{row.value}</span>
+                    <p className="flex items-center gap-2 text-sm text-gray-500">
+                        Selected:
+                        {row.swatch && (
+                            <span className="h-3.5 w-3.5 rounded-full border border-black/10" style={{ background: row.swatch }} />
+                        )}
+                        <span className="font-medium text-neutral-800">{row.value}</span>
                     </p>
                 )}
 
                 <div className="mt-5">
                     {group ? (
-                        <OptionPicker group={group} value={selections[group.key] || ""} onChange={onSelect} disabled={locked} />
+                        <OptionPicker
+                            group={group}
+                            value={selections[group.key] || ""}
+                            colorHex={selections.colorHex || ""}
+                            onChange={onSelect}
+                            disabled={locked}
+                        />
                     ) : (
                         <ExtrasPanel
                             refs={refs}

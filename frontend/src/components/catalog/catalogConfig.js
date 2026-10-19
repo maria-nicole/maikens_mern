@@ -1,8 +1,12 @@
+import { PALETTE, hexForName, normalizeHex } from "../../lib/colors";
+
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // IMPORTANT: these options must match the lists in your admin ProductForm
-// (event types, sleeves, colors, sizes). If they differ, filters won't match anything.
+// (event types, sleeves, sizes). If they differ, filters won't match anything.
+// The color group is filled in at runtime from the products themselves (see
+// colorOptionsFrom below), so a custom shade an admin added also becomes filterable.
 export const FILTER_GROUPS = [
     { key: "category", label: "Category", options: ["Gown", "Barong"] },
     {
@@ -15,25 +19,33 @@ export const FILTER_GROUPS = [
         label: "Sleeve style",
         options: ["Sleeveless", "Cap sleeve", "Short sleeve", "Long sleeve", "Off-shoulder", "Barrel cuff"],
     },
-    {
-        key: "color",
-        label: "Color",
-        options: ["Ivory", "Champagne", "Blush", "Slate gray", "Wine", "Emerald", "Navy", "Black"],
-    },
+    { key: "color", label: "Color", options: [] }, // filled in from the products, see below
     { key: "size", label: "Size", options: ["XS", "S", "M", "L", "XL", "XXL"] },
 ];
 
-// Only used to draw a small dot next to each color filter.
-export const COLOR_DOTS = {
-    Ivory: "#FFFFF0",
-    Champagne: "#F7E7CE",
-    Blush: "#E8B4B8",
-    "Slate gray": "#708090",
-    Wine: "#722F37",
-    Emerald: "#2E8B57",
-    Navy: "#1F2A5A",
-    Black: "#1A1A1A",
+// The color filter lists the colors the shop actually carries: every product's own
+// swatches, in palette order, then any custom shade the admin added. Falls back to the
+// palette itself before the products have loaded, so the filter is never empty.
+export const colorOptionsFrom = (products = []) => {
+    const seen = new Map();
+    for (const product of products) {
+        for (const c of product.swatches || []) {
+            const name = String(c.name || "").trim();
+            const hex = normalizeHex(c.hex) || hexForName(c.name);
+            if (!name && !hex) continue;
+            const key = (hex || name).toLowerCase();
+            if (!seen.has(key)) seen.set(key, { name: name || hex, hex });
+        }
+    }
+    const rank = (name) => {
+        const i = PALETTE.findIndex((c) => c.name.toLowerCase() === name.toLowerCase());
+        return i === -1 ? PALETTE.length : i;
+    };
+    return [...seen.values()].sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
 };
+
+// Before the catalog loads (or when nothing carries a color yet) the filter shows the palette
+export const PALETTE_OPTIONS = PALETTE.map(({ name, hex }) => ({ name, hex }));
 
 export const SORT_OPTIONS = [
     { value: "newest", label: "Newest" },
@@ -64,7 +76,7 @@ export const normalizeProduct = (p) => ({
     category: p.category ? [p.category] : [],
     eventType: p.eventTypes || [],
     sleeve: p.sleeve ? [p.sleeve] : [],
-    color: (p.colors || []).map((c) => c.name),
+    color: (p.colors || []).map((c) => c.name || c.hex).filter(Boolean),
     swatches: p.colors || [],
     // Made-to-order items can be requested in any carried size even at 0 stock
     size: (p.sizes || [])

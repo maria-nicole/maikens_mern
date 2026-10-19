@@ -12,6 +12,8 @@ import {
   API_URL,
   EMPTY_SELECTION,
   FILTER_GROUPS,
+  PALETTE_OPTIONS,
+  colorOptionsFrom,
   normalizeProduct,
 } from "../components/catalog/catalogConfig";
 
@@ -55,6 +57,14 @@ const Catalog = () => {
       ignore = true;
     };
   }, []);
+
+  // The Color filter is built from what the products actually carry, so a shade the admin
+  // added in the product form can be filtered too. The palette is the safe fallback.
+  const filterGroups = useMemo(() => {
+    const carried = colorOptionsFrom(products);
+    const colorOptions = carried.length > 0 ? carried : PALETTE_OPTIONS;
+    return FILTER_GROUPS.map((group) => (group.key === "color" ? { ...group, options: colorOptions } : group));
+  }, [products]);
 
   // Back to page 1 whenever the result set could change shape
   useEffect(() => {
@@ -157,6 +167,7 @@ const Catalog = () => {
 
       <div className="flex gap-10 px-6 py-10 md:px-10 lg:px-24">
         <FilterSidebar
+          groups={filterGroups}
           selected={selected}
           onToggle={toggleFilter}
           onClear={clearFilters}

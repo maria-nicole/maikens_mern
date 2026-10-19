@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { COLOR_DOTS, FILTER_GROUPS } from "./catalogConfig";
+import { FILTER_GROUPS } from "./catalogConfig";
 
-function FilterGroups({ selected, onToggle }) {
+// Options are plain strings, except colors: those come from the products themselves as
+// { name, hex } so a custom shade the admin added shows up with its real dot.
+function FilterGroups({ groups, selected, onToggle }) {
     return (
         <div className="divide-y divide-stone-100">
-            {FILTER_GROUPS.map((group) => {
+            {groups.map((group) => {
                 const count = selected[group.key].length;
                 return (
                     <details key={group.key} open className="group py-4 first:pt-0">
@@ -21,13 +23,14 @@ function FilterGroups({ selected, onToggle }) {
 
                         <div className="mt-3 flex flex-wrap gap-2">
                             {group.options.map((option) => {
-                                const active = selected[group.key].includes(option);
-                                const dot = group.key === "color" ? COLOR_DOTS[option] : null;
+                                const value = typeof option === "string" ? option : option.name;
+                                const dot = typeof option === "string" ? null : option.hex;
+                                const active = selected[group.key].includes(value);
                                 return (
                                     <button
-                                        key={option}
+                                        key={value}
                                         type="button"
-                                        onClick={() => onToggle(group.key, option)}
+                                        onClick={() => onToggle(group.key, value)}
                                         aria-pressed={active}
                                         className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${active
                                                 ? "border-yellow-600/89 bg-yellow-600/89 text-white"
@@ -41,7 +44,7 @@ function FilterGroups({ selected, onToggle }) {
                                                 aria-hidden="true"
                                             />
                                         )}
-                                        {option}
+                                        {value}
                                     </button>
                                 );
                             })}
@@ -53,7 +56,7 @@ function FilterGroups({ selected, onToggle }) {
     );
 }
 
-export default function FilterSidebar({ selected, onToggle, onClear, activeCount, resultCount, open, onClose }) {
+export default function FilterSidebar({ selected, onToggle, onClear, activeCount, resultCount, open, onClose, groups = FILTER_GROUPS }) {
     // Close the mobile drawer with Escape
     useEffect(() => {
         if (!open) return;
@@ -75,7 +78,7 @@ export default function FilterSidebar({ selected, onToggle, onClear, activeCount
                             </button>
                         )}
                     </div>
-                    <FilterGroups selected={selected} onToggle={onToggle} />
+                    <FilterGroups groups={groups} selected={selected} onToggle={onToggle} />
                 </div>
             </aside>
 
@@ -92,7 +95,7 @@ export default function FilterSidebar({ selected, onToggle, onClear, activeCount
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-5 py-5">
-                            <FilterGroups selected={selected} onToggle={onToggle} />
+                            <FilterGroups groups={groups} selected={selected} onToggle={onToggle} />
                         </div>
 
                         <div className="flex gap-3 border-t border-stone-200 px-5 py-4">
