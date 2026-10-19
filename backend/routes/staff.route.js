@@ -12,6 +12,7 @@ import { Product } from "../models/product.model.js";
 import { Message } from "../models/message.model.js";
 import { protect, staffOrAdmin } from "../middleware/auth.js";
 import { HIDDEN_FROM_PUBLIC, reserveStock, restoreStock, refreshStatuses } from "../utils/stock.js";
+import { setOrderStatus } from "../utils/orderStatus.js";
 import { conversationSummaries } from "../utils/conversations.js";
 
 const router = express.Router();
@@ -182,6 +183,7 @@ router.post("/sales", async (req, res) => {
             item: summary,
             product: lines[0].product,
             items: lines.map(({ madeToOrder, ...line }) => line),
+            reserved: reserved.map((r) => ({ productId: r.productId, size: r.size, quantity: r.quantity })),
             total,
             status: hasMadeToOrder ? "Order Received" : "Completed",
             paymentMethod,
@@ -260,13 +262,17 @@ router.get("/orders", async (req, res) => {
     }
 });
 
-// Move an order through production
+// Move an order through production. Cancelling hands its stock back, and moving an order
+// off "Cancelled" takes that stock again (see utils/orderStatus.js).
 router.patch("/orders/:id/status", async (req, res) => {
     try {
         if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, "Order not found.");
         if (!ORDER_STATUSES.includes(req.body?.status)) throw httpError(400, "Invalid status.");
-        const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { returnDocument: "after" });
+        const order = await Order.findById(req.params.id);
         if (!order) throw httpError(404, "Order not found.");
+
+        const result = await setOrderStatus(order, req.body.status);
+        if (!result.ok) throw httpError(409, result.message);
         res.json(order);
     } catch (err) {
         sendError(res, err);

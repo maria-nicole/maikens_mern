@@ -2,24 +2,13 @@ import express from "express";
 import mongoose from "mongoose";
 import { Product } from "../models/product.model.js";
 import { Review } from "../models/review.model.js";
+import { Cart } from "../models/cart.model.js";
+import { Favorite } from "../models/favorite.model.js";
 import { upload, fileUrl } from "../middleware/upload.js";
 import { protect, adminOnly } from "../middleware/auth.js";
+import { computeStock, HIDDEN_FROM_PUBLIC } from "../utils/stock.js";
 
 const router = express.Router();
-const LOW_STOCK_AT = 2;
-const HIDDEN_FROM_PUBLIC = ["Draft", "Archived"];
-
-function computeStock(data) {
-  const totalStock = (data.sizes || []).reduce((s, x) => s + (Number(x.stock) || 0), 0);
-  let status = data.status;
-  // Draft and Archived are set by hand; every other status is derived from stock
-  if (!HIDDEN_FROM_PUBLIC.includes(status)) {
-    status = !data.sizes?.length ? "Active"
-      : totalStock === 0 ? "Out of stock"
-        : totalStock <= LOW_STOCK_AT ? "Low stock" : "Active";
-  }
-  return { totalStock, status };
-}
 
 // PUBLIC: catalog (never shows drafts or archived items)
 router.get("/", async (req, res) => {
@@ -132,9 +121,15 @@ router.patch("/:id/status", protect, adminOnly, async (req, res) => {
 
 router.delete("/:id", protect, adminOnly, async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Not found" });
     await Product.findByIdAndDelete(req.params.id);
-    // A deleted product has no page left to show its reviews on
-    await Review.deleteMany({ product: req.params.id });
+    // Nothing should keep pointing at a product that no longer exists: its reviews have no
+    // page left to show on, and any saved cart line or favourite would be a dead link.
+    await Promise.all([
+      Review.deleteMany({ product: req.params.id }),
+      Favorite.deleteMany({ product: req.params.id }),
+      Cart.updateMany({}, { $pull: { items: { product: req.params.id } } }),
+    ]);
     res.json({ message: "Deleted" });
   } catch (err) {
     res.status(400).json({ message: err.message });

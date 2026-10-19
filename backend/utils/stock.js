@@ -35,6 +35,31 @@ export async function restoreStock(reserved) {
     }
 }
 
+// What an order is currently holding in stock, as [{ productId, size, quantity }].
+// Checkout and walk-in sales record this on the order as `reserved` when they take the
+// stock, so cancelling hands back exactly what was taken.
+//
+// An empty `reserved` means either "recorded, and nothing was held" (the field is set) or a
+// legacy order created before the field existed. Mongoose hands both an empty array, so
+// $isDefault tells them apart; a legacy order's stock is derived from the live product —
+// a line only holds stock when it is ready-to-wear and carries a size.
+export async function heldStock(order) {
+    if (order.reserved?.length) {
+        return order.reserved.map((r) => ({ productId: r.productId, size: r.size, quantity: r.quantity }));
+    }
+    if (!order.$isDefault("reserved")) return [];
+
+    const held = [];
+    for (const item of order.items || []) {
+        if (!item.product || !item.size) continue;
+        const p = await Product.findById(item.product).select("fulfillment sizes");
+        if (!p || p.fulfillment === "Made-to-order") continue;
+        if (!p.sizes?.some((s) => s.size === item.size)) continue;
+        held.push({ productId: item.product, size: item.size, quantity: item.quantity });
+    }
+    return held;
+}
+
 // Recomputes Low stock / Out of stock after stock changed
 export async function refreshStatuses(productIds) {
     for (const id of new Set(productIds.map(String))) {

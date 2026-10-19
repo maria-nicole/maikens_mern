@@ -44,6 +44,17 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// What this order actually took out of stock, so cancelling it can put the pieces back.
+// A snapshot like `items`, kept in case the product is edited afterwards.
+const reservedSchema = new mongoose.Schema(
+  {
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+    size: { type: String, default: "" },
+    quantity: { type: Number, min: 1, default: 1 },
+  },
+  { _id: false }
+);
+
 // Every peso the shop receives for an order is one entry here (deposit, balance, full payment)
 const paymentSchema = new mongoose.Schema({
   amount: { type: Number, required: true, min: 0.01 },
@@ -63,6 +74,7 @@ const orderSchema = new mongoose.Schema(
     item: { type: String, required: true, trim: true }, // one-line summary the admin console shows
     product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     items: [orderItemSchema], // filled by online checkout and walk-in sales
+    reserved: [reservedSchema], // the subset of `items` that held stock (see utils/stock.js)
     total: { type: Number, required: true, min: 0 },
     status: { type: String, enum: ORDER_STATUSES, default: "Order Received" },
 

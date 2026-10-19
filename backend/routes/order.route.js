@@ -6,7 +6,8 @@ import { Cart } from "../models/cart.model.js";
 import { Customization } from "../models/customization.model.js";
 import { Message } from "../models/message.model.js";
 import { protect, adminOnly } from "../middleware/auth.js";
-import { computeStock, HIDDEN_FROM_PUBLIC } from "../utils/stock.js";
+import { HIDDEN_FROM_PUBLIC, refreshStatuses } from "../utils/stock.js";
+import { setOrderStatus } from "../utils/orderStatus.js";
 
 const router = express.Router();
 router.use(protect); // every order route needs a login; customer routes come first, admin routes after adminOnly
@@ -27,16 +28,6 @@ router.get("/mine", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-// Recomputes Low stock / Out of stock after stock changed
-async function refreshStatuses(productIds) {
-  for (const id of new Set(productIds.map(String))) {
-    const p = await Product.findById(id);
-    if (!p || HIDDEN_FROM_PUBLIC.includes(p.status)) continue;
-    const { totalStock, status } = computeStock({ sizes: p.sizes, status: p.status });
-    await Product.updateOne({ _id: id }, { totalStock, status });
-  }
-}
 
 // CUSTOMER: turn my cart into an order.
 // The cart, prices and stock all come from the database. The browser only sends
@@ -123,6 +114,7 @@ router.post("/checkout", async (req, res) => {
       item: summary,
       product: lines[0].product,
       items: lines.map(({ madeToOrder, ...line }) => line),
+      reserved: reserved.map((r) => ({ productId: r.productId, size: r.size, quantity: r.quantity })),
       total: subtotal + shippingFee,
       shippingFee,
       deliveryMethod,
@@ -167,7 +159,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { customerName, customer, channel, fulfillment, item, product, total } = req.body;
-    const order = await Order.create({ customerName, customer, channel, fulfillment, item, product, total });
+    const order = await Order.create({ customerName, customer, channel, fulfillment, item, product, total, reserved: [] });
     res.status(201).json(order);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -195,6 +187,7 @@ router.post("/from-customization", async (req, res) => {
       fulfillment: "Made-to-order",
       item: [design.base, design.notes].filter(Boolean).join(": ").slice(0, 300),
       total: price,
+      reserved: [],
       items: [{ name: design.base, size: "", quantity: 1, unitPrice: price, image: design.previewImage || "" }],
     });
     design.order = order._id;
@@ -217,14 +210,21 @@ router.post("/from-customization", async (req, res) => {
   }
 });
 
+// Move an order through production. Cancelling hands its stock back, and moving an order
+// off "Cancelled" takes that stock again (see utils/orderStatus.js).
 router.patch("/:id/status", async (req, res) => {
   try {
-    const { status } = req.body;
-    if (!ORDER_STATUSES.includes(status)) return res.status(400).json({ message: "Invalid status." });
-    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { returnDocument: "after" });
-    order ? res.json(order) : res.status(404).json({ message: "Order not found." });
+    if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, "Order not found.");
+    if (!ORDER_STATUSES.includes(req.body?.status)) throw httpError(400, "Invalid status.");
+    const order = await Order.findById(req.params.id);
+    if (!order) throw httpError(404, "Order not found.");
+
+    const result = await setOrderStatus(order, req.body.status);
+    if (!result.ok) throw httpError(409, result.message);
+    res.json(order);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    if (!err.status) console.error("Order status update failed:", err);
+    res.status(err.status || 400).json({ message: err.status ? err.message : "Couldn't update the order. Please try again." });
   }
 });
 
