@@ -99,6 +99,8 @@ describe("Owner console", () => {
         await field.clear();
         await field.sendKeys("175");
         await clickText(d, "Save settings");
+        // Wait for the shop to say it saved, or we would read the fee before it landed.
+        await waitForText(d, "Delivery fee is now");
 
         // The shop now charges 175 for delivery
         const res = await fetch(`${API_URL}/api/settings`);
@@ -110,6 +112,7 @@ describe("Owner console", () => {
         await field.clear();
         await field.sendKeys(String(DELIVERY_FEE));
         await clickText(d, "Save settings");
+        await waitForText(d, "Delivery fee is now");
     });
 
     it("keeps a customer out of the owner console", async () => {

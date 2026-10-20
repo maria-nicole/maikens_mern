@@ -9,8 +9,10 @@ import { API_URL, CART_EVENT, assetUrl, authHeader } from "./account/accountShar
  *
  * The account menu is plain React state (it used to be Flowbite's JS), so it opens
  * and closes predictably: a click outside, Escape or any navigation puts it away.
- * Signed-in customers get a cart button with a live count, and Orders / Cart sit
- * right under My Account instead of being buried in the account page.
+ * The cart button and the account button are always there, and always the same size,
+ * so the bar does not move when someone signs in or out. The account menu offers
+ * Log in / Register to a visitor, and Orders / Cart right under My Account to a
+ * customer, instead of burying them in the account page.
  */
 
 const NAV_LINKS = [
@@ -43,13 +45,22 @@ const NavRow = ({ row, onGo }) => {
   );
 };
 
-/* The customer's own photo when they have one, their first initial otherwise. */
+/* The customer's own photo when they have one, their first initial otherwise.
+   A signed-out visitor gets a plain placeholder of exactly the same size, so the
+   bar never changes shape when someone signs in or out. */
 const Avatar = ({ user }) => {
   const src = user?.avatar ? assetUrl(user.avatar) : "";
   if (src) {
     return <img src={src} alt="" className="h-9 w-9 rounded-full border border-amber-200 object-cover" />;
   }
-  const initial = (user?.username || user?.email || "?").trim().charAt(0).toUpperCase();
+  if (!user) {
+    return (
+      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-200 bg-stone-100 text-stone-400">
+        <UserIcon size={18} />
+      </span>
+    );
+  }
+  const initial = (user.username || user.email || "?").trim().charAt(0).toUpperCase();
   return (
     <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-600 text-sm font-semibold text-white">
       {initial}
@@ -172,82 +183,80 @@ const Navbar = ({ user, error, setUser }) => {
           </span>
         </Link>
 
-        {/* Right side: cart, account, and the mobile menu button */}
+        {/* Right side: cart, account, and the mobile menu button. All three are the
+            same size whether or not anyone is signed in, so the bar never shifts. */}
         <div className="flex items-center gap-1 md:order-2">
-          {user && (
-            <Link
-              to="/profile?tab=cart"
-              onClick={closeMenus}
-              aria-label={cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"}
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-stone-600 transition-colors hover:bg-amber-50 hover:text-amber-800"
+          <Link
+            to={user ? "/profile?tab=cart" : "/login"}
+            state={user ? undefined : { from: { pathname: "/profile?tab=cart" } }}
+            onClick={closeMenus}
+            aria-label={user && cartCount > 0 ? `Cart, ${cartCount} items` : "Cart"}
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-stone-600 transition-colors hover:bg-amber-50 hover:text-amber-800"
+          >
+            <ShoppingBag size={21} />
+            {user && cartCount > 0 && (
+              <span className="absolute right-0 top-0 min-w-[18px] rounded-full bg-amber-600 px-1 text-center text-[11px] font-semibold leading-[18px] text-white">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* The account button is the same in both states; only the menu inside it
+              changes. Guests get Log in / Register, customers get their shortcuts. */}
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label="Account menu"
+              className="flex items-center rounded-full p-0.5 ring-2 ring-transparent transition-all duration-200 hover:ring-yellow-400 focus:outline-none focus:ring-4 focus:ring-amber-200"
             >
-              <ShoppingBag size={21} />
-              {cartCount > 0 && (
-                <span className="absolute right-0 top-0 min-w-[18px] rounded-full bg-amber-600 px-1 text-center text-[11px] font-semibold leading-[18px] text-white">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-          )}
+              <Avatar user={user} />
+            </button>
 
-          {user ? (
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((open) => !open)}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                aria-label="Account menu"
-                className="flex items-center rounded-full p-0.5 ring-2 ring-transparent transition-all duration-200 hover:ring-yellow-400 focus:outline-none focus:ring-4 focus:ring-amber-200"
+            {menuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 z-50 mt-3 w-60 overflow-hidden rounded-xl border border-amber-200 bg-white shadow-xl"
               >
-                <Avatar user={user} />
-              </button>
+                {user ? (
+                  <>
+                    <div className="border-b border-amber-100 bg-stone-50 px-4 py-3">
+                      {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
+                      <span className="block truncate text-sm font-semibold text-stone-800">{user.username}</span>
+                      <span className="block truncate text-xs text-stone-500">{user.email}</span>
+                    </div>
 
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 z-50 mt-3 w-60 overflow-hidden rounded-xl border border-amber-200 bg-white shadow-xl"
-                >
-                  <div className="border-b border-amber-100 bg-stone-50 px-4 py-3">
-                    {error && <p className="mb-2 text-xs text-red-500">{error}</p>}
-                    <span className="block truncate text-sm font-semibold text-stone-800">{user.username}</span>
-                    <span className="block truncate text-xs text-stone-500">{user.email}</span>
-                  </div>
+                    <div className="p-2">
+                      {accountRows.map((row) => (
+                        <NavRow key={row.to} row={row} onGo={closeMenus} />
+                      ))}
+                    </div>
 
-                  <div className="p-2">
-                    {accountRows.map((row) => (
-                      <NavRow key={row.to} row={row} onGo={closeMenus} />
-                    ))}
-                  </div>
+                    <div className="border-t border-amber-100 p-2">
+                      <button type="button" onClick={handleLogout} className={ROW_CLASS}>
+                        <LogOut size={16} className="shrink-0 text-amber-600" />
+                        Sign out
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="border-b border-amber-100 bg-stone-50 px-4 py-3">
+                      <span className="block text-sm font-semibold text-stone-800">Sign in to your account</span>
+                      <span className="block text-xs text-stone-500">See your orders, cart and messages.</span>
+                    </div>
 
-                  <div className="border-t border-amber-100 p-2">
-                    <button type="button" onClick={handleLogout} className={ROW_CLASS}>
-                      <LogOut size={16} className="shrink-0 text-amber-600" />
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                onClick={closeMenus}
-                className="hidden items-center gap-1.5 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 sm:inline-flex"
-              >
-                <LogIn size={16} />
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                onClick={closeMenus}
-                className="hidden rounded-full px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:text-amber-700 sm:inline-block"
-              >
-                Register
-              </Link>
-            </>
-          )}
+                    <div className="p-2">
+                      <NavRow row={{ to: "/login", icon: LogIn, label: "Log in" }} onGo={closeMenus} />
+                      <NavRow row={{ to: "/register", icon: UserIcon, label: "Register" }} onGo={closeMenus} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           <button
             type="button"

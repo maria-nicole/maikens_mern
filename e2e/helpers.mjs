@@ -103,6 +103,26 @@ export const waitForGone = async (d, text, timeout = 15000) => {
     throw new Error(`The page still shows "${text}".\nVisible text was:\n${seen.slice(0, 900)}`);
 };
 
+/* ------------------------------ signed in? ------------------------------ */
+
+// Whether anybody is signed in comes down to the token in the browser. The navbar's
+// account button is there for visitors too, so it can no longer be used to tell one
+// state from the other — these can.
+const hasToken = (d) => d.executeScript("return !!localStorage.getItem('token')");
+
+const waitForToken = async (d, want, timeout) => {
+    const deadline = Date.now() + timeout;
+    while (Date.now() < deadline) {
+        if ((await hasToken(d)) === want) return true;
+        await sleep(150);
+    }
+    throw new Error(want ? "The browser never got a token — the sign-in never finished."
+        : "The browser still has a token — the sign-out never finished.");
+};
+
+export const waitForSignedIn = (d, timeout = 15000) => waitForToken(d, true, timeout);
+export const waitForSignedOut = (d, timeout = 15000) => waitForToken(d, false, timeout);
+
 /* ------------------------------ doing things ------------------------------ */
 
 export const typeInto = async (d, selector, value) => {
@@ -152,7 +172,7 @@ export const signUpAndVerify = async (d, { username, email, password }) => {
     await waitForVisible(d, By.css('input[aria-label="Verification code"]'));
     const code = await waitForCode(email);
     await enterVerificationCode(d, code);
-    await waitForVisible(d, By.css('button[aria-label="Account menu"]'));
+    await waitForSignedIn(d);
     return code;
 };
 
