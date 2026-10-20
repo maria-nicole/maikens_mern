@@ -16,6 +16,7 @@ import {
   colorOptionsFrom,
   normalizeProduct,
 } from "../components/catalog/catalogConfig";
+import { NAVBAR_PT } from "../components/account/accountShared";
 
 const Catalog = () => {
   const [products, setProducts] = useState([]);
@@ -148,7 +149,7 @@ const Catalog = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className={`min-h-screen bg-white ${NAVBAR_PT}`}>
       <CatalogHeader />
 
       <CatalogToolbar

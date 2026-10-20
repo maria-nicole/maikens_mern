@@ -11,6 +11,7 @@ import DesignStep from "../components/customize/DesignStep";
 import PreviewStep from "../components/customize/PreviewStep";
 import { Toast, Lightbox } from "../components/customize/Overlays";
 import { ErrorScreen, SentScreen } from "../components/customize/CustomizeScreens";
+import { NAVBAR_PT } from "../components/account/accountShared";
 
 /**
  * Customize page: the state and the API calls live here.
@@ -334,7 +335,7 @@ export default function Customize() {
   if (sent) return <SentScreen sent={sent} onRestart={startOver} />;
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT}`}>
       <Toast message={toast} />
       {lightbox && preview && <Lightbox src={imageUrl(preview)} onClose={() => setLightbox(false)} />}
 

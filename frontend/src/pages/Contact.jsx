@@ -4,10 +4,11 @@ import { ChevronRight } from "lucide-react";
 import ContactForm from "../components/contact/ContactForm";
 import ChatCard from "../components/contact/ChatCard";
 import Footer from "../components/Footer";
+import { NAVBAR_PT } from "../components/account/accountShared";
 
 const Contact = () => {
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className={`min-h-screen bg-white ${NAVBAR_PT}`}>
       <header className="bg-orange-100/89 px-6 pb-12 pt-10 md:px-10 lg:px-24">
         <nav aria-label="Breadcrumb" className="mb-6">
           <ol className="flex items-center gap-1.5 text-sm text-stone-600">

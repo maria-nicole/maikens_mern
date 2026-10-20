@@ -12,6 +12,7 @@ import {
   mergeMessages,
   productToShare,
 } from "../components/message/messageConfig";
+import { NAVBAR_PT } from "../components/account/accountShared";
 import ChatSidebar from "../components/message/ChatSidebar";
 import MessageThread from "../components/message/MessageThread";
 import QuickReplies from "../components/message/QuickReplies";
@@ -279,7 +280,7 @@ export default function Message() {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className={`min-h-screen bg-white ${NAVBAR_PT}`}>
       <div className="grid h-[calc(100dvh-5rem)] grid-cols-1 lg:grid-cols-[320px_1fr]">
         <ChatSidebar open={open} ready={ready} onPhoto={openPhotoDialog} onPicker={openPicker} />
 

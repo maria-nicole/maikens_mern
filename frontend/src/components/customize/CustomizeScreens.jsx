@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { imageUrl, primaryBtn, ghostBtn } from "./customizeShared";
+import { NAVBAR_PT } from "../account/accountShared";
 
 // Shown when a design can't be loaded (removed, not logged in, server down)
 export function ErrorScreen({ message, loggedIn, location, onRestart }) {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-20">
+        <div className={`flex min-h-screen items-center justify-center bg-gray-50 px-4 ${NAVBAR_PT}`}>
             <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-10 text-center">
                 <p className="mb-5 text-sm text-red-700">{message}</p>
                 <div className="flex flex-col justify-center gap-3 sm:flex-row">
@@ -26,7 +27,7 @@ export function ErrorScreen({ message, loggedIn, location, onRestart }) {
 // Shown after the design was sent (or the changes saved)
 export function SentScreen({ sent, onRestart }) {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-20">
+        <div className={`flex min-h-screen items-center justify-center bg-gray-50 px-4 ${NAVBAR_PT}`}>
             <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-10 text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50">
                     <Check size={26} className="text-green-700" />

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Check, Lock, Loader2, Package, Sparkles } from "lucide-react";
-import { DESIGN_STATUS, FALLBACK_STATUS, ORDER_STATUS, assetUrl, cardClass, primaryLink } from "./accountShared";
+import { DESIGN_STATUS, FALLBACK_STATUS, NAVBAR_PT, ORDER_STATUS, assetUrl, cardClass, primaryLink } from "./accountShared";
 
 /* Small building blocks shared by the account panels. Keeping them here means the
    order card, the design card and the overview all show the same badges and thumbnails. */
@@ -28,7 +28,7 @@ export function Skeleton({ className = "" }) {
 
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 flex items-center justify-center">
+    <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT} flex items-center justify-center`}>
       <Spinner />
     </div>
   );
@@ -37,7 +37,7 @@ export function LoadingScreen() {
 export function LoggedOutScreen({ message }) {
   const location = useLocation();
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 px-4 flex items-center justify-center">
+    <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT} px-4 flex items-center justify-center`}>
       <div className="bg-white rounded-lg border border-gray-200 p-10 text-center w-full max-w-md">
         <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
           <Lock size={24} className="text-yellow-600/89" />
@@ -64,7 +64,7 @@ export function LoggedOutScreen({ message }) {
 
 export function ErrorScreen({ message }) {
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 px-4 flex items-center justify-center">
+    <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT} px-4 flex items-center justify-center`}>
       <div className="bg-white rounded-lg border border-gray-200 p-10 text-center w-full max-w-md">
         <p className="text-sm text-red-700 mb-4">{message || "Something went wrong."}</p>
         <button

@@ -15,6 +15,14 @@ import { DELIVERY_FEE_DEFAULT, SHIPPING_METHOD } from "./shipping.js";
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+/* How much room a page must leave at the top for the fixed navbar.
+   The bar is a constant 65px (see components/Navbar.jsx): its content is one 40px
+   row inside py-3, plus the 1px bottom border. Pages that are not full-bleed
+   heroes start with this much padding, so content lands flush under the bar
+   instead of hiding behind it or leaving a gap. */
+export const NAVBAR_H = 65;
+export const NAVBAR_PT = "pt-[65px]";
+
 // The boutique's Facebook page — where the saved order slips get sent.
 // (Same link the Contact page uses.)
 export const MESSENGER_URL = "https://www.facebook.com/share/18GpBdBoog";

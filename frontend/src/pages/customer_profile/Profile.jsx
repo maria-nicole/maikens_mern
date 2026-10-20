@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import useAccountData from "../../components/account/useAccountData";
 import useProfileForm from "../../components/account/useProfileForm";
-import { normalSection, sectionHref } from "../../components/account/accountShared";
+import { NAVBAR_PT, normalSection, sectionHref } from "../../components/account/accountShared";
 import AccountNav, { SectionRail } from "../../components/account/AccountNav";
 import { ErrorScreen, LoadingScreen, LoggedOutScreen, Toast } from "../../components/account/atoms";
 import OverviewPanel from "../../components/account/OverviewPanel";
@@ -49,7 +49,7 @@ export default function Profile({ setUser }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT}`}>
       <Toast text={account.toast} />
       <AccountNav section={section} counts={counts} />
 

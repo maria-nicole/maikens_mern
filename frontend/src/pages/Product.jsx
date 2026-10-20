@@ -17,7 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { BsFacebook } from "react-icons/bs";
-import { announceCart } from "../components/account/accountShared";
+import { announceCart, NAVBAR_PT } from "../components/account/accountShared";
 import ReviewsSection from "../components/reviews/ReviewsSection";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
@@ -166,7 +166,7 @@ export default function Product() {
   /* ------------------------------ Loading / error states ------------------------------ */
   if (loading) {
     return (
-      <div className="min-h-screen bg-white pt-20">
+      <div className={`min-h-screen bg-white ${NAVBAR_PT}`}>
         <div className="px-6 md:px-10 lg:px-24 py-10 grid lg:grid-cols-2 gap-10">
           <div className="aspect-[3/4] bg-zinc-100 animate-pulse rounded-lg" />
           <div className="space-y-4">
@@ -184,7 +184,7 @@ export default function Product() {
   if (loadError || !product) {
     const notFound = loadError === "notfound";
     return (
-      <div className="min-h-screen bg-gray-50 pt-20 px-4 flex items-center justify-center">
+      <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT} px-4 flex items-center justify-center`}>
         <div className="bg-white rounded-lg border border-gray-200 p-10 text-center w-full max-w-md">
           <h1 className="text-2xl font-bold text-neutral-800">
             {notFound ? "This item isn't available" : "Couldn't load this item"}
@@ -379,7 +379,7 @@ export default function Product() {
 
   /* ------------------------------ Render ------------------------------ */
   return (
-    <div className="min-h-screen bg-white pt-20">
+    <div className={`min-h-screen bg-white ${NAVBAR_PT}`}>
       {/* Toast */}
       {toast && (
         <div
