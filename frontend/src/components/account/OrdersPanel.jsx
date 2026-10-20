@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Package, Star } from "lucide-react";
-import { cardClass, fmt, formatDate, orderNo, primaryLink } from "./accountShared";
+import { cardClass, courierOf, fmt, formatDate, orderNo, primaryLink } from "./accountShared";
 import { EmptyState, OrderProgress, OrderThumb, Skeleton, StatusPill } from "./atoms";
 import SaveOrderButton from "./SaveOrderButton";
 import { paymentSummary } from "./orderSlip";
@@ -134,7 +134,7 @@ export default function OrdersPanel({ orders, loading, reviewable = [], onSaveRe
                   <Clock size={11} /> {formatDate(order.createdAt)} · {orderNo(order)}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {[order.fulfillment, order.deliveryMethod].filter(Boolean).join(" · ")}
+                  {[order.fulfillment, order.deliveryMethod, courierOf(order)].filter(Boolean).join(" · ")}
                 </p>
                 <p className="text-yellow-700/89 font-semibold text-sm mt-1.5">{fmt(order.total)}</p>
                 <PaymentLine order={order} />

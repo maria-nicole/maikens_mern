@@ -1,7 +1,7 @@
 // The owner's console: seeing the shop's orders and looking after its accounts.
 import assert from "node:assert/strict";
 import { By, Select } from "selenium-webdriver";
-import { ADMIN, CUSTOMER, OUTSIDER, PENDING, FRONTEND_URL } from "../config.mjs";
+import { ADMIN, CUSTOMER, OUTSIDER, PENDING, FRONTEND_URL, API_URL, DELIVERY_FEE } from "../config.mjs";
 import { seeded } from "../fixtures.mjs";
 import {
     getDriver, waitFor, waitForVisible, waitForText, clickText, login, clearSession, waitForToastToClear,
@@ -89,6 +89,27 @@ describe("Owner console", () => {
 
         await d.wait(async () => (await row.getText()).includes("Active"), 15000,
             "the account should be active again");
+    });
+
+    it("lets the owner set the delivery fee", async () => {
+        const d = getDriver();
+        await d.get(`${FRONTEND_URL}/admin?tab=settings`);
+
+        const field = await waitForVisible(d, By.css("#delivery-fee"));
+        await field.clear();
+        await field.sendKeys("175");
+        await clickText(d, "Save settings");
+
+        // The shop now charges 175 for delivery
+        const res = await fetch(`${API_URL}/api/settings`);
+        const settings = await res.json();
+        assert.equal(settings.deliveryFee, 175, "the delivery fee should have been saved");
+
+        // Put it back, so the rest of the suite is not affected
+        await waitForToastToClear(d);
+        await field.clear();
+        await field.sendKeys(String(DELIVERY_FEE));
+        await clickText(d, "Save settings");
     });
 
     it("keeps a customer out of the owner console", async () => {

@@ -6,6 +6,7 @@ import {
     CANCELLED,
     PAYMENT_STATUSES,
     PAYMENT_METHODS,
+    SHIPPING_METHOD,
     paymentStatusFor,
 } from "../models/order.model.js";
 import { Product } from "../models/product.model.js";
@@ -13,6 +14,7 @@ import { Message } from "../models/message.model.js";
 import { protect, staffOrAdmin } from "../middleware/auth.js";
 import { HIDDEN_FROM_PUBLIC, reserveStock, restoreStock, refreshStatuses } from "../utils/stock.js";
 import { setOrderStatus } from "../utils/orderStatus.js";
+import { setShippingFee, cleanShippingFee } from "../utils/shipping.js";
 import { conversationSummaries } from "../utils/conversations.js";
 
 const router = express.Router();
@@ -100,20 +102,26 @@ router.get("/dashboard", async (req, res) => {
 
 /* ------------------------------ Walk-in sale ------------------------------ */
 // body: { customerName, items: [{ productId, size, quantity }], paymentMethod,
-//         amountPaid?, cashReceived? }
+//         amountPaid?, cashReceived?, shippingFee? }
 // Prices and stock come from the database. The browser only says what was sold.
 router.post("/sales", async (req, res) => {
     const reserved = []; // stock taken so far: { productId, size, quantity }
     let created = false;
 
     try {
-        const { customerName, items, paymentMethod, amountPaid, cashReceived } = req.body || {};
+        const { customerName, items, paymentMethod, amountPaid, cashReceived, shippingFee: shippingFeeIn } = req.body || {};
 
         const name = String(customerName || "").trim().slice(0, 80);
         if (!name) throw httpError(400, "Enter the customer's name.");
         if (!PAYMENT_METHODS.includes(paymentMethod)) throw httpError(400, "Choose Cash or GCash.");
         if (!Array.isArray(items) || items.length === 0) throw httpError(400, "Add at least one item.");
         if (items.length > MAX_LINES) throw httpError(400, `A sale can have up to ${MAX_LINES} lines.`);
+
+        // A walk-in sale that is being delivered carries the courier's fee
+        const shippingFee = shippingFeeIn === undefined || shippingFeeIn === null || shippingFeeIn === ""
+            ? 0
+            : cleanShippingFee(shippingFeeIn);
+        if (shippingFee === null) throw httpError(400, "Enter a shipping fee of 0 or more.");
 
         // Merge repeated product + size lines
         const wanted = new Map();
@@ -159,7 +167,7 @@ router.post("/sales", async (req, res) => {
             });
         }
 
-        const total = money(lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0));
+        const total = money(lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0) + shippingFee);
         const hasMadeToOrder = lines.some((l) => l.madeToOrder);
 
         // Ready-to-wear leaves with the customer, so it must be paid in full.
@@ -185,6 +193,9 @@ router.post("/sales", async (req, res) => {
             items: lines.map(({ madeToOrder, ...line }) => line),
             reserved: reserved.map((r) => ({ productId: r.productId, size: r.size, quantity: r.quantity })),
             total,
+            shippingFee,
+            shippingMethod: shippingFee > 0 ? SHIPPING_METHOD : "",
+            deliveryMethod: shippingFee > 0 ? "Delivery" : undefined,
             status: hasMadeToOrder ? "Order Received" : "Completed",
             paymentMethod,
             payments: [
@@ -301,6 +312,24 @@ router.post("/orders/:id/payments", async (req, res) => {
         await order.save();
 
         res.status(201).json(order);
+    } catch (err) {
+        sendError(res, err);
+    }
+});
+
+// Set the shipping fee on an order (the courier's actual charge). The total and the
+// payment status follow it, so the balance owed moves with it.
+router.patch("/orders/:id/shipping", async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, "Order not found.");
+        const fee = cleanShippingFee(req.body?.shippingFee);
+        if (fee === null) throw httpError(400, "Enter a shipping fee of 0 or more.");
+        const order = await Order.findById(req.params.id);
+        if (!order) throw httpError(404, "Order not found.");
+
+        setShippingFee(order, fee);
+        await order.save();
+        res.json(order);
     } catch (err) {
         sendError(res, err);
     }

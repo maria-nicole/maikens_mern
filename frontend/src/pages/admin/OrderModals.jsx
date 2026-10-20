@@ -2,10 +2,37 @@ import { useState } from "react";
 import { font, api, errMsg, assetUrl, peso, orderNo, balanceOf, formatDate, formatDateTime } from "./adminLib";
 import { Modal, ModalHeader, StatusPill, PaymentPill, PrimaryButton, Field, Segmented, inputCls } from "./ui";
 
+// The courier that carries a delivery. Must match backend/models/order.model.js
+const SHIPPING_METHOD = "Lalamove";
+
 // Everything about one order: what was bought, who gets it, how it was paid.
-export function OrderDetailModal({ order, onClose }) {
+export function OrderDetailModal({ order, onClose, onSaved }) {
     const lines = order.items?.length ? order.items : [{ name: order.item, quantity: 1, unitPrice: order.total, size: "" }];
     const balance = balanceOf(order);
+
+    // The shipping fee can be corrected after the order is placed (the courier's actual
+    // charge). The total and the balance follow it.
+    const [fee, setFee] = useState(String(order.shippingFee || 0));
+    const [saving, setSaving] = useState(false);
+    const [feeError, setFeeError] = useState("");
+
+    const amount = Number(fee);
+    const feeInvalid = fee === "" || !Number.isFinite(amount) || amount < 0;
+
+    const saveShipping = async () => {
+        if (feeInvalid) return;
+        setSaving(true);
+        setFeeError("");
+        try {
+            const { data } = await api.patch(`/orders/${order._id}/shipping`, { shippingFee: amount });
+            setFee(String(data.shippingFee));
+            onSaved?.(data);
+        } catch (err) {
+            setFeeError(errMsg(err));
+        } finally {
+            setSaving(false);
+        }
+    };
 
     return (
         <Modal label={`Order ${orderNo(order)}`} onClose={onClose} maxWidth="max-w-lg">
@@ -50,6 +77,12 @@ export function OrderDetailModal({ order, onClose }) {
                     {order.deliveryMethod && (
                         <div className="flex justify-between gap-4"><dt className="text-[#8B8072]">Fulfillment</dt><dd className="text-right text-[#241F1A]">{order.deliveryMethod}</dd></div>
                     )}
+                    {order.deliveryMethod === "Delivery" && (
+                        <div className="flex justify-between gap-4">
+                            <dt className="text-[#8B8072]">Shipping method</dt>
+                            <dd className="text-right text-[#241F1A]">{order.shippingMethod || SHIPPING_METHOD}</dd>
+                        </div>
+                    )}
                     {order.deliveryMethod === "Delivery" && order.address && (
                         <div className="flex justify-between gap-4"><dt className="text-[#8B8072]">Address</dt><dd className="text-right text-[#241F1A]">{order.address}</dd></div>
                     )}
@@ -61,6 +94,35 @@ export function OrderDetailModal({ order, onClose }) {
                     )}
                 </dl>
             )}
+
+            {/* The courier's actual charge, if it differs from what was charged */}
+            <div className="mt-4 rounded-xl border border-[#EFE9E3] p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[#8B8072]">Shipping fee</p>
+                <div className="mt-2 flex items-start gap-2">
+                    <div className="flex-1">
+                        <Field
+                            label="Fee (₱)"
+                            htmlFor="shipping-fee"
+                            hint="Changing this moves the total and the balance owed."
+                            error={feeError || (feeInvalid && fee !== "" ? "Enter a number of 0 or more." : null)}
+                        >
+                            <input
+                                id="shipping-fee"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={fee}
+                                onChange={(e) => setFee(e.target.value)}
+                                className={inputCls}
+                                style={font.mono}
+                            />
+                        </Field>
+                    </div>
+                    <PrimaryButton onClick={saveShipping} loading={saving} disabled={feeInvalid} className="mt-7">
+                        Save
+                    </PrimaryButton>
+                </div>
+            </div>
 
             <div className="mt-4">
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[#8B8072]">Payments received</p>

@@ -73,6 +73,13 @@ export default function OrdersView({ notify, onChanged }) {
         onChanged?.();
     };
 
+    // The shipping fee was changed on the order, so the row and the details follow
+    const shippingChanged = (updated) => {
+        replace(updated);
+        setDetail(updated);
+        notify("success", "Shipping fee updated.");
+    };
+
     return (
         <div>
             <SectionHeader
@@ -199,7 +206,7 @@ export default function OrdersView({ notify, onChanged }) {
                 </div>
             )}
 
-            {detail && <OrderDetailModal order={detail} onClose={() => setDetail(null)} />}
+            {detail && <OrderDetailModal order={detail} onClose={() => setDetail(null)} onSaved={shippingChanged} />}
             {collecting && <PaymentModal order={collecting} onClose={() => setCollecting(null)} onDone={paymentDone} />}
             {cancelling && (
                 <ConfirmDialog

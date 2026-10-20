@@ -4,7 +4,7 @@
 // not depend on each other and any one of them can be run on its own.
 import assert from "node:assert/strict";
 import { By } from "selenium-webdriver";
-import { API_URL, FRONTEND_URL, GOWN, DELIVERY_FEE, GCASH_NUMBER, DELIVERY_ADDRESS } from "../config.mjs";
+import { API_URL, FRONTEND_URL, GOWN, deliveryFee, SHIPPING_METHOD, GCASH_NUMBER, DELIVERY_ADDRESS } from "../config.mjs";
 import { seeded } from "../fixtures.mjs";
 import {
     getDriver, waitForVisible, waitForText, typeInto, clickText, signUpAndVerify, clearSession,
@@ -46,11 +46,15 @@ const goToCart = async (d) => {
     await d.get(`${FRONTEND_URL}/profile?tab=cart`);
 };
 
-const placeTheOrder = async (d) => {
+const goToCheckout = async (d) => {
     await clickText(d, "Proceed to Checkout");
     await typeInto(d, 'input[name="address"]', DELIVERY_ADDRESS);
     await typeInto(d, 'input[name="gcash"]', GCASH_NUMBER);
-    const total = GOWN.price + DELIVERY_FEE;
+};
+
+const placeTheOrder = async (d) => {
+    await goToCheckout(d);
+    const total = GOWN.price + (await deliveryFee());
     await clickText(d, `Place Order — ₱${total.toLocaleString("en-PH")}`);
     // Wait for the order to be made, or we would go looking for it before it exists.
     await waitForText(d, "Order placed!");
@@ -105,8 +109,33 @@ describe("Cart and checkout", () => {
         await d.get(`${FRONTEND_URL}/profile?tab=orders`);
         const text = await waitForText(d, GOWN.name);
         assert.ok(
-            text.includes((GOWN.price + DELIVERY_FEE).toLocaleString("en-PH")),
+            text.includes((GOWN.price + (await deliveryFee())).toLocaleString("en-PH")),
             `the order total should be shown. It said:\n${text.slice(0, 600)}`
+        );
+    });
+
+    it("tells the customer who will deliver the order", async () => {
+        const d = getDriver();
+        await startShopping(d);
+
+        await goToCart(d);
+        await goToCheckout(d);
+        const text = await waitForText(d, SHIPPING_METHOD);
+        assert.ok(
+            text.includes(SHIPPING_METHOD),
+            `the checkout should name the courier. It said:\n${text.slice(0, 600)}`
+        );
+
+        // And it is on the order in the customer's own history
+        const total = GOWN.price + (await deliveryFee());
+        await clickText(d, `Place Order — ₱${total.toLocaleString("en-PH")}`);
+        await waitForText(d, "Order placed!");
+
+        await d.get(`${FRONTEND_URL}/profile?tab=orders`);
+        const orders = await waitForText(d, GOWN.name);
+        assert.ok(
+            orders.includes(SHIPPING_METHOD),
+            `the order should say who delivers it. It said:\n${orders.slice(0, 600)}`
         );
     });
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { API_URL, asArray, announceCart, authHeader, EMPTY_CART, isLoggedIn } from "./accountShared";
+import { API_URL, asArray, announceCart, authHeader, DELIVERY_FEE_DEFAULT, EMPTY_CART, isLoggedIn } from "./accountShared";
 
 /**
  * One loader for everything the My Account page shows: profile, orders, custom
@@ -22,6 +22,8 @@ export default function useAccountData({ setUser } = {}) {
   const [designs, setDesigns] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState(EMPTY_CART);
+  // What the shop charges for delivery — set by the owner in the admin console
+  const [deliveryFee, setDeliveryFee] = useState(DELIVERY_FEE_DEFAULT);
   // Which purchased products this customer may review, with their review if any
   const [reviewable, setReviewable] = useState([]);
   const [activityLoading, setActivityLoading] = useState(isLoggedIn);
@@ -59,6 +61,7 @@ export default function useAccountData({ setUser } = {}) {
         axios.get(`${API_URL}/api/favorites`, { headers }),
         axios.get(`${API_URL}/api/cart`, { headers }),
         axios.get(`${API_URL}/api/reviews/reviewable`, { headers }),
+        axios.get(`${API_URL}/api/settings`, { headers }),
       ]);
       if (ignore) return;
 
@@ -67,7 +70,7 @@ export default function useAccountData({ setUser } = {}) {
         return;
       }
 
-      const [profileRes, ordersRes, designsRes, favsRes, cartRes, reviewsRes] = results;
+      const [profileRes, ordersRes, designsRes, favsRes, cartRes, reviewsRes, settingsRes] = results;
 
       if (profileRes.status === "fulfilled") setProfile(profileRes.value.data);
       else setProfileError("We couldn't load your profile. Please try again.");
@@ -76,6 +79,9 @@ export default function useAccountData({ setUser } = {}) {
       if (designsRes.status === "fulfilled") setDesigns(asArray(designsRes.value.data));
       if (favsRes.status === "fulfilled") setFavorites(asArray(favsRes.value.data));
       if (reviewsRes.status === "fulfilled") setReviewable(asArray(reviewsRes.value.data));
+      if (settingsRes.status === "fulfilled" && Number.isFinite(settingsRes.value.data?.deliveryFee)) {
+        setDeliveryFee(settingsRes.value.data.deliveryFee);
+      }
       if (cartRes.status === "fulfilled") {
         setCart(cartRes.value.data || EMPTY_CART);
         announceCart(cartRes.value.data);
@@ -227,6 +233,7 @@ export default function useAccountData({ setUser } = {}) {
     favorites,
     cart,
     setCart,
+    deliveryFee,
     reviewable,
     activityLoading,
     activityError,

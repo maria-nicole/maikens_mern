@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Search, Receipt, HandCoins, RefreshCw } from "lucide-react";
+import { Search, Receipt, HandCoins, RefreshCw, Truck } from "lucide-react";
 import { font, api, errMsg, peso, orderNo, balanceOf, formatDate, formatTime, ORDER_STATUSES } from "./staffLib";
 import { SectionHeader, GhostButton, StatusPill, PaymentPill, EmptyState, Spinner, ErrorNote, ConfirmDialog, inputCls } from "./ui";
 import ReceiptModal from "./ReceiptModal";
 import CollectPaymentModal from "./CollectPaymentModal";
+import ShippingFeeModal from "./ShippingFeeModal";
 
 const EMPTY_FILTERS = { q: "", channel: "", status: "", payment: "", from: "", to: "" };
 
@@ -17,6 +18,7 @@ export default function OrdersView({ notify, onChanged }) {
     const [tick, setTick] = useState(0); // bump to reload
     const [receipt, setReceipt] = useState(null);
     const [collecting, setCollecting] = useState(null);
+    const [shipping, setShipping] = useState(null); // the order whose shipping fee is being set
     const [cancelling, setCancelling] = useState(null); // the order awaiting a "mark as cancelled" confirmation
 
     useEffect(() => {
@@ -66,6 +68,14 @@ export default function OrdersView({ notify, onChanged }) {
         setCollecting(null);
         setReceipt(updated); // show the updated receipt right away
         notify("success", "Payment recorded.");
+        onChanged?.();
+    };
+
+    const shippingDone = (updated) => {
+        replaceOrder(updated);
+        setShipping(null);
+        setReceipt(updated); // show the updated receipt right away
+        notify("success", "Shipping fee updated.");
         onChanged?.();
     };
 
@@ -165,7 +175,7 @@ export default function OrdersView({ notify, onChanged }) {
                                         <td className="px-5 py-3 text-[#4A4136]">{o.customerName}</td>
                                         <td className="max-w-[260px] px-5 py-3 text-[#4A4136]">
                                             <p className="line-clamp-2">{o.item}</p>
-                                            <p className="text-xs text-[#9C8C74]">{o.fulfillment}{o.deliveryMethod ? ` · ${o.deliveryMethod}` : ""}</p>
+                                            <p className="text-xs text-[#9C8C74]">{o.fulfillment}{o.deliveryMethod ? ` · ${o.deliveryMethod}` : ""}{o.shippingMethod ? ` · ${o.shippingMethod}` : ""}</p>
                                         </td>
                                         <td className="px-5 py-3" style={font.mono}>{peso(o.total)}</td>
                                         <td className="px-5 py-3">
@@ -198,6 +208,7 @@ export default function OrdersView({ notify, onChanged }) {
                                         <td className="px-5 py-3">
                                             <div className="flex justify-end gap-2">
                                                 {balance > 0 && <GhostButton icon={HandCoins} onClick={() => setCollecting(o)}>Collect</GhostButton>}
+                                                <GhostButton icon={Truck} onClick={() => setShipping(o)}>Shipping</GhostButton>
                                                 <GhostButton icon={Receipt} onClick={() => setReceipt(o)}>Receipt</GhostButton>
                                             </div>
                                         </td>
@@ -227,6 +238,7 @@ export default function OrdersView({ notify, onChanged }) {
 
             <ReceiptModal order={receipt} onClose={() => setReceipt(null)} />
             {collecting && <CollectPaymentModal order={collecting} onClose={() => setCollecting(null)} onDone={paymentDone} />}
+            {shipping && <ShippingFeeModal order={shipping} onClose={() => setShipping(null)} onDone={shippingDone} />}
             {cancelling && (
                 <ConfirmDialog
                     title="Mark this order as Cancelled?"

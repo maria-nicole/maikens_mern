@@ -10,6 +10,7 @@ import {
   Plus,
   ShoppingBag,
   Trash2,
+  Truck,
 } from "lucide-react";
 import {
   API_URL,
@@ -18,10 +19,10 @@ import {
   announceCart,
   authHeader,
   cardClass,
-  DELIVERY_FEE,
+  DELIVERY_FEE_DEFAULT,
   EMPTY_CART,
   fmt,
-  FULFILLMENT_OPTIONS,
+  fulfillmentOptions,
   inputClass,
   MAX_ADDRESS,
   orderNo,
@@ -30,6 +31,7 @@ import {
   primaryBtn,
   primaryLink,
   sectionHref,
+  SHIPPING_METHOD,
   today,
 } from "./accountShared";
 import { EmptyState } from "./atoms";
@@ -62,7 +64,7 @@ function Steps({ step }) {
  * The line items and their quantities come from useAccountData, so the cart
  * count in the side nav stays in step.
  */
-export default function CartPanel({ cart, profile, busyId, changeQty, removeItem, setCart, reloadCart, reloadOrders }) {
+export default function CartPanel({ cart, profile, deliveryFee, busyId, changeQty, removeItem, setCart, reloadCart, reloadOrders }) {
   const [step, setStep] = useState("cart");
   const [fulfillment, setFulfillment] = useState("Delivery");
   const [payment, setPayment] = useState("GCash");
@@ -73,7 +75,9 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
 
   const items = asArray(cart?.items);
   const blocked = cart?.hasIssues || items.length === 0;
-  const shipping = fulfillment === "Delivery" ? DELIVERY_FEE : 0;
+  // The fee the shop charges (set by the owner in the admin console)
+  const fee = Number.isFinite(deliveryFee) ? deliveryFee : DELIVERY_FEE_DEFAULT;
+  const shipping = fulfillment === "Delivery" ? fee : 0;
   const total = (cart?.subtotal || 0) + shipping;
 
   const startCheckout = () => {
@@ -137,6 +141,11 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
           Order <span className="font-medium text-gray-700">{orderNo(placed)}</span> · {fmt(placed.total)}
         </p>
         <p className="text-sm text-gray-400 mt-1">You can follow its progress from the Orders section.</p>
+        {placed.deliveryMethod === "Delivery" && (
+          <p className="text-sm text-gray-400 mt-1 flex items-center justify-center gap-1.5">
+            <Truck size={13} /> Delivered by {placed.shippingMethod || SHIPPING_METHOD}
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link to={sectionHref("orders")} className={primaryLink}>
             Track My Order
@@ -197,6 +206,11 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
           <span>Shipping</span>
           <span>{step === "cart" ? "Calculated at checkout" : shipping === 0 ? "Free (Pick-up)" : fmt(shipping)}</span>
         </div>
+        {step === "checkout" && fulfillment === "Delivery" && (
+          <p className="flex items-center gap-1 text-xs text-gray-400">
+            <Truck size={11} /> Delivered by {SHIPPING_METHOD}
+          </p>
+        )}
         <div className="flex justify-between font-semibold text-gray-800 pt-2 border-t border-gray-100">
           <span>Total</span>
           <span className="text-yellow-700/89 text-base">{fmt(step === "cart" ? cart.subtotal : total)}</span>
@@ -328,7 +342,7 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
             <div className={`${cardClass} p-5`}>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Delivery</p>
               <div className="grid sm:grid-cols-2 gap-3">
-                {FULFILLMENT_OPTIONS.map((option) => {
+                {fulfillmentOptions(fee).map((option) => {
                   const Icon = option.icon;
                   const active = fulfillment === option.key;
                   return (
@@ -365,6 +379,12 @@ export default function CartPanel({ cart, profile, busyId, changeQty, removeItem
                   maxLength={MAX_ADDRESS}
                   className={`mt-3 ${inputClass}`}
                 />
+              )}
+              {fulfillment === "Delivery" && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
+                  <Truck size={13} className="shrink-0 text-gray-400" />
+                  Delivered by {SHIPPING_METHOD} · {fmt(fee)} shipping
+                </p>
               )}
               {fulfillment === "Pick-up" && (
                 <input

@@ -17,6 +17,7 @@ import {
   Package,
   Star,
   Mail,
+  Settings,
 } from "lucide-react";
 import { font, api, errMsg, initials } from "./adminLib";
 import { PrimaryButton, Spinner } from "./ui";
@@ -30,6 +31,7 @@ import InquiriesView from "./InquiriesView";
 import ReviewsView from "./ReviewsView";
 import UsersView from "./UsersView";
 import ReportsView from "./ReportsView";
+import SettingsView from "./SettingsView";
 
 /**
  * MaikCraft: Admin / Owner console
@@ -48,6 +50,7 @@ const NAV = [
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "users", label: "Users", icon: Users },
   { key: "reports", label: "Reports", icon: BarChart3 },
+  { key: "settings", label: "Settings", icon: Settings },
 ];
 const TAB_KEYS = NAV.map((n) => n.key);
 const REFRESH_OVERVIEW_MS = 30000;
@@ -258,6 +261,7 @@ export default function Admin({ setUser }) {
           {tab === "reviews" && <ReviewsView notify={notify} />}
           {tab === "users" && <UsersView me={me} notify={notify} />}
           {tab === "reports" && <ReportsView notify={notify} />}
+          {tab === "settings" && <SettingsView notify={notify} />}
         </div>
       </div>
 

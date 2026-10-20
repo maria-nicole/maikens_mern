@@ -22,6 +22,7 @@ import cartRoutes from "./routes/cart.route.js";
 import favoritesRoutes from "./routes/favorites.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import staffRoutes from "./routes/staff.route.js";
+import settingsRoutes from "./routes/settings.route.js";
 import contactRoutes from "./routes/contact.route.js";
 import { hasMailProvider, hasSender } from "./mail/mailer.js";
 
@@ -107,6 +108,7 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/reports", reportRoutes);
 
 app.use("/api/staff", staffRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.use("/api/try-on", tryOnRoutes);
 

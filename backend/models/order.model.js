@@ -23,6 +23,11 @@ export const CANCELLED = "Cancelled";
 export const PAYMENT_STATUSES = ["Unpaid", "Partial", "Paid"];
 export const PAYMENT_METHODS = ["Cash", "GCash"];
 
+// Who carries the parcel. Only one courier for now, but it is written on the order
+// so the customer can see who is bringing it, and a second courier can be added later.
+// Keep in sync with frontend/src/components/account/shipping.js
+export const SHIPPING_METHOD = "Lalamove";
+
 export const paymentStatusFor = (total, paid) => {
   const t = Math.round((total || 0) * 100);
   const p = Math.round((paid || 0) * 100);
@@ -83,6 +88,8 @@ const orderSchema = new mongoose.Schema(
     address: { type: String, default: "", trim: true },
     pickupDate: { type: Date },
     shippingFee: { type: Number, min: 0, default: 0 },
+    // The courier for a delivered order, so the customer knows who brings it
+    shippingMethod: { type: String, default: "", trim: true },
     paymentMethod: { type: String, default: "" },
     gcashNumber: { type: String, default: "" },
 

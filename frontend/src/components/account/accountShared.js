@@ -10,6 +10,7 @@
 
 import { Calendar, Heart, MapPin, Package, Settings, ShoppingBag, Smartphone, Sparkles, User } from "lucide-react";
 import { colorLabel, selectionList, swatchFor } from "../../lib/colors";
+import { DELIVERY_FEE_DEFAULT, SHIPPING_METHOD } from "./shipping.js";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -38,11 +39,14 @@ export const orderNo = (o) => `#${String(o._id).slice(-6).toUpperCase()}`;
 export const MAX_AVATAR_MB = 2;
 export const PH_PHONE = /^(09|\+639)\d{9}$/;
 export const MAX_ADDRESS = 250;
-// Display only: the server sets the real fee when the order is placed.
-export const DELIVERY_FEE = 150;
 
-export const FULFILLMENT_OPTIONS = [
-  { key: "Delivery", label: "Delivery", sub: "+₱150 shipping", icon: MapPin },
+// The courier and the delivery fee. The fee is set by the owner in the admin console,
+// so the real number arrives with the account data; the constant here is only a fallback.
+export { SHIPPING_METHOD, DELIVERY_FEE_DEFAULT, courierOf } from "./shipping.js";
+
+// The two ways to get an order. The delivery price is whatever the shop charges.
+export const fulfillmentOptions = (deliveryFee = DELIVERY_FEE_DEFAULT) => [
+  { key: "Delivery", label: "Delivery", sub: `Via ${SHIPPING_METHOD} · +${fmt(deliveryFee)} shipping`, icon: MapPin },
   { key: "Pick-up", label: "Pick-up", sub: "Free · Schedule a date", icon: Calendar },
 ];
 

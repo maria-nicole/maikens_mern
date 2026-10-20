@@ -53,12 +53,27 @@ export const GOWN = {
 // A real file in backend/uploads, so the product has a picture to show.
 export const GOWN_IMAGE = "/uploads/02c3dbee-f6c0-44ed-8119-29cf00e85e9c.jpg";
 
-// What the shop charges for delivery, and the shape of a valid GCash number. Both come
-// from the frontend's own account helpers; they are repeated here so a change in the
-// app is a change in one place.
+// The default delivery fee. The owner can change it in the admin console, so the
+// suite asks the shop what it charges now (see deliveryFee below) rather than
+// trusting this number.
 export const DELIVERY_FEE = 150;
 export const GCASH_NUMBER = "09171234567";
 export const DELIVERY_ADDRESS = "Stall A18, Wedding Depot, Grace Park Street, Pandi";
+
+// Who carries the deliveries. Must match backend/models/order.model.js
+export const SHIPPING_METHOD = "Lalamove";
+
+// The owner sets the delivery fee in the admin console, so the suite asks the shop
+// what it charges now rather than assuming the default.
+export const deliveryFee = async () => {
+    try {
+        const res = await fetch(`${API_URL}/api/settings`);
+        const data = await res.json();
+        return Number.isFinite(data?.deliveryFee) ? data.deliveryFee : DELIVERY_FEE;
+    } catch {
+        return DELIVERY_FEE;
+    }
+};
 
 export const ORDER_STATUSES = [
     "Order Received",

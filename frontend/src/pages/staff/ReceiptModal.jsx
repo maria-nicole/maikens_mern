@@ -57,6 +57,12 @@ export default function ReceiptModal({ order, onClose }) {
                                 <span style={font.mono}>{peso(order.shippingFee)}</span>
                             </div>
                         )}
+                        {order.shippingMethod && (
+                            <div className="flex justify-between text-xs text-[#8B8072]">
+                                <span>Delivered by</span>
+                                <span>{order.shippingMethod}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-3 flex justify-between border-t border-[#EFE9E3] pt-3 text-sm font-semibold text-[#241F1A]">

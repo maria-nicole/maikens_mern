@@ -92,6 +92,7 @@ export default function Profile({ setUser }) {
             <CartPanel
               cart={account.cart}
               profile={account.profile}
+              deliveryFee={account.deliveryFee}
               busyId={account.busyId}
               changeQty={account.changeQty}
               removeItem={account.removeItem}

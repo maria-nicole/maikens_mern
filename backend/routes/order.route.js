@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
-import { Order, ORDER_STATUSES } from "../models/order.model.js";
+import { Order, ORDER_STATUSES, SHIPPING_METHOD } from "../models/order.model.js";
+import { getSettings } from "../models/settings.model.js";
 import { Product } from "../models/product.model.js";
 import { Cart } from "../models/cart.model.js";
 import { Customization } from "../models/customization.model.js";
@@ -8,11 +9,11 @@ import { Message } from "../models/message.model.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 import { HIDDEN_FROM_PUBLIC, refreshStatuses } from "../utils/stock.js";
 import { setOrderStatus } from "../utils/orderStatus.js";
+import { setShippingFee, cleanShippingFee } from "../utils/shipping.js";
 
 const router = express.Router();
 router.use(protect); // every order route needs a login; customer routes come first, admin routes after adminOnly
 
-const DELIVERY_FEE = 150; // must match the fee shown on the cart page
 const MAX_ADDRESS = 250;
 const PH_MOBILE = /^(09|\+639)\d{9}$/;
 
@@ -100,7 +101,9 @@ router.post("/checkout", async (req, res) => {
     }
 
     const subtotal = lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
-    const shippingFee = deliveryMethod === "Delivery" ? DELIVERY_FEE : 0;
+    // The fee is whatever the shop has set in its settings (admin console)
+    const { deliveryFee } = await getSettings();
+    const shippingFee = deliveryMethod === "Delivery" ? deliveryFee : 0;
     const summary = lines
       .map((l) => `${l.name}${l.size ? ` (${l.size})` : ""}${l.quantity > 1 ? ` ×${l.quantity}` : ""}`)
       .join(", ")
@@ -117,6 +120,7 @@ router.post("/checkout", async (req, res) => {
       reserved: reserved.map((r) => ({ productId: r.productId, size: r.size, quantity: r.quantity })),
       total: subtotal + shippingFee,
       shippingFee,
+      shippingMethod: deliveryMethod === "Delivery" ? SHIPPING_METHOD : "",
       deliveryMethod,
       address: deliveryMethod === "Delivery" ? cleanAddress : "",
       pickupDate: pickup,
@@ -225,6 +229,25 @@ router.patch("/:id/status", async (req, res) => {
   } catch (err) {
     if (!err.status) console.error("Order status update failed:", err);
     res.status(err.status || 400).json({ message: err.status ? err.message : "Couldn't update the order. Please try again." });
+  }
+});
+
+// Set the shipping fee on an order (the courier's actual charge). The total and the
+// payment status follow it, so the balance owed moves with it.
+router.patch("/:id/shipping", async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) throw httpError(404, "Order not found.");
+    const fee = cleanShippingFee(req.body?.shippingFee);
+    if (fee === null) throw httpError(400, "Enter a shipping fee of 0 or more.");
+    const order = await Order.findById(req.params.id);
+    if (!order) throw httpError(404, "Order not found.");
+
+    setShippingFee(order, fee);
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    if (!err.status) console.error("Shipping fee update failed:", err);
+    res.status(err.status || 400).json({ message: err.status ? err.message : "Couldn't update the shipping fee. Please try again." });
   }
 });
 

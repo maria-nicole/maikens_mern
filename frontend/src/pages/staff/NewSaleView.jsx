@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Search, Plus, Minus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Plus, Minus, Trash2, Truck } from "lucide-react";
 import { font, api, errMsg, assetUrl, peso, shortId } from "./staffLib";
 import { SectionHeader, PrimaryButton, Segmented, Spinner, EmptyState, ErrorNote, StockPill, inputCls } from "./ui";
 import ReceiptModal from "./ReceiptModal";
@@ -15,9 +15,23 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
     const [payInFull, setPayInFull] = useState(true);
     const [deposit, setDeposit] = useState("");
     const [cashReceived, setCashReceived] = useState("");
+    const [shippingFee, setShippingFee] = useState(""); // only when the sale is being delivered
+    const [shopFee, setShopFee] = useState(null); // the shop's usual delivery fee
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
     const [receipt, setReceipt] = useState(null);
+
+    // The usual delivery fee, so the common case is one click
+    useEffect(() => {
+        let ignore = false;
+        api
+            .get("/settings")
+            .then(({ data }) => !ignore && setShopFee(data.deliveryFee))
+            .catch(() => {});
+        return () => {
+            ignore = true;
+        };
+    }, []);
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -72,7 +86,9 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
     const removeLine = (line) => setCart((prev) => prev.filter((l) => l !== line));
 
     /* ---- totals ---- */
-    const total = cart.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+    const shipping = shippingFee === "" ? 0 : Number(shippingFee);
+    const shippingValid = Number.isFinite(shipping) && shipping >= 0;
+    const total = cart.reduce((s, l) => s + l.unitPrice * l.quantity, 0) + (shippingValid ? shipping : 0);
     const hasMadeToOrder = cart.some((l) => l.madeToOrder);
     const takingDeposit = hasMadeToOrder && !payInFull;
     const paying = takingDeposit ? Number(deposit) || 0 : total;
@@ -80,7 +96,7 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
     const tendered = Number(cashReceived) || 0;
     const change = method === "Cash" && cashReceived !== "" ? tendered - paying : null;
     const cashShort = change !== null && change < 0;
-    const canSubmit = cart.length > 0 && customer.trim() && !depositInvalid && !cashShort && !submitting;
+    const canSubmit = cart.length > 0 && customer.trim() && !depositInvalid && !cashShort && shippingValid && !submitting;
 
     const submit = async () => {
         if (!canSubmit) return;
@@ -93,12 +109,14 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
                 paymentMethod: method,
                 amountPaid: paying,
                 cashReceived: method === "Cash" && cashReceived !== "" ? tendered : undefined,
+                shippingFee: shipping,
             });
             setReceipt(data);
             setCart([]);
             setCustomer("");
             setDeposit("");
             setCashReceived("");
+            setShippingFee("");
             setPayInFull(true);
             onSold(); // stock changed, so refresh the product list
         } catch (err) {
@@ -242,6 +260,35 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
                             <Segmented label="Payment method" value={method} options={["Cash", "GCash"]} onChange={setMethod} />
                         </div>
 
+                        <div>
+                            <label htmlFor="shipping-fee" className="mb-1.5 block text-sm font-medium text-[#241F1A]">
+                                Shipping fee (optional)
+                            </label>
+                            <input
+                                id="shipping-fee"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={shippingFee}
+                                onChange={(e) => setShippingFee(e.target.value)}
+                                placeholder="0"
+                                className={inputCls}
+                                style={font.mono}
+                            />
+                            <p className="mt-1.5 text-xs text-[#8B8072]">
+                                Leave it at 0 for a pick-up. A delivery is carried by Lalamove.
+                            </p>
+                            {shopFee !== null && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShippingFee(String(shopFee))}
+                                    className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-[#9C7A3C] hover:underline"
+                                >
+                                    <Truck size={12} /> Use the usual fee ({peso(shopFee)})
+                                </button>
+                            )}
+                        </div>
+
                         {hasMadeToOrder && (
                             <div>
                                 <p className="mb-1.5 text-sm font-medium text-[#241F1A]">Amount to pay now</p>
@@ -282,6 +329,12 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
                     </div>
 
                     <dl className="mt-5 space-y-1.5 border-t border-[#EFE9E3] pt-4 text-sm">
+                        {shipping > 0 && (
+                            <div className="flex justify-between">
+                                <dt className="text-[#8B8072]">Shipping</dt>
+                                <dd style={font.mono}>{peso(shipping)}</dd>
+                            </div>
+                        )}
                         <div className="flex justify-between"><dt className="text-[#8B8072]">Total</dt><dd className="text-lg" style={{ ...font.display, color: "#241F1A" }}>{peso(total)}</dd></div>
                         {takingDeposit && (
                             <>

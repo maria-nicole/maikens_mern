@@ -7,9 +7,11 @@
      • drawSlip(ctx, layout, images) paints that list onto a canvas
    so the geometry can be produced and inspected without a browser.
 
-   This file deliberately imports nothing: it is the one piece that can be rendered
-   outside the app to check the result.
+   This file deliberately imports nothing outside the app: it is the one piece that can
+   be rendered outside the app to check the result.
 ------------------------------------------------------------------------------------------- */
+
+import { courierOf } from "./shipping.js";
 
 export const SLIP_WIDTH = 720; // logical pixels — the canvas is drawn at SLIP_SCALE times this
 export const SLIP_SCALE = 2; // 2x, so Messenger's compression doesn't make it fuzzy
@@ -254,6 +256,13 @@ export function slipLayout(order, { measure = roughMeasure, resolveImage = (p) =
   const addressLines = wrapText(deliveryLine(order), addressFont, contentW, m, 2);
   addressLines.forEach((line, i) => text({ x: PAD, y: by + i * 19, text: line, font: addressFont, color: INK }));
   by += addressLines.length * 19;
+
+  // Who brings it
+  const courier = courierOf(order);
+  if (courier) {
+    by += 20;
+    text({ x: PAD, y: by, text: `Delivered by ${courier}`, font: font(13.5), color: MUTED });
+  }
 
   by += 26;
   text({ x: PAD, y: by, text: "PAYMENT", font: font(11, 700), color: MUTED });
@@ -550,6 +559,7 @@ export function slipText(order) {
           : "Nothing due",
     "",
     order?.deliveryMethod === "Pick-up" ? `Pick-up: ${slipDate(order?.pickupDate)}` : `Delivery: ${deliveryLine(order)}`,
+    ...(courierOf(order) ? [`Delivered by: ${courierOf(order)}`] : []),
     `Payment: ${paymentLine(order)}`,
     "",
     "Send this to MAIKENS on Messenger and we'll confirm your order.",
