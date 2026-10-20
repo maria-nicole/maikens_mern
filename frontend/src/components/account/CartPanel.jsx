@@ -34,7 +34,7 @@ import {
   SHIPPING_METHOD,
   today,
 } from "./accountShared";
-import { EmptyState } from "./atoms";
+import { EmptyState, PaymentPolicyNote } from "./atoms";
 import SaveOrderButton from "./SaveOrderButton";
 
 const CHECKOUT_STEPS = [
@@ -440,6 +440,11 @@ export default function CartPanel({ cart, profile, deliveryFee, busyId, changeQt
                   </p>
                 </>
               )}
+
+              {/* What the customer is agreeing to when they place the order. It sits
+                  under the method rather than beside it, so it reads as the terms
+                  around paying and not as another way to pay. */}
+              <PaymentPolicyNote />
             </div>
           </div>
 

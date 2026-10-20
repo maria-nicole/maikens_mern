@@ -1,9 +1,28 @@
 import { Link, useLocation } from "react-router-dom";
-import { Check, Lock, Loader2, Package, Sparkles } from "lucide-react";
-import { DESIGN_STATUS, FALLBACK_STATUS, NAVBAR_PT, ORDER_STATUS, assetUrl, cardClass, primaryLink } from "./accountShared";
+import { Check, Info, Lock, Loader2, Package, Sparkles } from "lucide-react";
+import { DESIGN_STATUS, FALLBACK_STATUS, NAVBAR_PT, ORDER_STATUS, PAYMENT_POLICY, assetUrl, cardClass, primaryLink } from "./accountShared";
 
 /* Small building blocks shared by the account panels. Keeping them here means the
    order card, the design card and the overview all show the same badges and thumbnails. */
+
+/* How the boutique takes payment: half up front, and payments are not refundable.
+   Shown at checkout and in My Orders, so the customer meets the same terms in both
+   places. It reads as a gentle notice box rather than a warning, matching the delivery
+   note beside it, because it is information the customer needs and not an error. */
+export function PaymentPolicyNote({ className = "" }) {
+  return (
+    <div className={`mt-3 flex items-start gap-2 rounded-xl bg-[#FBF8F3] px-3 py-2.5 text-sm text-[#4A4136] ${className}`}>
+      <Info size={15} className="mt-0.5 shrink-0 text-[#9C7A3C]" />
+      <div className="space-y-1.5">
+        {PAYMENT_POLICY.map((rule) => (
+          <p key={rule.title}>
+            <strong className="font-semibold text-[#241F1A]">{rule.title}.</strong> {rule.body}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Toast({ text }) {
   if (!text) return null;

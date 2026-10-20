@@ -52,6 +52,9 @@ export const MAX_ADDRESS = 250;
 // so the real number arrives with the account data; the constant here is only a fallback.
 export { SHIPPING_METHOD, DELIVERY_FEE_DEFAULT, courierOf } from "./shipping.js";
 
+// How the boutique takes payment. Shown at checkout, in My Orders and on the slip.
+export { PAYMENT_POLICY, paymentPolicyLines } from "./shipping.js";
+
 // The two ways to get an order. The delivery price is whatever the shop charges.
 export const fulfillmentOptions = (deliveryFee = DELIVERY_FEE_DEFAULT) => [
   { key: "Delivery", label: "Delivery", sub: `Via ${SHIPPING_METHOD} · +${fmt(deliveryFee)} shipping`, icon: MapPin },

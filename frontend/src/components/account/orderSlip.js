@@ -11,7 +11,7 @@
    be rendered outside the app to check the result.
 ------------------------------------------------------------------------------------------- */
 
-import { courierOf } from "./shipping.js";
+import { courierOf, paymentPolicyLines } from "./shipping.js";
 
 export const SLIP_WIDTH = 720; // logical pixels — the canvas is drawn at SLIP_SCALE times this
 export const SLIP_SCALE = 2; // 2x, so Messenger's compression doesn't make it fuzzy
@@ -351,9 +351,22 @@ export function slipLayout(order, { measure = roughMeasure, resolveImage = (p) =
     text({ x: PAD, y: by, text: "Nothing due", font: font(13.5), color: MUTED });
   }
 
-  /* ── Footer band ── */
+  /* ── Footer band ──
+     The confirmation line, then the payment terms, then who we are. The terms are the
+     same sentences the checkout and My Orders show, so a slip that reaches Messenger
+     says the same thing as the screen it came from.
+
+     The line cap is set well above the two lines these sentences actually need, on
+     purpose: wrapText ellipsises whatever is past the cap, and losing the tail of a
+     refund term ("...including a") would be worse than a taller slip. The band is sized
+     from the lines that come back, so the page grows to fit either way. */
+  const policyFont = font(12.5);
+  const policyLines = paymentPolicyLines().flatMap((line) =>
+    wrapText(line, policyFont, contentW, m, 20)
+  );
+
   const footTop = by + 34;
-  const footH = 76;
+  const footH = 76 + policyLines.length * 17;
   rect(0, footTop, W, footH, FOOT_BG);
   rule(0, footTop, W);
   text({
@@ -363,9 +376,14 @@ export function slipLayout(order, { measure = roughMeasure, resolveImage = (p) =
     font: font(13, 500),
     color: INK_SOFT,
   });
+
+  policyLines.forEach((line, i) =>
+    text({ x: PAD, y: footTop + 54 + i * 17, text: line, font: policyFont, color: INK_SOFT })
+  );
+
   text({
     x: PAD,
-    y: footTop + 53,
+    y: footTop + 54 + policyLines.length * 17 + 6,
     text: "Maikens Gown & Barong · maikens-mern.vercel.app",
     font: font(11.5),
     color: MUTED,
@@ -561,6 +579,8 @@ export function slipText(order) {
     order?.deliveryMethod === "Pick-up" ? `Pick-up: ${slipDate(order?.pickupDate)}` : `Delivery: ${deliveryLine(order)}`,
     ...(courierOf(order) ? [`Delivered by: ${courierOf(order)}`] : []),
     `Payment: ${paymentLine(order)}`,
+    "",
+    ...paymentPolicyLines(),
     "",
     "Send this to MAIKENS on Messenger and we'll confirm your order.",
   ];

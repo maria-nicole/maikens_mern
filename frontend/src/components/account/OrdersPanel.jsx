@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Package, Star } from "lucide-react";
 import { cardClass, courierOf, fmt, formatDate, orderNo, primaryLink } from "./accountShared";
-import { EmptyState, OrderProgress, OrderThumb, Skeleton, StatusPill } from "./atoms";
+import { EmptyState, OrderProgress, OrderThumb, PaymentPolicyNote, Skeleton, StatusPill } from "./atoms";
 import SaveOrderButton from "./SaveOrderButton";
 import { paymentSummary } from "./orderSlip";
 import ReviewForm from "../reviews/ReviewForm";
@@ -93,6 +93,10 @@ export default function OrdersPanel({ orders, loading, reviewable = [], onSaveRe
       <p className="text-xs text-gray-400">
         {orders.length} {orders.length === 1 ? "order" : "orders"} · newest first
       </p>
+
+      {/* The terms live once per panel rather than on every card, so a customer with a
+          dozen orders still reads them once. */}
+      <PaymentPolicyNote />
 
       <div className="grid lg:grid-cols-2 gap-4 items-start">
         {orders.map((order) => (

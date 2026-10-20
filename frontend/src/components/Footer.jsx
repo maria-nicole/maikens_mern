@@ -32,8 +32,8 @@ export default function Footer() {
                     <div>
                         <h2 className="mb-6 text-sm font-semibold uppercase text-gray-900">Help</h2>
                         <ul className="flex flex-col gap-5">
-                            <li><a href="#" className={linkClass}>Payment Options</a></li>
-                            <li><a href="#" className={linkClass}>Returns</a></li>
+                            <li><Link to="/payment-policy" className={linkClass}>Payment Options</Link></li>
+                            <li><Link to="/payment-policy" className={linkClass}>Returns</Link></li>
                             <li><a href="#" className={linkClass}>Privacy Policies</a></li>
                         </ul>
                     </div>

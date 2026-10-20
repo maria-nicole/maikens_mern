@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Catalog from "./pages/Catalog";
 import Contact from "./pages/Contact";
+import PaymentPolicy from "./pages/PaymentPolicy";
 import Product from "./pages/Product";
 import Profile from "./pages/customer_profile/Profile";
 import { FavoritesRedirect, MyCartRedirect } from "./components/account/AccountRedirects";
@@ -52,6 +53,7 @@ function Layout({ user, setUser }) {
         <Route path="/profile" element={<Profile setUser={setUser} />} />
         <Route path="/favorites" element={<FavoritesRedirect />} />
         <Route path="/contact" element={<Contact user={user} />} />
+        <Route path="/payment-policy" element={<PaymentPolicy />} />
         <Route path="/product/:id" element={<Product user={user} />} />
         <Route path="/message" element={<Message user={user} />} />
         <Route path="/customize" element={<Customize user={user} />} />
