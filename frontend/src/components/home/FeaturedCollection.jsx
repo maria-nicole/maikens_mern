@@ -20,18 +20,21 @@ export default function FeaturedCollection({ loading, items, count }) {
                 </Link>
             </div>
 
-            {/* Two per row on every phone (a single column made the page far too long
-                on a 375px screen), three on a tablet. */}
+            {/* Two per row on every phone, three on a tablet. Only the first two are
+                shown on a phone: a lone third card on its own row looked uneven. */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
                 {loading
                     ? Array.from({ length: count }).map((_, i) => (
-                        <div key={i} className="aspect-[3/4] animate-pulse rounded-lg bg-zinc-100" />
+                        <div
+                            key={i}
+                            className={`aspect-[3/4] animate-pulse rounded-lg bg-zinc-100 ${i === 2 ? "hidden sm:block" : ""}`}
+                        />
                     ))
-                    : items.map((item) => (
+                    : items.map((item, i) => (
                         <Link
                             key={item.id}
                             to={`/product/${item.id}`}
-                            className="group relative block aspect-[3/4] overflow-hidden rounded-lg bg-zinc-100"
+                            className={`group relative block aspect-[3/4] overflow-hidden rounded-lg bg-zinc-100 ${i === 2 ? "hidden sm:block" : ""}`}
                         >
                             <img
                                 src={item.image}
