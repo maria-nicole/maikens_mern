@@ -124,7 +124,7 @@ export default function ProductsView({ notify, onChanged }) {
                 {products === null && !error ? (
                     <Spinner label="Loading products…" />
                 ) : (
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full min-w-[820px] text-left text-sm">
                         <thead>
                             <tr className="border-b border-[#EFE9E3] text-xs uppercase tracking-wide text-[#9C8C74]">
                                 <th className="px-5 py-3 font-medium">Product</th>

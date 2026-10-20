@@ -86,7 +86,7 @@ export default function InventoryView({ products, loading, loadError, onRefresh 
                     <Spinner label="Loading inventory…" />
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                        <table className="w-full min-w-[820px] text-left text-sm">
                             <thead className="bg-[#FBF8F3] text-xs uppercase tracking-wide text-[#9C8C74]">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">Product</th>

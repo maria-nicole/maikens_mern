@@ -117,7 +117,7 @@ export default function ReviewsView({ notify }) {
                         hint={filter === "hidden" ? "Nothing has been hidden." : "Customer reviews appear as soon as an order is completed."}
                     />
                 ) : (
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full min-w-[760px] text-left text-sm">
                         <thead>
                             <tr className="border-b border-[#EFE9E3] text-xs uppercase tracking-wide text-[#9C8C74]">
                                 <th className="px-5 py-3 font-medium">Item</th>

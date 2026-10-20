@@ -29,13 +29,13 @@ export default function ChatCard() {
 
             <div className="mt-6 border-t border-yellow-700/20 pt-5">
                 <p className="mb-3 text-sm text-stone-600">You can also find us on</p>
-                <div className="flex gap-4">
+                <div className="flex gap-1">
                     {SOCIALS.map(({ Icon, href, label }) => (
                         <a
                             key={label}
                             href={href}
                             aria-label={label}
-                            className="text-stone-600 transition-colors hover:text-yellow-700/89"
+                            className="flex h-10 w-10 items-center justify-center rounded-lg text-stone-600 transition-colors hover:bg-yellow-700/10 hover:text-yellow-700/89 focus:outline-none focus:ring-2 focus:ring-yellow-700/40"
                         >
                             <Icon className="h-5 w-5" />
                         </a>

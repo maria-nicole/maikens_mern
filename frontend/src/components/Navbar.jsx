@@ -176,16 +176,17 @@ const Navbar = ({ user, error, setUser }) => {
     <nav className="fixed inset-s-0 top-0 z-20 w-full border-b border-yellow-500 bg-white/80 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
 
-        {/* Brand */}
-        <Link to="/" onClick={closeMenus} className="flex items-center gap-2.5">
-          <span className="whitespace-nowrap font-serif text-2xl font-bold tracking-wide text-stone-800 md:text-[1.7rem]">
+        {/* Brand. It may shrink (and the wordmark may clip) rather than push the bar
+            onto a second line, which would make the fixed header taller. */}
+        <Link to="/" onClick={closeMenus} className="flex min-w-0 items-center gap-2.5">
+          <span className="truncate whitespace-nowrap font-serif text-xl font-bold tracking-wide text-stone-800 sm:text-2xl lg:text-[1.7rem]">
             Maikens <span className="text-amber-700">Gown &amp; Barong</span>
           </span>
         </Link>
 
         {/* Right side: cart, account, and the mobile menu button. All three are the
             same size whether or not anyone is signed in, so the bar never shifts. */}
-        <div className="flex items-center gap-1 md:order-2">
+        <div className="flex shrink-0 items-center gap-1 lg:order-2">
           <Link
             to={user ? "/profile?tab=cart" : "/login"}
             state={user ? undefined : { from: { pathname: "/profile?tab=cart" } }}
@@ -263,19 +264,22 @@ const Navbar = ({ user, error, setUser }) => {
             onClick={() => setMobileOpen((open) => !open)}
             aria-controls="navbar-user"
             aria-expanded={mobileOpen}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-stone-600 transition-colors hover:bg-amber-50 hover:text-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-200 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-stone-600 transition-colors hover:bg-amber-50 hover:text-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-200 lg:hidden"
           >
             <span className="sr-only">{mobileOpen ? "Close main menu" : "Open main menu"}</span>
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
 
-        {/* Links: inline from md up, folded into the panel below md */}
+        {/* Links: inline from lg up, folded into the panel below lg. The wrapping
+            breakpoint matters: the brand, the links and the three buttons only fit on
+            one line from about 1024px up, so the bar switches to the panel below that.
+            Otherwise the row wraps and the fixed header grows over the page. */}
         <div
           id="navbar-user"
-          className={`${mobileOpen ? "block" : "hidden"} w-full border-t border-amber-100 pt-3 md:order-1 md:block md:w-auto md:border-0 md:pt-0`}
+          className={`${mobileOpen ? "block" : "hidden"} w-full border-t border-amber-100 pt-3 lg:order-1 lg:block lg:w-auto lg:border-0 lg:pt-0`}
         >
-          <ul className="flex flex-col md:flex-row md:items-center md:gap-1">
+          <ul className="flex flex-col lg:flex-row lg:items-center lg:gap-1">
             {NAV_LINKS.map((link) => (
               <li key={link.to}>
                 <Link to={link.to} onClick={closeMenus} className={navLinkClass(isActive(link))}>
@@ -286,7 +290,7 @@ const Navbar = ({ user, error, setUser }) => {
           </ul>
 
           {/* Small screens only: the same account shortcuts the avatar menu offers */}
-          <ul className="mt-3 space-y-1 border-t border-amber-100 pt-3 md:hidden">
+          <ul className="mt-3 space-y-1 border-t border-amber-100 pt-3 lg:hidden">
             {user ? (
               <>
                 {accountRows.map((row) => (

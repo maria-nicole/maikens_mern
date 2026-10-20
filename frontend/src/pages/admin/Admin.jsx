@@ -180,7 +180,7 @@ export default function Admin({ setUser }) {
                 <p className="text-[10px] uppercase tracking-[0.16em] text-[#9C8C74]">Admin console</p>
               </div>
             </div>
-            <button onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" className="text-[#C9BFAF] hover:text-white sm:hidden">
+            <button onClick={() => setSidebarOpen(false)} aria-label="Close sidebar" className="-mr-1 flex h-10 w-10 items-center justify-center rounded-lg text-[#C9BFAF] transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#C9A96A]/50 sm:hidden">
               <X size={18} />
             </button>
           </div>
