@@ -34,6 +34,18 @@ export const waitForCode = async (email, timeoutMs = 20000) => {
     throw new Error(`No verification code was sent to ${email} within ${timeoutMs}ms`);
 };
 
+// The password-reset link from the most recent email to this address. It arrives as a
+// button rather than a code, so it is read out of the message's HTML the same way.
+export const waitForResetLink = async (email, timeoutMs = 20000) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        const link = mailbox?.linkFor(email);
+        if (link) return link;
+        await sleep(100);
+    }
+    throw new Error(`No password reset link was sent to ${email} within ${timeoutMs}ms`);
+};
+
 /* ------------------------------- the browser ------------------------------ */
 
 export const launchBrowser = async ({ headed = false } = {}) => {

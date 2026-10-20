@@ -1,6 +1,8 @@
 import {
 	verificationEmailTemplate,
 	welcomeEmailTemplate,
+	passwordResetRequestTemplate,
+	passwordResetSuccessTemplate,
 } from "./emailTemplates.js";
 import { sendMail } from "./mailer.js";
 
@@ -29,5 +31,33 @@ export const sendWelcomeEmail = async (email, name) => {
 	} catch (error) {
 		console.error("Error sending welcome email:", error);
 		throw new Error("Couldn't send the welcome email.");
+	}
+};
+
+export const sendPasswordResetEmail = async (email, resetURL) => {
+	try {
+		await sendMail({
+			to: email,
+			subject: "Reset your Maikens password",
+			text: `Reset your Maikens password here: ${resetURL} — the link expires in 1 hour. If you didn't ask for this, you can ignore this email.`,
+			html: passwordResetRequestTemplate({ resetURL }),
+		});
+	} catch (error) {
+		console.error("Error sending password reset email:", error);
+		throw new Error("Couldn't send the password reset email.");
+	}
+};
+
+export const sendPasswordChangedEmail = async (email) => {
+	try {
+		await sendMail({
+			to: email,
+			subject: "Your Maikens password was changed",
+			text: "Your Maikens password was just changed. If this wasn't you, please contact the boutique right away.",
+			html: passwordResetSuccessTemplate(),
+		});
+	} catch (error) {
+		console.error("Error sending password changed email:", error);
+		throw new Error("Couldn't send the password changed email.");
 	}
 };

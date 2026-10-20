@@ -5,7 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
-import { sendVerificationEmail, sendWelcomeEmail } from "../mail/emails.js";
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail } from "../mail/emails.js";
 import { hasMailProvider } from "../mail/mailer.js";
 
 
@@ -19,10 +19,13 @@ const signupLimit = rateLimit({ windowMs: 60 * 60 * 1000, max: 10 });
 const verifyLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });
 
 const CODE_TTL_MS = 15 * 60 * 1000;
+const RESET_TTL_MS = 60 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_ATTEMPTS = 5;
-// These fields are select:false in the model, so routes that need them ask for them
+// These fields are select:false in the model, so routes that need them ask for them.
+// `password` is select:false too, so anywhere that checks a password must ask for it.
 const WITH_CODE = "+verificationToken +verificationTokenExpiresAt +verificationAttempts";
+const WITH_CODE_AND_PASSWORD = `${WITH_CODE} +password`;
 
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 const hashCode = (code) => crypto.createHash("sha256").update(String(code)).digest("hex");
@@ -180,7 +183,7 @@ router.post("/login", loginLimit, async (req, res) => {
         const password = String(req.body?.password || "");
         if (!email || !password) return res.status(400).json({ message: "Please fill all the fields." });
 
-        const user = await User.findOne({ email }).select(WITH_CODE);
+        const user = await User.findOne({ email }).select(WITH_CODE_AND_PASSWORD);
         if (!user || !(await user.matchPassword(password))) {
             return res.status(401).json({ message: "Invalid credentials." });
         }
@@ -267,6 +270,86 @@ router.post("/google", async (req, res) => {
     } catch (err) {
         console.error("Google auth failed:", err.message);
         res.status(401).json({ message: "Google sign-in failed. Please try again." });
+    }
+});
+
+/* --------------------------- Forgot password --------------------------- */
+// Always answers the same way, whether or not the email exists. Otherwise this endpoint
+// becomes a way to test which email addresses have accounts here.
+router.post("/forgot-password", loginLimit, async (req, res) => {
+    const generic = { message: "If that email has an account, we've sent a reset link." };
+    try {
+        const email = String(req.body?.email || "").trim().toLowerCase();
+        if (!email) return res.status(400).json({ message: "Enter your email address." });
+
+        // `password` is select:false, so it must be asked for by name — otherwise every
+        // account would look like a Google-only one and no reset link would ever be sent.
+        const user = await User.findOne({ email }).select("+password");
+
+        // Google-only accounts have no password to reset, and deactivated ones stay out.
+        if (!user || user.isActive === false || !user.password) return res.status(200).json(generic);
+
+        const token = crypto.randomBytes(32).toString("hex");
+        user.resetToken = hashCode(token);
+        user.resetTokenExpiresAt = new Date(Date.now() + RESET_TTL_MS);
+        await user.save();
+
+        // Without a mail provider the link can't be delivered, so log it to make the flow
+        // testable locally — the same convenience the verification code has.
+        const base = process.env.CLIENT_URL || "http://localhost:5173";
+        const resetURL = `${base}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+        if (!hasMailProvider()) {
+            if (process.env.NODE_ENV !== "production") console.log(`[dev] password reset link for ${email}: ${resetURL}`);
+        } else {
+            try {
+                await sendPasswordResetEmail(email, resetURL);
+            } catch {
+                // A failed send must not tell the caller the address exists
+            }
+        }
+
+        res.status(200).json(generic);
+    } catch (err) {
+        console.error("Forgot password failed:", err);
+        res.status(500).json({ message: "Couldn't send the reset link. Please try again." });
+    }
+});
+
+/* --------------------------- Reset password --------------------------- */
+router.post("/reset-password", loginLimit, async (req, res) => {
+    try {
+        const email = String(req.body?.email || "").trim().toLowerCase();
+        const token = String(req.body?.token || "").trim();
+        const password = String(req.body?.password || "");
+
+        if (!email || !token) return res.status(400).json({ message: "That reset link is incomplete. Please request a new one." });
+        if (password.length < 8 || !/\d/.test(password)) {
+            return res.status(400).json({ message: "Password must be at least 8 characters and contain a number." });
+        }
+
+        const user = await User.findOne({ email }).select("+resetToken +resetTokenExpiresAt");
+        if (!user || !user.resetToken || !user.resetTokenExpiresAt || user.resetTokenExpiresAt <= Date.now()) {
+            return res.status(400).json({ message: "That reset link has expired. Please request a new one." });
+        }
+        if (hashCode(token) !== user.resetToken) {
+            return res.status(400).json({ message: "That reset link isn't valid. Please request a new one." });
+        }
+
+        user.password = password; // hashed by the pre-save hook
+        user.resetToken = undefined; // single-use
+        user.resetTokenExpiresAt = undefined;
+        // Proving control of the inbox also proves the email, so let them straight in
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpiresAt = undefined;
+        await user.save();
+
+        sendPasswordChangedEmail(email).catch(() => {});
+
+        res.status(200).json(session(user));
+    } catch (err) {
+        console.error("Reset password failed:", err);
+        res.status(500).json({ message: "Couldn't reset the password. Please try again." });
     }
 });
 

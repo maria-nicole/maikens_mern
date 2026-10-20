@@ -46,4 +46,7 @@ const customizationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// The customer's own design list, and the owner's review queue, both filter on these.
+customizationSchema.index({ customer: 1, createdAt: -1 });
+
 export const Customization = mongoose.model("Customization", customizationSchema);

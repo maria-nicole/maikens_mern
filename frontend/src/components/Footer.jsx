@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { BsFacebook } from "react-icons/bs";
+import { MESSENGER_URL } from "./account/accountShared";
 
 const linkClass = "text-sm text-gray-600 hover:text-gray-900 hover:underline";
 
@@ -34,7 +35,7 @@ export default function Footer() {
                         <ul className="flex flex-col gap-5">
                             <li><Link to="/payment-policy" className={linkClass}>Payment Options</Link></li>
                             <li><Link to="/payment-policy" className={linkClass}>Returns</Link></li>
-                            <li><a href="#" className={linkClass}>Privacy Policies</a></li>
+                            <li><Link to="/privacy-policy" className={linkClass}>Privacy Policies</Link></li>
                         </ul>
                     </div>
                 </div>
@@ -44,9 +45,15 @@ export default function Footer() {
 
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
                 <span className="text-sm text-gray-500">
-                    © 2026 <a href="#" className="hover:underline">MAIKENS GOWN &amp; BARONG</a>. All Rights Reserved.
+                    © 2026 <Link to="/" className="hover:underline">MAIKENS GOWN &amp; BARONG</Link>. All Rights Reserved.
                 </span>
-                <a href="#" aria-label="Facebook" className="text-gray-500 transition-colors hover:text-gray-900">
+                <a
+                    href={MESSENGER_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Maikens on Facebook"
+                    className="text-gray-500 transition-colors hover:text-gray-900"
+                >
                     <BsFacebook className="h-5 w-5" />
                 </a>
             </div>

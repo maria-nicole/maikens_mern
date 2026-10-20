@@ -104,5 +104,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ createdAt: -1 });
+// "My Orders" is looked up by customer on every visit to the account panel.
+orderSchema.index({ customer: 1, createdAt: -1 });
 
 export const Order = mongoose.model("Order", orderSchema);

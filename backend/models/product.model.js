@@ -25,4 +25,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// The catalog and the admin list both filter on status.
+productSchema.index({ status: 1, createdAt: -1 });
+
 export const Product = mongoose.model("Product", productSchema);

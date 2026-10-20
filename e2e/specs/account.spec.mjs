@@ -4,7 +4,7 @@ import { By } from "selenium-webdriver";
 import { CUSTOMER, FRONTEND_URL } from "../config.mjs";
 import {
     getDriver, waitForVisible, waitForText, waitForSignedIn, waitForSignedOut, bodyText, clickText,
-    register, login, signUpAndVerify, waitForCode, clearSession,
+    register, login, signUpAndVerify, waitForCode, waitForResetLink, clearSession, typeInto,
 } from "../helpers.mjs";
 
 const NEW_ACCOUNT = {
@@ -127,5 +127,79 @@ describe("Accounts and email verification", () => {
         await cart.click();
         await d.wait(async () => (await d.getCurrentUrl()).includes("/login"), 15000,
             "the cart should send a visitor to the sign-in page");
+    });
+
+    it("lets a customer who forgot their password set a new one and sign in with it", async () => {
+        const d = getDriver();
+        // A fresh account, so resetting its password cannot disturb the other tests.
+        const email = "forgetful@maikens.test";
+        const original = "Forgotpass1";
+        const replacement = "Remembered2";
+        await register(d, { username: "SeleniumForgetful", email, password: original });
+        const code = await waitForCode(email);
+        const field = await waitForVisible(d, By.css('input[aria-label="Verification code"]'));
+        await field.sendKeys(code);
+        await clickText(d, "Verify email");
+        await waitForSignedIn(d);
+
+        // Back out to the sign-in page and ask for a reset link
+        await clearSession(d);
+        await d.get(`${FRONTEND_URL}/login`);
+        await clickText(d, "Forgot password?", "a");
+        await waitForText(d, /forgot your password/i);
+        await typeInto(d, "#email", email);
+        await clickText(d, "Send reset link");
+        await waitForText(d, /check your email/i);
+
+        // The link points back into the app, and opening it offers a new password
+        const link = await waitForResetLink(email);
+        assert.ok(link.includes("/reset-password"), `expected a reset link, got ${link}`);
+        await d.get(link);
+        await waitForText(d, /set a new password/i);
+
+        await typeInto(d, "#password", replacement);
+        await typeInto(d, "#confirm", replacement);
+        await clickText(d, "Save new password");
+        await waitForSignedIn(d);
+
+        // The new password works and the old one no longer does
+        await clearSession(d);
+        await login(d, { email, password: original });
+        await waitForText(d, "Invalid credentials.");
+        await login(d, { email, password: replacement });
+        await waitForSignedIn(d);
+    });
+
+    it("keeps the reset link to one use", async () => {
+        const d = getDriver();
+        const email = "oneshot@maikens.test";
+        await register(d, { username: "SeleniumOneShot", email, password: "Oneshotpass1" });
+        const code = await waitForCode(email);
+        const field = await waitForVisible(d, By.css('input[aria-label="Verification code"]'));
+        await field.sendKeys(code);
+        await clickText(d, "Verify email");
+        await waitForSignedIn(d);
+
+        await clearSession(d);
+        await d.get(`${FRONTEND_URL}/reset-password?token=not-a-real-token&email=${encodeURIComponent(email)}`);
+        await waitForText(d, /set a new password/i);
+        await typeInto(d, "#password", "Anotherpass2");
+        await typeInto(d, "#confirm", "Anotherpass2");
+        await clickText(d, "Save new password");
+
+        await waitForText(d, /isn't valid|has expired/i);
+        await waitForSignedOut(d);
+    });
+
+    it("does not reveal whether an email has an account", async () => {
+        const d = getDriver();
+        await clearSession(d);
+        await d.get(`${FRONTEND_URL}/forgot-password`);
+        await typeInto(d, "#email", "nobody-at-all@maikens.test");
+        await clickText(d, "Send reset link");
+
+        // The same wording as for a real address
+        const text = await waitForText(d, /check your email/i);
+        assert.match(text, /if that email has an account/i);
     });
 });

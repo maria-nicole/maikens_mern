@@ -10,6 +10,10 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import About from "./pages/About";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Catalog from "./pages/Catalog";
 import Contact from "./pages/Contact";
 import PaymentPolicy from "./pages/PaymentPolicy";
@@ -31,7 +35,15 @@ import VerifyEmail from "./pages/VerifyEmail";
 
 
 const ROLE_HOME = { admin: "/admin", staff: "/staff", customer: "/" };
-const HIDDEN_NAVBAR_PATHS = ["/login", "/register", "/verify-email", "/admin", "/staff"];
+const HIDDEN_NAVBAR_PATHS = [
+  "/login",
+  "/register",
+  "/verify-email",
+  "/forgot-password",
+  "/reset-password",
+  "/admin",
+  "/staff",
+];
 // Who may open the staff console. The owner keeps full access to everything.
 const STAFF_ROLES = ["staff", "admin"];
 
@@ -53,7 +65,9 @@ function Layout({ user, setUser }) {
         <Route path="/profile" element={<Profile setUser={setUser} />} />
         <Route path="/favorites" element={<FavoritesRedirect />} />
         <Route path="/contact" element={<Contact user={user} />} />
+        <Route path="/about" element={<About />} />
         <Route path="/payment-policy" element={<PaymentPolicy />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/product/:id" element={<Product user={user} />} />
         <Route path="/message" element={<Message user={user} />} />
         <Route path="/customize" element={<Customize user={user} />} />
@@ -104,6 +118,14 @@ function Layout({ user, setUser }) {
         <Route
           path="/verify-email"
           element={user ? <Navigate to={ROLE_HOME[user.role] || "/"} /> : <VerifyEmail setUser={setUser} />}
+        />
+        <Route
+          path="/forgot-password"
+          element={user ? <Navigate to={ROLE_HOME[user.role] || "/"} /> : <ForgotPassword />}
+        />
+        <Route
+          path="/reset-password"
+          element={user ? <Navigate to={ROLE_HOME[user.role] || "/"} /> : <ResetPassword setUser={setUser} />}
         />
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: function () { return !this.googleId; },
+        // Never sent to a client by default. Every route that returns a user therefore
+        // omits the hash without having to remember .select("-password"), which is one
+        // forgotten call away from leaking it.
+        select: false,
 
     },
 
@@ -47,6 +51,18 @@ const userSchema = new mongoose.Schema({
     verificationAttempts: {
         type: Number,
         default: 0,
+        select: false
+    },
+
+    // Password reset. Only the hash of the emailed token is stored, and it is single-use:
+    // it is cleared the moment the password changes. select:false, like the fields above,
+    // so a reset token can never ride along in a user response.
+    resetToken: {
+        type: String,
+        select: false
+    },
+    resetTokenExpiresAt: {
+        type: Date,
         select: false
     },
 

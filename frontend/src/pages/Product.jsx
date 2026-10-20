@@ -16,8 +16,8 @@ import {
   Check,
   RefreshCw,
 } from "lucide-react";
-import { BsFacebook } from "react-icons/bs";
 import { announceCart, NAVBAR_PT } from "../components/account/accountShared";
+import Footer from "../components/Footer";
 import ReviewsSection from "../components/reviews/ReviewsSection";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
@@ -812,56 +812,9 @@ export default function Product() {
       )}
 
       {/* Footer */}
-      <footer className="w-full bg-white border-t border-gray-200 px-6 py-10 mt-10">
-        <div className="w-full">
-          <div className="flex flex-col sm:flex-row sm:justify-between">
-            <div className="my-5 lg:mx-5 gap-2 mb-6 sm:mb-0">
-              <span className="text-2xl font-bold text-gray-800">MAIKENS</span>
-              <p className="py-5 text-gray-400">
-                Stall A18 Disenyo Pandi
-                <br />
-                Wedding Depot
-                <br />
-                Grace Park Street, Bagong Barrio, Pandi, 3014 Bulacan
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 sm:mt-4 sm:grid-cols-3 sm:gap-6">
-              <div>
-                <h2 className="mb-6 text-sm font-semibold uppercase text-gray-900">Link</h2>
-                <ul className="flex flex-col gap-5">
-                  <li><Link to="/" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">Home</Link></li>
-                  <li><Link to="/catalog" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">Shop</Link></li>
-                  <li><Link to="/about" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">About</Link></li>
-                  <li><Link to="/contact" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">Contact</Link></li>
-                </ul>
-              </div>
-
-              <div>
-                <h2 className="mb-6 text-sm font-semibold uppercase text-gray-900">Help</h2>
-                <ul className="flex flex-col gap-5">
-                  <li><a href="#" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">Payment Options</a></li>
-                  <li><a href="#" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">Returns</a></li>
-                  <li><a href="#" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">Privacy Policies</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-6 border-gray-200" />
-
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-            <span className="text-sm text-gray-500">
-              © 2026 <a href="#" className="hover:underline">MAIKENS GOWN &amp; BARONG</a>. All Rights Reserved.
-            </span>
-            <div className="flex gap-6">
-              <a href="#" aria-label="Facebook" className="text-gray-500 hover:text-gray-900 transition-colors">
-                <BsFacebook className="h-5 w-5" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <div className="mt-10">
+        <Footer />
+      </div>
     </div>
   );
 }

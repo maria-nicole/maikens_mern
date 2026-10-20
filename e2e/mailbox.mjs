@@ -48,6 +48,20 @@ export const startMailbox = async (port = MAILBOX_PORT) => {
             }
             return null;
         },
+        // The URL of the most recent message to this address, for links like a password
+        // reset that arrive as a clickable button rather than a code.
+        linkFor(email, path = "/reset-password") {
+            const wanted = String(email).toLowerCase();
+            for (let i = inbox.length - 1; i >= 0; i--) {
+                const message = inbox[i];
+                const sentTo = (message.to || []).some((t) => String(t.email).toLowerCase() === wanted);
+                if (!sentTo) continue;
+                // The href sits inside the button table; pull it out of the raw HTML.
+                const match = new RegExp(`href="([^"]*${path}[^"]*)"`).exec(message.htmlContent || "");
+                if (match) return match[1].replace(/&amp;/g, "&");
+            }
+            return null;
+        },
         close: () => new Promise((resolve) => server.close(resolve)),
     };
 };

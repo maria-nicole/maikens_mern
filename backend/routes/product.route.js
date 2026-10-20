@@ -10,6 +10,33 @@ import { computeStock, HIDDEN_FROM_PUBLIC } from "../utils/stock.js";
 
 const router = express.Router();
 
+// The only fields the admin form is allowed to set. Spreading req.body straight into the
+// model would let a crafted request write anything in the schema — including `totalStock`,
+// which is supposed to be derived from `sizes` and would then disagree with them.
+const EDITABLE_FIELDS = [
+  "name",
+  "category",
+  "description",
+  "material",
+  "sleeve",
+  "length",
+  "price",
+  "eventTypes",
+  "colors",
+  "sizes",
+  "fulfillment",
+  "customizable",
+  "status",
+];
+
+function pickEditable(data = {}) {
+  const out = {};
+  for (const key of EDITABLE_FIELDS) {
+    if (data[key] !== undefined) out[key] = data[key];
+  }
+  return out;
+}
+
 // PUBLIC: catalog (never shows drafts or archived items)
 router.get("/", async (req, res) => {
   try {
@@ -62,7 +89,7 @@ router.get("/:id", async (req, res) => {
 // ADMIN: create / update / archive / delete
 router.post("/", protect, adminOnly, upload.array("images", 5), async (req, res) => {
   try {
-    const data = JSON.parse(req.body.data);
+    const data = pickEditable(JSON.parse(req.body.data));
     const images = (req.files || []).map(fileUrl);
     const product = await Product.create({ ...data, ...computeStock(data), images });
     res.status(201).json(product);
@@ -80,12 +107,15 @@ router.put("/:id", protect, adminOnly, upload.array("images", 5), async (req, re
     const current = await Product.findById(req.params.id);
     if (!current) return res.status(404).json({ message: "Not found" });
 
-    const data = JSON.parse(req.body.data);
+    // `imageOrder` and `keepImages` drive the photo layout rather than the product itself,
+    // so they are read from the raw body — the allow-list below would otherwise drop them.
+    const raw = JSON.parse(req.body.data);
+    const data = pickEditable(raw);
     const files = (req.files || []).map(fileUrl);
     const owned = new Set(current.images);
-    const order = Array.isArray(data.imageOrder)
-      ? data.imageOrder
-      : [...(data.keepImages || []), ...files.map((_, i) => `new:${i}`)];
+    const order = Array.isArray(raw.imageOrder)
+      ? raw.imageOrder
+      : [...(raw.keepImages || []), ...files.map((_, i) => `new:${i}`)];
     const images = order
       .map((t) => (typeof t === "string" && t.startsWith("new:") ? files[Number(t.slice(4))] : owned.has(t) ? t : null))
       .filter(Boolean)

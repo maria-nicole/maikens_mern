@@ -159,6 +159,10 @@ const main = async () => {
             MAIL_FROM_EMAIL: "selenium@maikens.test",
             MAIL_FROM_NAME: "Maikens Gown & Barong",
             CORS_ORIGIN: FRONTEND_URL,
+            // The suite signs up a dozen accounts from one address, which the real sign-up
+            // ceiling (10 an hour) would block part-way through. Lift it for the test API
+            // only; the shop's own limits are untouched.
+            RATE_LIMIT_MAX: "1000",
         },
         stdio: ["ignore", "pipe", "pipe"],
     });

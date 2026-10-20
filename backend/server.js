@@ -86,6 +86,12 @@ if (process.env.NODE_ENV === "production") {
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
+// Behind Render's proxy, every request arrives from the proxy's address. Without this the
+// rate limiter would count all visitors as one client — a single attacker could then lock
+// out everyone else. Trusting one hop lets Express read the real client IP from
+// X-Forwarded-For, so each visitor gets their own bucket.
+app.set("trust proxy", 1);
+
 // Render (and any uptime monitor) polls this to know the service is alive
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 

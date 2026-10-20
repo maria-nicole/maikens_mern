@@ -163,10 +163,17 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { customerName, customer, channel, fulfillment, item, product, total } = req.body;
-    const order = await Order.create({ customerName, customer, channel, fulfillment, item, product, total, reserved: [] });
+
+    // The admin types this figure by hand, so a stray keystroke must be caught here rather
+    // than becoming a wrong-priced order. Same rule as the from-customization route below.
+    const price = Math.round(Number(total) * 100) / 100;
+    if (!Number.isFinite(price) || price < 0) throw httpError(400, "Enter a valid total.");
+
+    const order = await Order.create({ customerName, customer, channel, fulfillment, item, product, total: price, reserved: [] });
     res.status(201).json(order);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    if (!err.status) console.error("Walk-in order failed:", err);
+    res.status(err.status || 400).json({ message: err.status ? err.message : "Couldn't create the order. Please try again." });
   }
 });
 
