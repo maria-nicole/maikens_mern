@@ -1,19 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-import img1 from "../../assets/img_maikens_1/199503546.jpg";
 import img2 from "../../assets/img_maikens_1/196525763.jpg";
 import img3 from "../../assets/img_maikens_1/471228577.jpg";
 import img4 from "../../assets/img_maikens_1/471318371.jpg";
 
 // Every photo is a 3:2 landscape shot. Each one fills its slide box edge to edge
 // (object-cover), so no white gap can show through anywhere in the carousel.
-const SLIDES = [img1, img2, img3, img4];
+const SLIDES = [img2, img3, img4];
 
-/* Slide 1 sits 5px lower than the rest: its subject was sitting too high in the frame.
-   `calc(50% + 5px)` is a pixel offset on top of the usual centring, so the picture moves
-   by exactly 5px at every width. (A plain `55%` would move it by a different number of
-   pixels on every screen, because percentages scale with the crop slack.) */
-const SLIDE_NUDGE = { 0: "object-[50%_calc(50%+5px)]" };
 const SLIDE_INTERVAL = 3000;
 
 export default function HeroCarousel() {
@@ -40,13 +34,9 @@ export default function HeroCarousel() {
                             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === current ? "opacity-100 z-10" : "opacity-0 z-0"
                                 }`}
                         >
-                            {/* The picture always covers the whole box. Slide 1's subject sat
-                                too high, so its crop window is shifted down by exactly 5px
-                                with a pixel object-position — a percentage would move it by a
-                                different amount at every width. */}
                             <img
                                 src={src}
-                                className={`h-full w-full object-cover ${SLIDE_NUDGE[i] || ""}`}
+                                className="h-full w-full object-cover"
                                 alt={`Featured look ${i + 1}`}
                             />
                         </div>
