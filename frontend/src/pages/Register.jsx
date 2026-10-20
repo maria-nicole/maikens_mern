@@ -3,6 +3,7 @@ import React, { useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, ArrowLeft, Check, ShoppingBag, Camera, PackageSearch } from "lucide-react";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import { PASSWORD_RULES, unmetPasswordRules } from "../components/account/passwordRules";
 
 import registerImg from "../assets/img_maikens_1/196322087.jpg";
 
@@ -11,8 +12,6 @@ const PERKS = [
   { icon: Camera, text: "Try gowns on virtually with your own photo" },
   { icon: PackageSearch, text: "Follow every order's status in real time" },
 ];
-
-const MIN_PASSWORD_LENGTH = 8;
 
 // Where each user level lands after signing in
 const ROLE_HOME = { admin: "/admin", staff: "/staff", customer: "/" };
@@ -40,10 +39,7 @@ const Register = ({ setUser }) => {
 
   // Live password checklist so people know the rules before submitting
   const rules = useMemo(
-    () => [
-      { label: `At least ${MIN_PASSWORD_LENGTH} characters`, met: formData.password.length >= MIN_PASSWORD_LENGTH },
-      { label: "Contains a number", met: /\d/.test(formData.password) },
-    ],
+    () => PASSWORD_RULES.map((rule) => ({ label: rule.label, met: rule.test(formData.password) })),
     [formData.password]
   );
 
@@ -57,7 +53,9 @@ const Register = ({ setUser }) => {
     setError("");
 
     if (!rules.every((r) => r.met)) {
-      setError("Please choose a password that meets all the requirements.");
+      // Name what is still missing, rather than making them guess from a generic refusal
+      const missing = unmetPasswordRules(formData.password);
+      setError(`Your password still needs ${missing.join(", ")}.`);
       return;
     }
     if (formData.password !== formData.confirmPassword) {

@@ -7,6 +7,7 @@ import { protect } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail } from "../mail/emails.js";
 import { hasMailProvider } from "../mail/mailer.js";
+import { checkPassword } from "../utils/password.js";
 
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -63,9 +64,8 @@ router.post("/register", signupLimit, async (req, res) => {
         const password = String(req.body?.password || "");
 
         if (!username || !email || !password) return res.status(400).json({ message: "Please fill all the fields." });
-        if (password.length < 8 || !/\d/.test(password)) {
-            return res.status(400).json({ message: "Password must be at least 8 characters and contain a number." });
-        }
+        const weak = checkPassword(password);
+        if (weak) return res.status(400).json({ message: weak });
 
         let user = await User.findOne({ email });
         if (user?.isVerified) return res.status(400).json({ message: "User already exists." });
@@ -323,9 +323,8 @@ router.post("/reset-password", loginLimit, async (req, res) => {
         const password = String(req.body?.password || "");
 
         if (!email || !token) return res.status(400).json({ message: "That reset link is incomplete. Please request a new one." });
-        if (password.length < 8 || !/\d/.test(password)) {
-            return res.status(400).json({ message: "Password must be at least 8 characters and contain a number." });
-        }
+        const weak = checkPassword(password);
+        if (weak) return res.status(400).json({ message: weak });
 
         const user = await User.findOne({ email }).select("+resetToken +resetTokenExpiresAt");
         if (!user || !user.resetToken || !user.resetTokenExpiresAt || user.resetTokenExpiresAt <= Date.now()) {

@@ -1,7 +1,7 @@
 // Signing up, confirming the email, and signing back in.
 import assert from "node:assert/strict";
 import { By } from "selenium-webdriver";
-import { CUSTOMER, FRONTEND_URL } from "../config.mjs";
+import { API_URL, CUSTOMER, FRONTEND_URL } from "../config.mjs";
 import {
     getDriver, waitForVisible, waitForText, waitForSignedIn, waitForSignedOut, bodyText, clickText,
     register, login, signUpAndVerify, waitForCode, waitForResetLink, clearSession, typeInto,
@@ -78,8 +78,47 @@ describe("Accounts and email verification", () => {
     it("refuses a password that is too short", async () => {
         const d = getDriver();
         await register(d, { ...NEW_ACCOUNT, username: "SeleniumWeak", email: "weak@maikens.test", password: "short" });
-        const text = await waitForText(d, "8 characters");
-        assert.match(text, /8 characters/i);
+
+        // The form names every rule the password misses, and does not let it through
+        const text = await waitForText(d, /still needs/i);
+        assert.match(text, /at least 12 characters/i, "it should say the length it wants");
+        assert.match(text, /upper-case letter/i, "it should ask for an upper-case letter");
+        assert.doesNotMatch(text, /verify your email/i, "a weak password must not reach the server");
+    });
+
+    it("refuses a password with no upper-case letter or number", async () => {
+        const d = getDriver();
+        // Long enough and mixed case, but no digit and no capital — the rules still bite
+        await register(d, {
+            ...NEW_ACCOUNT,
+            username: "SeleniumLowerOnly",
+            email: "loweronly@maikens.test",
+            password: "alldownlettershere",
+        });
+        const text = await waitForText(d, /still needs/i);
+        assert.match(text, /upper-case letter/i);
+        assert.match(text, /number/i);
+    });
+
+    it("accepts a password that meets every rule", async () => {
+        const d = getDriver();
+        const email = "strongpass@maikens.test";
+        await register(d, { ...NEW_ACCOUNT, username: "SeleniumStrong", email, password: "StrongerPass12" });
+        await waitForVisible(d, By.css('input[aria-label="Verification code"]'));
+        assert.ok(true, "a password meeting every rule should get through to verification");
+    });
+
+    it("still refuses a weak password at the API, not just in the form", async () => {
+        const d = getDriver();
+        // Straight to the endpoint, bypassing the page's own checks entirely
+        const res = await fetch(`${API_URL}/api/users/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: "SeleniumApiWeak", email: "apiweak@maikens.test", password: "short" }),
+        });
+        assert.equal(res.status, 400, "the server must refuse it on its own");
+        const body = await res.json();
+        assert.match(body.message, /12 characters/i, "and say what it wants");
     });
 
     it("signs an existing customer back in", async () => {
@@ -133,8 +172,8 @@ describe("Accounts and email verification", () => {
         const d = getDriver();
         // A fresh account, so resetting its password cannot disturb the other tests.
         const email = "forgetful@maikens.test";
-        const original = "Forgotpass1";
-        const replacement = "Remembered2";
+        const original = "Forgotpass123";
+        const replacement = "Remembered234";
         await register(d, { username: "SeleniumForgetful", email, password: original });
         const code = await waitForCode(email);
         const field = await waitForVisible(d, By.css('input[aria-label="Verification code"]'));

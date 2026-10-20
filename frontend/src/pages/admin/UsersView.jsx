@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, UserPlus, RefreshCw, ChevronDown } from "lucide-react";
 import { api, errMsg, formatDate, ROLE_LABEL, ROLE_TONE } from "./adminLib";
+import { PASSWORD_MIN_LENGTH, passwordHint } from "../../components/account/passwordRules";
 import {
     SectionHeader, PrimaryButton, GhostButton, Segmented, EmptyState, Spinner, ErrorNote, ConfirmDialog, Modal, ModalHeader, Field, inputCls,
 } from "./ui";
@@ -252,8 +253,8 @@ function AddUserModal({ onClose, onCreated }) {
                 <Field label="Email" htmlFor="u-email">
                     <input id="u-email" type="email" value={form.email} onChange={set("email")} className={inputCls} required />
                 </Field>
-                <Field label="Temporary password" htmlFor="u-pass" hint="At least 8 characters with a number. Ask them to change it after logging in.">
-                    <input id="u-pass" type="text" value={form.password} onChange={set("password")} className={inputCls} required minLength={8} autoComplete="off" />
+                <Field label="Temporary password" htmlFor="u-pass" hint={`${passwordHint} Ask them to change it after logging in.`}>
+                    <input id="u-pass" type="text" value={form.password} onChange={set("password")} className={inputCls} required minLength={PASSWORD_MIN_LENGTH} autoComplete="off" />
                 </Field>
                 <Field label="Role">
                     <Segmented label="Role" value={form.role} options={Object.entries(ROLE_LABEL).map(([value, label]) => ({ value, label }))} onChange={(role) => setForm((f) => ({ ...f, role }))} />

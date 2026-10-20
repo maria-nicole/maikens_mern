@@ -18,7 +18,7 @@ export const TEST_DB_NAME = "maikens_e2e";
 export const ADMIN = {
     username: "SeleniumOwner",
     email: "owner@maikens.test",
-    password: "Ownerpass1",
+    password: "Ownerpass123",
 };
 
 export const CUSTOMER = {

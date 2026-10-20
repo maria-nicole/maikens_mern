@@ -1,7 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { PASSWORD_RULES, unmetPasswordRules } from "../components/account/passwordRules";
 
 const ROLE_HOME = { admin: "/admin", staff: "/staff", customer: "/" };
 
@@ -33,8 +34,9 @@ const ResetPassword = ({ setUser }) => {
     e.preventDefault();
     setError("");
 
-    if (password.length < 8 || !/\d/.test(password)) {
-      return setError("Password must be at least 8 characters and contain a number.");
+    const missing = unmetPasswordRules(password);
+    if (missing.length) {
+      return setError(`Your password still needs ${missing.join(", ")}.`);
     }
     if (password !== confirm) return setError("Those passwords don't match.");
 
@@ -89,7 +91,7 @@ const ResetPassword = ({ setUser }) => {
                   type={show ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters, with a number"
+                  placeholder="Create a new password"
                   autoComplete="new-password"
                   required
                 />
@@ -102,6 +104,23 @@ const ResetPassword = ({ setUser }) => {
                   {show ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+
+              {password.length > 0 && (
+                <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  {PASSWORD_RULES.map((rule) => {
+                    const met = rule.test(password);
+                    return (
+                      <li
+                        key={rule.label}
+                        className={`flex items-center gap-1 text-xs ${met ? "text-green-700" : "text-gray-400"}`}
+                      >
+                        <Check size={12} className={met ? "opacity-100" : "opacity-30"} />
+                        {rule.label}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
 
             <div>

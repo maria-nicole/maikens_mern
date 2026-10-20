@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import { protect, adminOnly } from "../middleware/auth.js";
+import { checkPassword } from "../utils/password.js";
 
 const router = express.Router();
 router.use(protect, adminOnly);
@@ -35,7 +36,8 @@ router.post("/", async (req, res) => {
 
     if (username.length < 2 || username.length > 40) throw httpError(400, "Username must be 2 to 40 characters.");
     if (!EMAIL.test(email)) throw httpError(400, "Enter a valid email address.");
-    if (password.length < 8 || !/\d/.test(password)) throw httpError(400, "Password needs at least 8 characters and a number.");
+    const weak = checkPassword(password);
+    if (weak) throw httpError(400, weak);
     if (!ROLES.includes(role)) throw httpError(400, "Choose a role.");
 
     const user = await User.create({ username, email, password, role, isVerified: true });
