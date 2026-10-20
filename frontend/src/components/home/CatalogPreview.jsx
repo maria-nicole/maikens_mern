@@ -7,10 +7,14 @@ const buttonClass =
 
 export default function CatalogPreview({ loading, loadError, products, skeletonCount, hasMore, onShowMore }) {
     return (
-        <section className="bg-stone-50 px-6 py-16 md:px-10 lg:px-24">
-            <div className="mb-8">
-                <h2 className="font-serif text-3xl font-bold text-neutral-800 md:text-4xl">From our catalog</h2>
-                <p className="mt-2 text-stone-600">Ready-to-wear and made-to-order pieces for every occasion.</p>
+        <section className="bg-stone-50 px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
+            <div className="mb-6 sm:mb-8">
+                <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
+                    From our catalog
+                </h2>
+                <p className="mt-2 text-sm text-stone-600 sm:text-base">
+                    Ready-to-wear and made-to-order pieces for every occasion.
+                </p>
             </div>
 
             {loadError && (

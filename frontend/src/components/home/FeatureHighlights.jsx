@@ -30,22 +30,31 @@ const FEATURES = [
 
 export default function FeatureHighlights() {
     return (
-        <section className="bg-orange-100/89 px-6 py-16 md:px-10 lg:px-24">
-            <div className="mb-10 max-w-xl">
-                <h2 className="font-serif text-3xl font-bold text-neutral-800 md:text-4xl">Everything in one place</h2>
-                <p className="mt-3 text-stone-600">
+        <section className="bg-orange-100/89 px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
+            <div className="mb-8 max-w-xl sm:mb-10">
+                <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
+                    Everything in one place
+                </h2>
+                <p className="mt-3 text-sm text-stone-600 sm:text-base">
                     From first idea to pick-up day, the boutique's most-requested services are now online.
                 </p>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-3">
+            {/* On a phone the three cards sit in a single column, so each one is kept
+                compact: the icon sits beside the title rather than above it, and the
+                copy is trimmed by the card's own padding. */}
+            <div className="grid gap-4 sm:gap-5 md:grid-cols-3">
                 {FEATURES.map(({ icon: Icon, title, description, link, cta }) => (
-                    <div key={title} className="flex flex-col rounded-lg bg-white p-6 ring-1 ring-stone-200">
-                        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-orange-100/89">
-                            <Icon size={20} className="text-yellow-700/89" />
+                    <div key={title} className="flex flex-col rounded-lg bg-white p-5 ring-1 ring-stone-200 sm:p-6">
+                        <div className="mb-3 flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100/89">
+                                <Icon size={18} className="text-yellow-700/89" />
+                            </div>
+                            <h3 className="font-serif text-lg font-bold leading-tight text-neutral-800 sm:text-xl">
+                                {title}
+                            </h3>
                         </div>
-                        <h3 className="mb-2 font-serif text-xl font-bold text-neutral-800">{title}</h3>
-                        <p className="mb-5 flex-1 text-sm leading-relaxed text-stone-600">{description}</p>
+                        <p className="mb-4 flex-1 text-sm leading-relaxed text-stone-600">{description}</p>
                         <Link
                             to={link}
                             className="inline-flex items-center gap-1.5 text-sm font-semibold text-yellow-700/89 transition-all hover:gap-2.5"

@@ -18,16 +18,18 @@ export default function FacebookGallery() {
     if (FB_GALLERY.length === 0) return null;
 
     return (
-        <section className="px-6 pb-16 pt-4 md:px-10 lg:px-24">
-            <div className="mb-8 flex items-center gap-3">
-                <BsFacebook className="h-7 w-7 text-yellow-700/89" aria-hidden="true" />
+        <section className="px-5 pb-12 pt-4 sm:px-6 sm:pb-16 md:px-10 lg:px-24">
+            <div className="mb-6 flex items-center gap-3 sm:mb-8">
+                <BsFacebook className="h-7 w-7 shrink-0 text-yellow-700/89" aria-hidden="true" />
                 <div>
                     <p className="text-sm text-stone-500">Follow us on Facebook</p>
-                    <h2 className="font-serif text-2xl font-bold text-neutral-800 md:text-3xl">M&amp;N Gowns and Suits</h2>
+                    <h2 className="font-serif text-xl font-bold text-neutral-800 sm:text-2xl md:text-3xl">
+                        M&amp;N Gowns and Suits
+                    </h2>
                 </div>
             </div>
 
-            <div className="columns-2 gap-4 md:columns-3 lg:columns-4 [&>*]:mb-4">
+            <div className="columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4 [&>*]:mb-3 sm:[&>*]:mb-4">
                 {FB_GALLERY.map((src, i) => (
                     <img
                         key={src}
