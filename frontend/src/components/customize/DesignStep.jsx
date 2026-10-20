@@ -44,7 +44,7 @@ export default function DesignStep({
         ) : null;
 
     return (
-        <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
             <SectionRail
                 rows={rows}
                 activeId={row.id}

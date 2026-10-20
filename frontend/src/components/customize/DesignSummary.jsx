@@ -31,9 +31,9 @@ export default function DesignSummary({ category, mode, baseProduct, rows, onEdi
                                     type="button"
                                     onClick={() => onEdit(r.id)}
                                     aria-label={`Edit ${r.title}`}
-                                    className="shrink-0 rounded p-1 text-gray-300 hover:bg-gray-50 hover:text-yellow-700/89"
+                                    className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-300 hover:bg-gray-50 hover:text-yellow-700/89"
                                 >
-                                    <Pencil size={12} />
+                                    <Pencil size={13} />
                                 </button>
                             )}
                         </dd>

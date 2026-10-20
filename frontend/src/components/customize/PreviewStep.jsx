@@ -31,7 +31,7 @@ export default function PreviewStep({
                 </p>
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,360px)_1fr]">
                 {/* Preview picture, or a login prompt */}
                 <div>
                     {!loggedIn ? (

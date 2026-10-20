@@ -38,7 +38,10 @@ export default function SectionRail({ rows, activeId, onSelect, baseProduct, can
                 </div>
             </div>
 
-            <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+            {/* On a phone this is a horizontally-scrolling strip of sections. Each row is
+                fixed-width and `shrink-0`, so without `min-w-0` on the scroll container the
+                whole page inherits a 1280px min-content width and zooms out. */}
+            <ul className="flex min-w-0 gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
                 {rows.map((row, i) => {
                     const active = row.id === activeId;
                     return (

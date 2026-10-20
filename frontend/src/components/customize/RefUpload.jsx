@@ -26,9 +26,9 @@ export default function RefUpload({ title, hint, value, onPick, onClear, disable
                             type="button"
                             onClick={onClear}
                             aria-label={`Remove ${title.toLowerCase()}`}
-                            className="absolute right-1.5 top-1.5 rounded-full bg-white/95 p-1 text-gray-600 shadow-sm hover:text-red-600"
+                            className="absolute -right-1 -top-1 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-gray-600 shadow-sm hover:text-red-600"
                         >
-                            <X size={12} />
+                            <X size={14} />
                         </button>
                     )}
                 </div>
