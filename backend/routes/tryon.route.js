@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
 import { Product } from "../models/product.model.js";
+import { Customization } from "../models/customization.model.js";
 import { protect } from "../middleware/auth.js";
 import { uploadTryOnPhoto } from "../middleware/upload.js";
 import { readUpload } from "../utils/uploads.js";
@@ -28,7 +29,7 @@ function sniffMime(buf) {
     return null;
 }
 
-function buildPrompt(product) {
+function buildPromptForProduct(product) {
     const garment = product.category === "Barong" ? "barong" : "gown";
     return [
         `Virtual try-on. The first image is a photo of a real person. The second image shows a ${garment} called "${product.name}".`,
@@ -39,7 +40,19 @@ function buildPrompt(product) {
     ].join(" ");
 }
 
-// multipart/form-data: photo (file), productId, imageIndex (optional: which product photo to use)
+function buildPromptForCustomization(customization) {
+    const garment = customization.category === "Barong" ? "barong" : "gown";
+    const name = customization.base || customization.customerName ? `${customization.base || "custom"} design` : "custom design";
+    return [
+        `Virtual try-on. The first image is a photo of a real person. The second image shows a custom ${garment} design called "${name}".`,
+        `Produce a photorealistic photo of the SAME person from the first image wearing this custom ${garment}.`,
+        "Keep the person's face, hair, skin tone, body shape, pose, and the background exactly as in the first photo.",
+        `Reproduce the ${garment} faithfully based on the second image: match its design, color, fabric, neckline, sleeves, silhouette, length, and embellishments, fitted naturally to the person's body with realistic drape and shadows.`,
+        "Replace whatever the person is currently wearing. Do not add text, watermarks, logos, or extra people.",
+    ].join(" ");
+}
+
+// multipart/form-data: photo (file), productId OR customizationId, imageIndex (optional)
 router.post("/", protect, parsePhoto, async (req, res) => {
     const userId = String(req.user._id);
     let counted = false;
@@ -59,15 +72,35 @@ router.post("/", protect, parsePhoto, async (req, res) => {
         const mimeType = sniffMime(req.file.buffer);
         if (!mimeType) return fail(400, "Please use a JPG, PNG or WebP photo.");
 
-        const { productId } = req.body;
-        if (!mongoose.isValidObjectId(productId)) return fail(404, "That item isn't available.");
-        const product = await Product.findOne({ _id: productId, status: { $nin: HIDDEN_FROM_PUBLIC } });
-        if (!product) return fail(404, "That item isn't available.");
+        const { productId, customizationId } = req.body;
+        let garment;
+        let prompt;
 
-        const idx = Number.parseInt(req.body.imageIndex, 10);
-        const garmentPath = product.images?.[idx >= 0 ? idx : 0] || product.images?.[0];
-        const garment = garmentPath ? await readUpload(garmentPath) : null;
-        if (!garment) return fail(400, "This item has no photo to try on yet.");
+        if (customizationId) {
+            if (!mongoose.isValidObjectId(customizationId)) return fail(404, "That design isn't available.");
+            const customization = await Customization.findOne({ _id: customizationId });
+            if (!customization) return fail(404, "That design isn't available.");
+            // Allow owner or admin/staff? For now require ownership
+            if (String(customization.customer) !== userId && req.user.role !== "admin" && req.user.role !== "staff") {
+                return fail(403, "You don't have permission to try on this design.");
+            }
+            if (!customization.previewImage) return fail(400, "This design has no AI preview to try on yet.");
+            garment = await readUpload(customization.previewImage);
+            if (!garment) return fail(400, "This design's preview isn't available to try on.");
+            prompt = buildPromptForCustomization(customization);
+        } else if (productId) {
+            if (!mongoose.isValidObjectId(productId)) return fail(404, "That item isn't available.");
+            const product = await Product.findOne({ _id: productId, status: { $nin: HIDDEN_FROM_PUBLIC } });
+            if (!product) return fail(404, "That item isn't available.");
+
+            const idx = Number.parseInt(req.body.imageIndex, 10);
+            const garmentPath = product.images?.[idx >= 0 ? idx : 0] || product.images?.[0];
+            garment = garmentPath ? await readUpload(garmentPath) : null;
+            if (!garment) return fail(400, "This item has no photo to try on yet.");
+            prompt = buildPromptForProduct(product);
+        } else {
+            return fail(400, "Please select an item or design to try on.");
+        }
 
         const slot = limiter.take(userId);
         if (!slot.ok) {
@@ -76,10 +109,10 @@ router.post("/", protect, parsePhoto, async (req, res) => {
         counted = true;
 
         const result = await generateWithGemini([
-            { text: buildPrompt(product) },
+            { text: prompt },
             { text: "Person photo:" },
             { inlineData: { mimeType, data: req.file.buffer.toString("base64") } },
-            { text: `${product.category} to wear:` },
+            { text: customizationId ? "Custom design to wear:" : "Item to wear:" },
             { inlineData: { mimeType: garment.mimeType, data: garment.data } },
         ]);
 
