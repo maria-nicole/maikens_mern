@@ -166,9 +166,9 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
                                         ) : (
                                             <div className="h-20 w-16 shrink-0 rounded-md bg-[#F3EEE4]" />
                                         )}
-                                        <div className="min-w-0 flex-1">
+                                        <div className="min-w-0 flex-1 overflow-hidden">
                                             <div className="flex items-start justify-between gap-2">
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 overflow-hidden">
                                                     <p className="truncate text-sm font-medium text-[#241F1A]">{p.name}</p>
                                                     <p className="text-xs text-[#9C8C74]" style={font.mono}>
                                                         {shortId("MK", p._id)} · {p.category}
@@ -224,7 +224,7 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
                         {cart.length === 0 && <p className="text-sm text-[#8B8072]">Nothing added yet. Pick a product on the left.</p>}
                         {cart.map((l) => (
                             <div key={`${l.productId}|${l.size}`} className="flex items-center justify-between gap-3 rounded-lg bg-[#FBF8F3] px-3 py-2">
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1 overflow-hidden">
                                     <p className="truncate text-sm text-[#241F1A]">
                                         {l.name}
                                         {l.size ? ` (${l.size})` : ""}
