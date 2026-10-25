@@ -131,9 +131,9 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
         <div>
             <SectionHeader eyebrow="Order processing" title="New walk-in sale" />
 
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_1fr]">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.2fr_minmax(0,1fr)]">
                 {/* ------------------------ Product picker ------------------------ */}
-                <div className="rounded-2xl border border-[#E3DACB] bg-white p-5">
+                <div className="min-w-0 rounded-2xl border border-[#E3DACB] bg-white p-5">
                     <div className="mb-4 flex flex-wrap items-center gap-2">
                         <div className="relative min-w-[180px] flex-1">
                             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#B4A88F]" />
@@ -217,15 +217,15 @@ export default function NewSaleView({ products, loading, loadError, onSold, noti
                 </div>
 
                 {/* ------------------------ Sale panel ------------------------ */}
-                <div className="h-fit rounded-2xl border border-[#E3DACB] bg-white p-5 xl:sticky xl:top-20">
+                <div className="h-fit min-w-0 rounded-2xl border border-[#E3DACB] bg-white p-5 xl:sticky xl:top-20">
                     <h3 className="mb-4 text-sm font-semibold text-[#241F1A]">Current sale</h3>
 
-                    <div className="min-h-[72px] space-y-2">
+                    <div className="min-h-[72px] w-full min-w-0 space-y-2">
                         {cart.length === 0 && <p className="text-sm text-[#8B8072]">Nothing added yet. Pick a product on the left.</p>}
                         {cart.map((l) => (
-                            <div key={`${l.productId}|${l.size}`} className="flex items-center justify-between gap-3 rounded-lg bg-[#FBF8F3] px-3 py-2">
+                            <div key={`${l.productId}|${l.size}`} className="flex w-full min-w-0 items-center gap-3 rounded-lg bg-[#FBF8F3] px-3 py-2">
                                 <div className="min-w-0 flex-1 overflow-hidden">
-                                    <p className="truncate text-sm text-[#241F1A]">
+                                    <p className="block w-full truncate text-sm text-[#241F1A]">
                                         {l.name}
                                         {l.size ? ` (${l.size})` : ""}
                                     </p>
