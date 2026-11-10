@@ -41,7 +41,7 @@ const NAV = [
 ];
 const TAB_KEYS = NAV.map((n) => n.key);
 const ROLES_ALLOWED = ["staff", "admin"];
-const POLL_MESSAGES_MS = 20000;
+const POLL_MESSAGES_MS = 30000; // safety net only — live updates arrive over the socket
 
 export default function Staff({ setUser }) {
   const navigate = useNavigate();

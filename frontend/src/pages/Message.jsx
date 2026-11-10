@@ -19,6 +19,7 @@ import QuickReplies from "../components/message/QuickReplies";
 import Composer from "../components/message/Composer";
 import SharePicker from "../components/message/SharePicker";
 import Lightbox from "../components/message/Lightbox";
+import useChatSocket from "../components/message/useChatSocket";
 
 /**
  * Chat with the boutique: the state and the API calls live here.
@@ -40,12 +41,14 @@ export default function Message() {
   ); // loading | ready | error | unauthorized
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [editing, setEditing] = useState(null); // the message being edited, or null
   const [now, setNow] = useState(() => new Date());
 
   const fileRef = useRef(null);
   const scrollRef = useRef(null);
   const stickRef = useRef(true); // keep the view pinned to the newest message
   const lastIdRef = useRef(null); // id of the newest message we already have
+  const reloadRef = useRef(null); // full refetch, used after a socket reconnect
   const photosRef = useRef(photos);
 
   const ready = status === "ready";
@@ -69,17 +72,18 @@ export default function Message() {
   // free photo previews when leaving the page
   useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.url)), []);
 
-  // Load the conversation, then check for new messages every few seconds
+  // Load the conversation, then check for new messages every few seconds.
+  // The socket does the real work; this poll is only a safety net.
   useEffect(() => {
     if (!localStorage.getItem("token")) return;
     let ignore = false;
 
-    const load = async (initial) => {
+    const load = async (initial, replace = false) => {
       try {
         const params = initial || !lastIdRef.current ? {} : { after: lastIdRef.current };
         const { data } = await api.get("/messages", { params });
         if (ignore) return;
-        setMessages((prev) => mergeMessages(prev, data));
+        setMessages((prev) => (replace ? data : mergeMessages(prev, data)));
         setStatus((s) => (s === "loading" || s === "error" ? "ready" : s));
       } catch (err) {
         if (ignore) return;
@@ -88,16 +92,33 @@ export default function Message() {
       }
     };
 
-    load(true);
+    // A reconnect refetches everything, since an "after" fetch can't see deletes
+    reloadRef.current = () => load(true, true);
+    load(true, true);
     const timer = setInterval(() => {
       if (!document.hidden) load(false);
     }, POLL_MS);
 
     return () => {
       ignore = true;
+      reloadRef.current = null;
       clearInterval(timer);
     };
   }, []);
+
+  // Live updates from the shop and from this customer's other tabs
+  useChatSocket({
+    onNew: (msg) => setMessages((prev) => mergeMessages(prev, [msg])),
+    onUpdated: (msg) => {
+      setMessages((prev) => prev.map((m) => (m._id === msg._id ? msg : m)));
+      setEditing((cur) => (cur?._id === msg._id ? msg : cur));
+    },
+    onDeleted: ({ id }) => {
+      setMessages((prev) => prev.filter((m) => m._id !== id));
+      setEditing((cur) => (cur?._id === id ? null : cur));
+    },
+    onReconnect: () => reloadRef.current?.(),
+  });
 
   // "/message?product=<id>" (from a product page) or
   // "/message?share=customization|order&id=<id>" (from "Message the boutique")
@@ -163,6 +184,7 @@ export default function Message() {
 
   /* ---- attachments ---- */
   const addFiles = (fileList) => {
+    if (editing) return; // attachments belong to a new message, not an edit
     const incoming = Array.from(fileList || []);
     if (!incoming.length) return;
 
@@ -219,9 +241,55 @@ export default function Message() {
     setPicker(tab);
   };
 
+  /* ---- editing and deleting ---- */
+  const startEdit = (msg) => {
+    setEditing(msg);
+    setDraft(msg.body || "");
+    clearAttachments();
+    setMenuOpen(false);
+    setSendError("");
+  };
+
+  const cancelEdit = () => {
+    setEditing(null);
+    setDraft("");
+    setSendError("");
+  };
+
+  const removeMessage = async (msg) => {
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await api.delete(`/messages/${msg._id}`);
+      setMessages((prev) => prev.filter((m) => m._id !== msg._id));
+      if (editing?._id === msg._id) cancelEdit();
+    } catch (err) {
+      if (err.response?.status === 401) setStatus("unauthorized");
+      else setSendError(errMsg(err));
+    }
+  };
+
   /* ---- sending ---- */
   const send = async ({ quickReplyId } = {}) => {
     if (!ready || sending) return;
+
+    // Editing replaces the text in place instead of adding a message
+    if (editing) {
+      const body = draft.trim();
+      if (!body) return;
+      setSending(true);
+      setSendError("");
+      try {
+        const { data } = await api.patch(`/messages/${editing._id}`, { body });
+        setMessages((prev) => prev.map((m) => (m._id === data._id ? data : m)));
+        cancelEdit();
+      } catch (err) {
+        if (err.response?.status === 401) setStatus("unauthorized");
+        else setSendError(errMsg(err));
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
 
     const body = draft.trim();
     const form = new FormData();
@@ -253,6 +321,11 @@ export default function Message() {
   };
 
   const handleKeyDown = (e) => {
+    if (e.key === "Escape" && editing) {
+      e.preventDefault();
+      cancelEdit();
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       send();
@@ -264,10 +337,10 @@ export default function Message() {
   /* ---- drag & drop ---- */
   const dropProps = {
     onDragEnter: (e) => {
-      if (ready && e.dataTransfer?.types?.includes("Files")) setDragging(true);
+      if (ready && !editing && e.dataTransfer?.types?.includes("Files")) setDragging(true);
     },
     onDragOver: (e) => {
-      if (ready) e.preventDefault();
+      if (ready && !editing) e.preventDefault();
     },
     onDragLeave: (e) => {
       if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false);
@@ -310,9 +383,13 @@ export default function Message() {
             onScroll={handleScroll}
             onZoom={setLightbox}
             onImageLoad={() => stickRef.current && scrollToBottom()}
+            onEdit={startEdit}
+            onDelete={removeMessage}
           />
 
-          <QuickReplies ready={ready} sending={sending} onQuickReply={(id) => send({ quickReplyId: id })} />
+          {!editing && (
+            <QuickReplies ready={ready} sending={sending} onQuickReply={(id) => send({ quickReplyId: id })} />
+          )}
 
           {sendError && (
             <p role="alert" className="px-4 pb-2 text-xs text-red-700 md:px-8">
@@ -339,6 +416,8 @@ export default function Message() {
             onMenuToggle={() => setMenuOpen((v) => !v)}
             onPhoto={openPhotoDialog}
             onPicker={openPicker}
+            editing={editing}
+            onCancelEdit={cancelEdit}
           />
 
           {/* Drop overlay */}

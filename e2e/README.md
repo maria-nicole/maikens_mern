@@ -5,7 +5,7 @@ boxes, clicks buttons and then checks what appears on the page, the same way a p
 would. That is the point of them: they prove the whole shop works *through* a browser,
 not just that one function returns the right thing.
 
-There are 35 of them, and they cover the journeys that matter:
+There are 38 of them, and they cover the journeys that matter:
 
 | File | What it covers |
 | --- | --- |
@@ -14,6 +14,7 @@ There are 35 of them, and they cover the journeys that matter:
 | `specs/checkout.spec.mjs` | Adding a gown to the cart, the cart and its price, placing the order, the order appearing in the customer's own history, the stock coming down, the cart emptying. |
 | `specs/admin.spec.mjs` | The owner's console, the orders in it, moving an order to the next stage, confirming an account by hand, deactivating and reactivating an account, and a customer being kept out of the console. |
 | `specs/notifications.spec.mjs` | The bells: a customer hearing that their order moved (and the click taking them to it), the shop hearing that a customer wrote in, and marking everything read. |
+| `specs/messages.spec.mjs` | Editing a message in place (with its "edited" mark), deleting one's own message, the owner removing a customer's message, and a reply arriving live (well inside the 30-second fallback poll). |
 
 ## Running them
 

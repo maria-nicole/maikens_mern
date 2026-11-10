@@ -1,6 +1,7 @@
 import "./config/env.js"; // must stay first so process.env is ready for every other import
 import express from "express";
 import cors from "cors";
+import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
@@ -26,6 +27,7 @@ import staffRoutes from "./routes/staff.route.js";
 import settingsRoutes from "./routes/settings.route.js";
 import contactRoutes from "./routes/contact.route.js";
 import { hasMailProvider, hasSender } from "./mail/mailer.js";
+import { initRealtime } from "./realtime.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -134,6 +136,11 @@ app.use((err, req, res, next) => {
 
 connectDB();
 
-app.listen(PORT, () => {
+// Socket.IO rides on the same port as the REST API, so the chat updates live
+// without a second server or a second URL to configure.
+const httpServer = http.createServer(app);
+initRealtime(httpServer, allowedOrigins);
+
+httpServer.listen(PORT, () => {
   console.log(`Server started at port ${PORT}`);
 });

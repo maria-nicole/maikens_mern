@@ -9,6 +9,7 @@ import { upload, fileUrl } from "../middleware/upload.js";
 import { QUICK_REPLIES, AUTO_ACK } from "../utils/quickReplies.js";
 import { removeUpload } from "../utils/uploads.js";
 import { notifyStaff, notifyCustomer } from "../utils/notifications.js";
+import { emitToCustomer, emitToShop } from "../realtime.js";
 
 const router = express.Router();
 const MAX_PHOTOS = 4;
@@ -97,6 +98,8 @@ router.post("/thread/:customerId", protect, adminOnly, async (req, res) => {
       body: String(req.body?.body || "").slice(0, 160),
       link: "/message",
     });
+    emitToCustomer(req.params.customerId, "message:new", msg);
+    emitToShop("message:new", msg);
     res.status(201).json(msg);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -277,9 +280,87 @@ router.post("/", protect, uploadPhotos, async (req, res) => {
       link: { staff: "/staff?tab=messages", admin: "/admin?tab=messages" },
     });
 
+    // The customer's other tabs and the shop's consoles update without polling
+    created.forEach((msg) => {
+      emitToCustomer(req.user._id, "message:new", msg);
+      emitToShop("message:new", msg);
+    });
+
     res.status(201).json(created);
   } catch (err) {
     fail(400, err.message);
+  }
+});
+
+/* --------------------------- EDIT AND DELETE --------------------------- */
+
+// Only typed messages can change. A quick-reply and its auto-ack are part of
+// the question-and-answer record, so they are left alone.
+const changeable = (msg) => msg.kind === "message";
+
+// A customer may only touch messages they typed themselves.
+const ownsMessage = (msg, user) =>
+  msg.sender === "customer" && String(msg.customer) === String(user._id);
+
+// CUSTOMER or ADMIN: change the text of a message
+router.patch("/:id", protect, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: "Message not found." });
+    }
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: "Message not found." });
+
+    const isAdmin = req.user.role === "admin";
+    // The owner may only edit replies they wrote; customers only their own
+    if (isAdmin ? msg.sender !== "admin" : !ownsMessage(msg, req.user)) {
+      return res.status(403).json({
+        message: isAdmin ? "You can only edit your own replies." : "You can only edit your own messages.",
+      });
+    }
+    if (!changeable(msg)) return res.status(400).json({ message: "This message can't be edited." });
+
+    const body = String(req.body?.body || "").trim();
+    if (!body && !msg.images?.length && !msg.share) {
+      return res.status(400).json({ message: "Message can't be empty." });
+    }
+
+    msg.body = body;
+    msg.editedAt = new Date();
+    await msg.save();
+
+    emitToCustomer(msg.customer, "message:updated", msg);
+    emitToShop("message:updated", msg);
+    res.json(msg);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// CUSTOMER or ADMIN: remove a message and the photos it carried
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ message: "Message not found." });
+    }
+    const msg = await Message.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: "Message not found." });
+
+    // The owner can remove anything typed; a customer only their own message
+    if (req.user.role !== "admin" && !ownsMessage(msg, req.user)) {
+      return res.status(403).json({ message: "You can only delete your own messages." });
+    }
+    if (!changeable(msg)) return res.status(400).json({ message: "This message can't be deleted." });
+
+    (msg.images || []).forEach((src) => removeUpload(src));
+    await msg.deleteOne();
+
+    const payload = { id: String(msg._id), customerId: String(msg.customer) };
+    emitToCustomer(msg.customer, "message:deleted", payload);
+    emitToShop("message:deleted", payload);
+    res.json({ ok: true, ...payload });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 });
 

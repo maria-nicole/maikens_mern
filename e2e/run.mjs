@@ -33,7 +33,7 @@ const grep = grepIndex !== -1 ? args[grepIndex + 1] : null;
 
 const isWindows = process.platform === "win32";
 
-const SPECS = ["storefront.spec.mjs", "account.spec.mjs", "checkout.spec.mjs", "admin.spec.mjs", "notifications.spec.mjs"];
+const SPECS = ["storefront.spec.mjs", "account.spec.mjs", "checkout.spec.mjs", "admin.spec.mjs", "notifications.spec.mjs", "messages.spec.mjs"];
 
 const children = [];
 let mailbox = null;

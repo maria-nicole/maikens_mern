@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ImagePlus, Loader2, Package, Palette, Paperclip, Send, Shirt, X } from "lucide-react";
+import { ImagePlus, Loader2, Package, Palette, Paperclip, Send, Shirt, Check, X } from "lucide-react";
 import ShareCard from "./ShareCard";
 
 // The composer: attach menu, photos/share waiting to send, text box and Send
@@ -22,6 +22,8 @@ export default function Composer({
   onMenuToggle,
   onPhoto,
   onPicker,
+  editing,
+  onCancelEdit,
 }) {
   const textRef = useRef(null);
 
@@ -53,6 +55,20 @@ export default function Composer({
           e.target.value = "";
         }}
       />
+
+      {/* Editing replaces the text of one message instead of sending a new one */}
+      {editing && (
+        <div className="flex items-center justify-between border-t border-gray-100 bg-yellow-50/60 px-4 py-2 md:px-8">
+          <p className="text-xs font-medium text-yellow-800">Editing message</p>
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="flex cursor-pointer items-center gap-1 text-xs text-zinc-500 transition-colors hover:text-zinc-800"
+          >
+            <X size={12} /> Cancel
+          </button>
+        </div>
+      )}
 
       {/* Attachments waiting to be sent */}
       {(photos.length > 0 || pendingShare) && (
@@ -93,13 +109,13 @@ export default function Composer({
             onClick={onMenuToggle}
             aria-expanded={menuOpen}
             aria-label="Attach"
-            disabled={!ready}
+            disabled={!ready || !!editing}
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-gray-50 hover:text-yellow-700/89 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Paperclip size={18} />
           </button>
 
-          {menuOpen && (
+          {menuOpen && !editing && (
             <>
               <div className="fixed inset-0 z-10" onClick={onMenuToggle} />
               <div
@@ -135,17 +151,17 @@ export default function Composer({
           rows={1}
           maxLength={1000}
           disabled={!ready}
-          placeholder={ready ? "Type a message…" : "Log in to send a message"}
+          placeholder={editing ? "Edit your message…" : ready ? "Type a message…" : "Log in to send a message"}
           className="max-h-[120px] flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-2.5 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-50"
         />
         <button
           type="button"
           onClick={onSend}
           disabled={!canSend}
-          aria-label="Send message"
+          aria-label={editing ? "Save changes" : "Send message"}
           className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-yellow-600/89 text-white transition-colors hover:bg-yellow-700/89 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+          {sending ? <Loader2 size={16} className="animate-spin" /> : editing ? <Check size={16} /> : <Send size={16} />}
         </button>
       </div>
     </>

@@ -5,7 +5,7 @@ import { WELCOME, dayLabel } from "./messageConfig";
 import MessageBubble from "./MessageBubble";
 
 // The scrolling message area: loading / logged-out / error states, then the bubbles
-export default function MessageThread({ status, messages, scrollRef, onScroll, onZoom, onImageLoad }) {
+export default function MessageThread({ status, messages, scrollRef, onScroll, onZoom, onImageLoad, onEdit, onDelete }) {
   return (
     <div ref={scrollRef} onScroll={onScroll} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-5 md:px-8">
       {status === "loading" && (
@@ -59,7 +59,7 @@ export default function MessageThread({ status, messages, scrollRef, onScroll, o
                   </span>
                 </div>
               )}
-              <MessageBubble message={m} onZoom={onZoom} onImageLoad={onImageLoad} />
+              <MessageBubble message={m} onZoom={onZoom} onImageLoad={onImageLoad} onEdit={onEdit} onDelete={onDelete} />
             </Fragment>
           );
         })}

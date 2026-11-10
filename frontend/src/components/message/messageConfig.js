@@ -16,7 +16,7 @@ export const errMsg = (err) =>
   err.response?.data?.message ||
   (err.response ? err.message : "Can't reach the server. Check your connection and try again.");
 
-export const POLL_MS = 5000; // how often to check for the owner's replies
+export const POLL_MS = 30000; // safety net only — live updates arrive over the socket
 export const MAX_PHOTOS = 4;
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 

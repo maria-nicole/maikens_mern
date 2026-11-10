@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errMsg, assetUrl, formatWhen } from "./staffLib";
 import { SectionHeader, EmptyState, Spinner, ErrorNote } from "./ui";
+import useChatSocket from "../../components/message/useChatSocket";
 
 const SHARE_LABEL = { product: "Shared product", customization: "Shared customization", order: "Shared order" };
 // Thumbnail height per kind, 3:4 like the product photos. Orders get the biggest.
@@ -14,25 +15,52 @@ export default function MessagesView({ conversations, loaded, onRefresh }) {
     const [loadingThread, setLoadingThread] = useState(false);
     const [error, setError] = useState("");
     const threadRef = useRef(null);
+    const activeRef = useRef(null);
+
+    useEffect(() => {
+        activeRef.current = activeId;
+    }, [activeId]);
+
+    const loadThread = useCallback(async (customerId) => {
+        if (!customerId) return;
+        setLoadingThread(true);
+        setError("");
+        try {
+            const { data } = await api.get(`/staff/threads/${customerId}`);
+            if (activeRef.current === customerId) setThread(data);
+        } catch (err) {
+            if (activeRef.current === customerId) setError(errMsg(err));
+        } finally {
+            if (activeRef.current === customerId) setLoadingThread(false);
+        }
+    }, []);
 
     useEffect(() => {
         if (!activeId && conversations.length > 0) setActiveId(conversations[0].customerId);
     }, [conversations, activeId]);
 
     useEffect(() => {
-        if (!activeId) return;
-        let ignore = false;
-        setLoadingThread(true);
-        setError("");
-        api
-            .get(`/staff/threads/${activeId}`)
-            .then(({ data }) => !ignore && setThread(data))
-            .catch((err) => !ignore && setError(errMsg(err)))
-            .finally(() => !ignore && setLoadingThread(false));
-        return () => {
-            ignore = true;
-        };
-    }, [activeId]);
+        loadThread(activeId);
+    }, [activeId, loadThread]);
+
+    // Live updates from the customer's chat. Staff can only read, but the thread
+    // and the conversation list still refresh as messages arrive.
+    useChatSocket({
+        onNew: (msg) => {
+            onRefresh?.();
+            if (String(msg.customer) === String(activeId)) loadThread(activeId);
+        },
+        onUpdated: (msg) => {
+            if (String(msg.customer) === String(activeId)) loadThread(activeId);
+        },
+        onDeleted: ({ customerId }) => {
+            if (String(customerId) === String(activeId)) loadThread(activeId);
+        },
+        onReconnect: () => {
+            onRefresh?.();
+            loadThread(activeId);
+        },
+    });
 
     useEffect(() => {
         if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;

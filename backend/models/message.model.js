@@ -33,6 +33,8 @@ const messageSchema = new mongoose.Schema(
     images: [String], // uploaded photos, e.g. "/uploads/abc.jpg"
     share: { type: shareSchema, default: undefined },
     read: { type: Boolean, default: false },
+    // Set the first time the sender changes the text, so the bubble can say "(edited)"
+    editedAt: { type: Date },
     // "message"     = typed by the customer or the owner
     // "quick-reply" = the system's canned answer to a quick-question chip
     // "auto-ack"    = the "the owner will reply shortly" notice
