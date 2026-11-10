@@ -11,7 +11,6 @@ import {
   BarChart3,
   LogOut,
   Menu,
-  Bell,
   X,
   Check,
   Package,
@@ -22,6 +21,7 @@ import {
 import { font, api, errMsg, initials } from "./adminLib";
 import { PrimaryButton, Spinner } from "./ui";
 import Forbidden from "../../components/Forbidden";
+import NotificationBell from "../../components/notifications/NotificationBell";
 import DashboardView from "./DashboardView";
 import ProductsView from "./ProductsView";
 import OrdersView from "./OrdersView";
@@ -130,7 +130,6 @@ export default function Admin({ setUser }) {
       inquiries: overview?.newInquiries,
       users: overview?.unverifiedUsers,
     })[key] || 0;
-  const totalAlerts = badge("orders") + badge("customizations") + badge("messages") + badge("inquiries") + badge("users");
   const activeLabel = NAV.find((n) => n.key === tab)?.label ?? "";
 
   /* ---- gates ---- */
@@ -232,14 +231,9 @@ export default function Admin({ setUser }) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setTab(badge("messages") ? "messages" : badge("users") ? "users" : badge("customizations") ? "customizations" : badge("inquiries") ? "inquiries" : "orders")}
-              aria-label={totalAlerts ? `${totalAlerts} items need attention` : "Nothing needs attention"}
-              className="relative rounded-lg p-2 text-[#4A4136] hover:bg-white"
-            >
-              <Bell size={18} />
-              {totalAlerts > 0 && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#7C4A4A]" />}
-            </button>
+            {/* The bell lists what happened across the shop — new orders, messages,
+                inquiries — and each notification takes the owner to the tab it lives in. */}
+            <NotificationBell variant="console" />
             <div className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-1.5">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#9C7A3C]/20 text-xs font-semibold text-[#6B5426]">
                 {initials(me?.username)}

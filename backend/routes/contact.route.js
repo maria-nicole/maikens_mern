@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { ContactMessage } from "../models/contactMessage.model.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rateLimit.js";
+import { notifyStaff } from "../utils/notifications.js";
 
 const router = express.Router();
 
@@ -32,6 +33,15 @@ router.post("/", sendLimit, async (req, res) => {
         if (!message) return res.status(400).json({ message: "Please write a message." });
 
         await ContactMessage.create({ name, email, subject, message });
+
+        // Ring the owner's bell — inquiries are read in the owner console
+        await notifyStaff({
+            type: "inquiry",
+            title: `New inquiry from ${name}`,
+            body: subject || message.slice(0, 160),
+            link: { admin: "/admin?tab=inquiries" },
+        }, ["admin"]);
+
         res.status(201).json({ message: "Thanks, your message has been sent. We'll get back to you shortly." });
     } catch (err) {
         sendError(res, err);

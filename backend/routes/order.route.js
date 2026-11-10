@@ -10,6 +10,7 @@ import { protect, adminOnly } from "../middleware/auth.js";
 import { HIDDEN_FROM_PUBLIC, refreshStatuses } from "../utils/stock.js";
 import { setOrderStatus } from "../utils/orderStatus.js";
 import { setShippingFee, cleanShippingFee } from "../utils/shipping.js";
+import { notifyStaff, notifyCustomer } from "../utils/notifications.js";
 
 const router = express.Router();
 router.use(protect); // every order route needs a login; customer routes come first, admin routes after adminOnly
@@ -132,6 +133,14 @@ router.post("/checkout", async (req, res) => {
     await Cart.deleteOne({ _id: cart._id });
     await refreshStatuses(reserved.map((r) => r.productId));
 
+    // Ring the shop's bell: an online order is waiting to be processed.
+    await notifyStaff({
+      type: "new-order",
+      title: `New online order #${String(order._id).slice(-6).toUpperCase()}`,
+      body: `${order.customerName} · ${order.item}`,
+      link: { staff: "/staff?tab=orders", admin: "/admin?tab=orders" },
+    });
+
     res.status(201).json(order);
   } catch (err) {
     // Give back any stock we took if the order never got created
@@ -213,6 +222,13 @@ router.post("/from-customization", async (req, res) => {
         body: `Your custom design is now an order. The agreed total is ₱${price.toLocaleString("en-PH")}. You can follow its progress under My Orders.`,
         share: { kind: "order", refId: order._id, title: order.item, subtitle: `${no} · ${order.status}`, detail: `₱${price.toLocaleString("en-PH")}`, image: design.previewImage || "" },
       });
+      // And their bell, so it's seen even without opening the chat
+      await notifyCustomer(design.customer, {
+        type: "order",
+        title: `Your design is now an order ${no}`,
+        body: `Agreed total ₱${price.toLocaleString("en-PH")}. Follow its progress under My Orders.`,
+        link: "/profile?tab=orders",
+      });
     }
 
     res.status(201).json({ order, customization: design });
@@ -251,6 +267,16 @@ router.patch("/:id/shipping", async (req, res) => {
 
     setShippingFee(order, fee);
     await order.save();
+
+    // The customer's total (and balance) just moved, so their bell should say so.
+    if (order.customer) {
+      await notifyCustomer(order.customer, {
+        type: "shipping",
+        title: `Shipping fee updated on order #${String(order._id).slice(-6).toUpperCase()}`,
+        body: `The total is now ₱${order.total.toLocaleString("en-PH")} (balance ₱${Math.max(0, order.total - (order.amountPaid || 0)).toLocaleString("en-PH")}).`,
+        link: "/profile?tab=orders",
+      });
+    }
     res.json(order);
   } catch (err) {
     if (!err.status) console.error("Shipping fee update failed:", err);

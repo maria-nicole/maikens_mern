@@ -8,6 +8,7 @@ import { protect, adminOnly } from "../middleware/auth.js";
 import { upload, fileUrl } from "../middleware/upload.js";
 import { QUICK_REPLIES, AUTO_ACK } from "../utils/quickReplies.js";
 import { removeUpload } from "../utils/uploads.js";
+import { notifyStaff, notifyCustomer } from "../utils/notifications.js";
 
 const router = express.Router();
 const MAX_PHOTOS = 4;
@@ -88,6 +89,13 @@ router.post("/thread/:customerId", protect, adminOnly, async (req, res) => {
       sender: "admin",
       body: req.body?.body,
       read: true,
+    });
+    // Ring the customer's bell — the chat page only polls while it's open
+    await notifyCustomer(req.params.customerId, {
+      type: "message",
+      title: "The boutique replied to your message",
+      body: String(req.body?.body || "").slice(0, 160),
+      link: "/message",
     });
     res.status(201).json(msg);
   } catch (err) {
@@ -259,6 +267,15 @@ router.post("/", protect, uploadPhotos, async (req, res) => {
         await Message.create({ customer: req.user._id, sender: "admin", kind: "auto-ack", body: AUTO_ACK, read: true })
       );
     }
+
+    // Ring the shop's bell. A quick question is still the customer reaching out — the
+    // canned answer isn't, but that one is sender "admin" and never lands here.
+    await notifyStaff({
+      type: "message",
+      title: `New message from ${req.user.username}`,
+      body: (body || (images.length ? "📷 Photo" : share ? `Shared: ${share.title}` : "Message")).slice(0, 160),
+      link: { staff: "/staff?tab=messages", admin: "/admin?tab=messages" },
+    });
 
     res.status(201).json(created);
   } catch (err) {

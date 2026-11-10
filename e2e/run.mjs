@@ -33,7 +33,7 @@ const grep = grepIndex !== -1 ? args[grepIndex + 1] : null;
 
 const isWindows = process.platform === "win32";
 
-const SPECS = ["storefront.spec.mjs", "account.spec.mjs", "checkout.spec.mjs", "admin.spec.mjs"];
+const SPECS = ["storefront.spec.mjs", "account.spec.mjs", "checkout.spec.mjs", "admin.spec.mjs", "notifications.spec.mjs"];
 
 const children = [];
 let mailbox = null;
@@ -79,9 +79,11 @@ if (/(^|\.)(mongodb\.net|onrender\.com)/i.test(testUri) === false && !/mongodb(\
 
 /* --------------------------------- ports ---------------------------------- */
 
-const portInUse = (port) =>
+// A port can be held on IPv4, IPv6, or both (a Vite dev server on Windows binds ::1
+// alone), so both loopback addresses are probed before a port is called free.
+const hostInUse = (port, host) =>
     new Promise((resolve) => {
-        const socket = net.connect({ port, host: "127.0.0.1" });
+        const socket = net.connect({ port, host });
         const done = (result) => {
             socket.destroy();
             resolve(result);
@@ -91,6 +93,9 @@ const portInUse = (port) =>
         socket.once("timeout", () => done(false));
         socket.once("error", () => done(false));
     });
+
+const portInUse = async (port) =>
+    (await hostInUse(port, "127.0.0.1")) || (await hostInUse(port, "::1"));
 
 const busy = [];
 for (const port of [BACKEND_PORT, FRONTEND_PORT, MAILBOX_PORT]) {

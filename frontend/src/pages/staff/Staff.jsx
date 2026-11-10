@@ -10,13 +10,13 @@ import {
   MessageSquare,
   LogOut,
   Menu,
-  Bell,
   X,
   Check,
 } from "lucide-react";
 import { font, api, errMsg, initials } from "./staffLib";
 import { PrimaryButton, Spinner } from "./ui";
 import Forbidden from "../../components/Forbidden";
+import NotificationBell from "../../components/notifications/NotificationBell";
 import DashboardView from "./DashboardView";
 import NewSaleView from "./NewSaleView";
 import OrdersView from "./OrdersView";
@@ -233,10 +233,9 @@ export default function Staff({ setUser }) {
             Staff <span className="text-[#B4A88F]">/</span> <span className="font-medium text-[#241F1A]">{activeLabel}</span>
           </p>
           <div className="flex items-center gap-3">
-            <button onClick={() => setTab("messages")} aria-label={unread ? `${unread} unread messages` : "Messages"} className="relative rounded-lg p-2 text-[#4A4136] hover:bg-white">
-              <Bell size={18} />
-              {unread > 0 && <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#7C4A4A]" />}
-            </button>
+            {/* The bell lists what happened — new orders, customer messages, stock — and
+                each notification takes the cashier to the tab it lives in. */}
+            <NotificationBell variant="console" />
             <div className="flex items-center gap-2 rounded-lg bg-white px-2.5 py-1.5">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#9C7A3C]/20 text-xs font-semibold text-[#6B5426]">
                 {initials(me?.username)}

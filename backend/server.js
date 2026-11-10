@@ -13,6 +13,7 @@ import customizationRoutes from "./routes/customization.route.js";
 import tryOnRoutes from "./routes/tryon.route.js";
 
 import messageRoutes from "./routes/message.route.js";
+import notificationRoutes from "./routes/notification.route.js";
 
 import adminUserRoutes from "./routes/adminUsers.route.js";
 import reportRoutes from "./routes/report.route.js";
@@ -109,6 +110,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/customizations", customizationRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/reports", reportRoutes);

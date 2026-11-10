@@ -16,6 +16,7 @@ import { HIDDEN_FROM_PUBLIC, reserveStock, restoreStock, refreshStatuses } from 
 import { setOrderStatus } from "../utils/orderStatus.js";
 import { setShippingFee, cleanShippingFee } from "../utils/shipping.js";
 import { conversationSummaries } from "../utils/conversations.js";
+import { notifyCustomer } from "../utils/notifications.js";
 
 const router = express.Router();
 router.use(protect, staffOrAdmin); // staff and the owner/admin can use everything below
@@ -311,6 +312,17 @@ router.post("/orders/:id/payments", async (req, res) => {
         order.paymentStatus = paymentStatusFor(order.total, order.amountPaid);
         await order.save();
 
+        // Tell the customer what landed on their order — a deposit, or the balance
+        // clearing — so they don't have to ask whether the shop received it.
+        if (order.customer) {
+            await notifyCustomer(order.customer, {
+                type: "payment",
+                title: `Payment recorded on order #${String(order._id).slice(-6).toUpperCase()}`,
+                body: `₱${paid.toLocaleString("en-PH")} received · balance ₱${money(order.total - order.amountPaid).toLocaleString("en-PH")}`,
+                link: "/profile?tab=orders",
+            });
+        }
+
         res.status(201).json(order);
     } catch (err) {
         sendError(res, err);
@@ -329,6 +341,16 @@ router.patch("/orders/:id/shipping", async (req, res) => {
 
         setShippingFee(order, fee);
         await order.save();
+
+        // The customer's total (and balance) just moved, so their bell should say so.
+        if (order.customer) {
+            await notifyCustomer(order.customer, {
+                type: "shipping",
+                title: `Shipping fee updated on order #${String(order._id).slice(-6).toUpperCase()}`,
+                body: `The total is now ₱${order.total.toLocaleString("en-PH")} (balance ₱${Math.max(0, order.total - (order.amountPaid || 0)).toLocaleString("en-PH")}).`,
+                link: "/profile?tab=orders",
+            });
+        }
         res.json(order);
     } catch (err) {
         sendError(res, err);

@@ -11,6 +11,7 @@ import {
   describeSelections,
 } from "../utils/designOptions.js";
 import { uploadExists } from "../utils/uploads.js";
+import { notifyStaff, notifyCustomer } from "../utils/notifications.js";
 
 const router = express.Router();
 
@@ -109,6 +110,13 @@ router.post("/", protect, async (req, res) => {
       customer: req.user._id,
       customerName: req.user.username,
     });
+    // Ring the owner's bell — design requests are reviewed in the owner console
+    await notifyStaff({
+      type: "design",
+      title: `New design request from ${req.user.username}`,
+      body: created.base || "",
+      link: { admin: "/admin?tab=customizations" },
+    }, ["admin"]);
     res.status(201).json(created);
   } catch (err) {
     sendError(res, err);
@@ -176,6 +184,13 @@ router.patch("/:id/status", protect, adminOnly, async (req, res) => {
         },
       });
     }
+    // The bell says the design moved, whether or not a note went with it
+    await notifyCustomer(item.customer, {
+      type: "design",
+      title: `Your design request is now ${status}`,
+      body: text || item.base || "",
+      link: "/profile?tab=designs",
+    });
     res.json(item);
   } catch (err) {
     res.status(400).json({ message: err.message });

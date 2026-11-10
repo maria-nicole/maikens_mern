@@ -1,4 +1,5 @@
 import { Product } from "../models/product.model.js";
+import { notifyStaff } from "./notifications.js";
 
 export const LOW_STOCK_AT = 2;
 export const HIDDEN_FROM_PUBLIC = ["Draft", "Archived"];
@@ -67,5 +68,18 @@ export async function refreshStatuses(productIds) {
         if (!p || HIDDEN_FROM_PUBLIC.includes(p.status)) continue;
         const { totalStock, status } = computeStock({ sizes: p.sizes, status: p.status });
         await Product.updateOne({ _id: id }, { totalStock, status });
+
+        // Ring the shop's bell when a product DROPS to low or out of stock — but only on
+        // the drop itself. A product that is already low stays quiet, so selling down
+        // through the last pieces doesn't fire a notification per sale, and restocking
+        // (which walks back up through Low stock) doesn't either.
+        if (status !== p.status && ["Low stock", "Out of stock"].includes(status)) {
+            await notifyStaff({
+                type: "stock",
+                title: `${p.name} is ${status.toLowerCase()}`,
+                body: totalStock === 0 ? "Nothing left to sell." : `${totalStock} left in stock.`,
+                link: { staff: "/staff?tab=inventory", admin: "/admin?tab=products" },
+            });
+        }
     }
 }

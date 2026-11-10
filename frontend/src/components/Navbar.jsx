@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { LogIn, LogOut, Menu, MessageCircle, Package, ShieldCheck, ShoppingBag, User as UserIcon, X } from "lucide-react";
 import { API_URL, CART_EVENT, assetUrl, authHeader } from "./account/accountShared";
+import NotificationBell from "./notifications/NotificationBell";
 
 /**
  * The shop's top bar.
@@ -184,9 +185,13 @@ const Navbar = ({ user, error, setUser }) => {
           </span>
         </Link>
 
-        {/* Right side: cart, account, and the mobile menu button. All three are the
-            same size whether or not anyone is signed in, so the bar never shifts. */}
+        {/* Right side: notifications, cart, account, and the mobile menu button. The cart
+            and account buttons are always there, and always the same size, so the bar
+            never shifts when someone signs in or out. The bell only appears once someone
+            is signed in — it has nothing to show a visitor. */}
         <div className="flex shrink-0 items-center gap-1 lg:order-2">
+          {user && <NotificationBell variant="store" />}
+
           <Link
             to={user ? "/profile?tab=cart" : "/login"}
             state={user ? undefined : { from: { pathname: "/profile?tab=cart" } }}

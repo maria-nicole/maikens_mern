@@ -47,7 +47,9 @@ export const GOWN = {
     category: "Gown",
     price: 21500,
     size: "M",
-    stock: 5,
+    // Enough for every spec that buys a gown, with room for more, so no spec has to
+    // depend on exactly how many the ones before it bought.
+    stock: 8,
 };
 
 // A real file in backend/uploads, so the product has a picture to show.
@@ -76,7 +78,7 @@ export const deliveryFee = async () => {
 };
 
 export const ORDER_STATUSES = [
-    "Order Received",
+    "Order Placed",
     "In Production",
     "Preparing",
     "Finished Production",
