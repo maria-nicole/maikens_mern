@@ -76,7 +76,7 @@ export const today = (() => {
 // A cancelled order isn't anywhere on that path, so it carries no step and the bar is
 // drawn flat rather than filled (see OrderProgress).
 export const ORDER_STATUS = {
-  "Order Received": { step: 1, color: "text-gray-700 bg-gray-50 border-gray-200" },
+  "Order Placed": { step: 1, color: "text-gray-700 bg-gray-50 border-gray-200" },
   "In Production": { step: 2, color: "text-blue-700 bg-blue-50 border-blue-200" },
   Preparing: { step: 3, color: "text-amber-700 bg-amber-50 border-amber-200" },
   "Finished Production": { step: 4, color: "text-purple-700 bg-purple-50 border-purple-200" },

@@ -103,7 +103,7 @@ export const seedTestDatabase = async (uri) => {
             },
         ],
         total: GOWN.price,
-        status: "Order Received",
+        status: "Order Placed",
         deliveryMethod: "Delivery",
         paymentMethod: "GCash",
         amountPaid: 0,

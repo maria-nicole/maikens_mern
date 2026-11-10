@@ -195,7 +195,7 @@ export function slipLayout(order, { measure = roughMeasure, resolveImage = (p) =
   let by = BAND_H + 34 + 30; // baseline of the order number
   text({ x: PAD, y: by, text: slipNo(order), font: font(30, 700, SERIF), color: INK });
 
-  const pillText = order?.status || "Order Received";
+  const pillText = order?.status || "Order Placed";
   const pill = PILL_TONES[order?.status] || PILL_DEFAULT;
   const pillFont = font(12.5, 600);
   const pillW = Math.round(m(pillText, pillFont)) + 26;
@@ -542,7 +542,7 @@ export function slipText(order) {
   const lines = [
     "MAIKENS Gown & Barong — Order Slip",
     `${slipNo(order)} · ${slipDate(order?.createdAt)}`,
-    `Status: ${order?.status || "Order Received"}`,
+    `Status: ${order?.status || "Order Placed"}`,
     "",
     `Prepared for: ${order?.customerName || "you"}`,
     "",

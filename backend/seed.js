@@ -13,7 +13,7 @@ await connectDB();
 if ((await Order.countDocuments()) === 0) {
   await Order.insertMany([
     { customerName: "Nicole Gopez", channel: "Online", fulfillment: "Ready-to-wear", item: "Rosa Mermaid Gown", total: 21500, status: "In Production" },
-    { customerName: "Gabriel Buluran", channel: "Walk-in", fulfillment: "Made-to-order", item: "Custom Barong: jusi, gold thread", total: 8900, status: "Order Received" },
+    { customerName: "Gabriel Buluran", channel: "Walk-in", fulfillment: "Made-to-order", item: "Custom Barong: jusi, gold thread", total: 8900, status: "Order Placed" },
     { customerName: "Aldwin Espiritu", channel: "Online", fulfillment: "Made-to-order", item: "Custom Gown: off-shoulder, blush", total: 24000, status: "Preparing" },
     { customerName: "Christian Janhmer", channel: "Walk-in", fulfillment: "Ready-to-wear", item: "Classic Filipiniana Barong", total: 6200, status: "Ready for Pick-Up" },
   ]);

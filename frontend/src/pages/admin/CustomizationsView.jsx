@@ -275,7 +275,7 @@ function PriceModal({ item, onClose, onDone }) {
                     </div>
                 </Field>
                 <p className="text-xs text-[#8B8072]">
-                    The order starts at “Order Received” as made-to-order. Record any deposit from the Orders tab.
+                    The order starts at "Order Placed" as made-to-order. Record any deposit from the Orders tab.
                     {Number(price) > 0 && <> Total: <span style={font.mono}>{peso(price)}</span>.</>}
                 </p>
                 {error && <p role="alert" className="rounded-lg bg-[#F3E4E2] px-3 py-2 text-sm text-[#6B3838]">{error}</p>}

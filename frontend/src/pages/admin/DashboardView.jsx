@@ -32,7 +32,7 @@ export default function DashboardView({ data, error, onRefresh, onNavigate }) {
                         <StatCard
                             label="New orders to start"
                             value={data.newOrders}
-                            sub={data.newOrders ? "Waiting at Order Received" : "Nothing waiting"}
+                            sub={data.newOrders ? "Waiting at Order Placed" : "Nothing waiting"}
                             accent={data.newOrders ? "#7C4A4A" : "#5B6E58"}
                             onClick={() => onNavigate("orders")}
                         />

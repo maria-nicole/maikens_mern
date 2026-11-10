@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 // Keep the frontend lists (admin/adminLib.js, staff/staffLib.js, account/accountShared.js)
 // in sync with this.
 export const ORDER_STATUSES = [
-  "Order Received",
+  "Order Placed",
   "In Production",
   "Preparing",
   "Finished Production",
@@ -81,7 +81,7 @@ const orderSchema = new mongoose.Schema(
     items: [orderItemSchema], // filled by online checkout and walk-in sales
     reserved: [reservedSchema], // the subset of `items` that held stock (see utils/stock.js)
     total: { type: Number, required: true, min: 0 },
-    status: { type: String, enum: ORDER_STATUSES, default: "Order Received" },
+    status: { type: String, enum: ORDER_STATUSES, default: "Order Placed" },
 
     // Checkout details (empty for walk-in orders)
     deliveryMethod: { type: String, enum: ["Delivery", "Pick-up"] },

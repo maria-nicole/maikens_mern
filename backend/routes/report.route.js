@@ -14,7 +14,7 @@ const TZ = "Asia/Manila";
 const OFFSET_MS = 8 * 60 * 60 * 1000; // the boutique runs on Philippine time (UTC+8, no daylight saving)
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_DAYS = 366;
-const IN_PROGRESS = ["Order Received", "In Production", "Preparing", "Finished Production"];
+const IN_PROGRESS = ["Order Placed", "In Production", "Preparing", "Finished Production"];
 
 const httpError = (status, message) => Object.assign(new Error(message), { status });
 const sendError = (res, err) => {
@@ -51,7 +51,7 @@ router.get("/dashboard", async (req, res) => {
                 { $group: { _id: null, count: { $sum: 1 }, total: { $sum: "$total" } } },
             ]),
             Order.countDocuments({ status: { $in: IN_PROGRESS } }),
-            Order.countDocuments({ status: "Order Received" }),
+            Order.countDocuments({ status: "Order Placed" }),
             Customization.countDocuments({ status: "Pending review" }),
             Message.countDocuments({ sender: "customer", read: false }),
             ContactMessage.countDocuments({ handled: false }),

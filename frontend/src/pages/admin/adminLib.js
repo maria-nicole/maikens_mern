@@ -65,7 +65,7 @@ export function downloadBlob(blob, filename) {
 
 // Must match ORDER_STATUSES in backend/models/order.model.js
 export const ORDER_STATUSES = [
-    "Order Received",
+    "Order Placed",
     "In Production",
     "Preparing",
     "Finished Production",
@@ -76,7 +76,7 @@ export const ORDER_STATUSES = [
 ];
 
 export const STATUS_TONE = {
-    "Order Received": { dot: "#9C7A3C", bg: "#F4ECDB", text: "#6B5426" },
+    "Order Placed": { dot: "#9C7A3C", bg: "#F4ECDB", text: "#6B5426" },
     "In Production": { dot: "#7C4A4A", bg: "#F3E4E2", text: "#6B3838" },
     Preparing: { dot: "#7C4A4A", bg: "#F3E4E2", text: "#6B3838" },
     "Finished Production": { dot: "#5B6E58", bg: "#E7EDE3", text: "#3E4E3B" },

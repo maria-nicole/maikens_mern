@@ -66,7 +66,7 @@ router.get("/dashboard", async (req, res) => {
                 { $match: { "payments.at": { $gte: since } } },
                 { $group: { _id: "$payments.method", total: { $sum: "$payments.amount" }, count: { $sum: 1 } } },
             ]),
-            Order.countDocuments({ channel: "Online", status: "Order Received" }),
+            Order.countDocuments({ channel: "Online", status: "Order Placed" }),
             Order.countDocuments({ status: { $in: ["In Production", "Preparing"] } }),
             Order.aggregate([
                 { $match: { paymentStatus: { $ne: "Paid" }, status: { $ne: CANCELLED } } },
@@ -196,7 +196,7 @@ router.post("/sales", async (req, res) => {
             shippingFee,
             shippingMethod: shippingFee > 0 ? SHIPPING_METHOD : "",
             deliveryMethod: shippingFee > 0 ? "Delivery" : undefined,
-            status: hasMadeToOrder ? "Order Received" : "Completed",
+            status: hasMadeToOrder ? "Order Placed" : "Completed",
             paymentMethod,
             payments: [
                 { amount: paid, method: paymentMethod, tendered, receivedBy: req.user._id, receivedByName: req.user.username },
