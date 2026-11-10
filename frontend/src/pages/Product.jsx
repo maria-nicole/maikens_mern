@@ -416,7 +416,7 @@ export default function Product() {
 
       {/* Main layout */}
       <div className="px-6 md:px-10 lg:px-24 py-8 grid lg:grid-cols-2 gap-10 items-start">
-        {/* LEFT: gallery + try-on */}
+        {/* LEFT: gallery */}
         <div className="flex flex-col gap-3">
           <div className="relative aspect-[3/4] bg-zinc-100 overflow-hidden rounded-lg border border-gray-200">
             {images.length > 0 ? (
@@ -459,10 +459,79 @@ export default function Product() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* RIGHT: details */}
+        <div className="flex flex-col gap-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold text-yellow-700/89 uppercase tracking-wide mb-1">
+                {product.category}
+                {product.eventTypes?.[0] ? ` · ${product.eventTypes[0]}` : ""}
+              </p>
+              <h1 className="text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">{product.name}</h1>
+            </div>
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={toggleWishlist}
+                className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                aria-label={wishlisted ? "Remove from favorites" : "Add to favorites"}
+                aria-pressed={wishlisted}
+              >
+                <Heart size={16} className={wishlisted ? "fill-yellow-600/89 text-yellow-600/89" : "text-gray-400"} />
+              </button>
+              <button
+                onClick={handleShare}
+                className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                aria-label="Share"
+              >
+                <Share2 size={16} className="text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-semibold text-neutral-800">{formatPrice(product.price)}</span>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${availability.color}`}>
+              {availability.label}
+            </span>
+          </div>
+
+          {product.colors?.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5">
+                {product.colors.map((c) => (
+                  <span
+                    key={c.hex}
+                    title={c.name}
+                    className="h-5 w-5 rounded-full border border-black/10"
+                    style={{ background: c.hex }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {product.description && <p className="text-sm text-zinc-600 leading-relaxed">{product.description}</p>}
+
+          {/* Customize CTA */}
+          {product.customizable && (
+            <button
+              onClick={() => navigate(`/customize?product=${product._id}`)}
+              className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-gray-200 bg-white hover:border-yellow-600/89 transition-colors text-left"
+            >
+              <span className="flex items-center gap-3 text-sm font-medium text-neutral-800">
+                <span className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0">
+                  <Palette size={15} className="text-yellow-600/89" />
+                </span>
+                Customize this design
+              </span>
+              <ChevronRight size={15} className="text-gray-400" />
+            </button>
+          )}
 
           {/* Virtual try-on */}
-          {/* Virtual try-on */}
-          <div className="rounded-lg bg-orange-100/89 p-5 mt-2">
+          <div className="rounded-lg bg-orange-100/89 p-5">
             <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full bg-white/60 text-yellow-700/89 text-xs font-semibold uppercase tracking-wide">
               <Sparkles size={13} />
               AI-Powered
@@ -490,8 +559,8 @@ export default function Product() {
                   Upload photo &amp; try on
                 </button>
                 <p className="text-xs text-zinc-500 mt-3">
-                  Best results: stand straight, face the camera, good lighting. Your photo is only used to create the preview
-                  and is not saved.
+                  JPG, PNG or WebP, up to 5 MB. Best results: stand straight, face the camera, good lighting. Your
+                  photo is only used to create the preview and is not saved.
                 </p>
               </>
             )}
@@ -569,76 +638,6 @@ export default function Product() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* RIGHT: details */}
-        <div className="flex flex-col gap-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold text-yellow-700/89 uppercase tracking-wide mb-1">
-                {product.category}
-                {product.eventTypes?.[0] ? ` · ${product.eventTypes[0]}` : ""}
-              </p>
-              <h1 className="text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">{product.name}</h1>
-            </div>
-            <div className="flex gap-2 mt-1">
-              <button
-                onClick={toggleWishlist}
-                className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
-                aria-label={wishlisted ? "Remove from favorites" : "Add to favorites"}
-                aria-pressed={wishlisted}
-              >
-                <Heart size={16} className={wishlisted ? "fill-yellow-600/89 text-yellow-600/89" : "text-gray-400"} />
-              </button>
-              <button
-                onClick={handleShare}
-                className="p-2 rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
-                aria-label="Share"
-              >
-                <Share2 size={16} className="text-gray-400" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-semibold text-neutral-800">{formatPrice(product.price)}</span>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${availability.color}`}>
-              {availability.label}
-            </span>
-          </div>
-
-          {product.colors?.length > 0 && (
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1.5">
-                {product.colors.map((c) => (
-                  <span
-                    key={c.hex}
-                    title={c.name}
-                    className="h-5 w-5 rounded-full border border-black/10"
-                    style={{ background: c.hex }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {product.description && <p className="text-sm text-zinc-600 leading-relaxed">{product.description}</p>}
-
-          {/* Customize CTA */}
-          {product.customizable && (
-            <button
-              onClick={() => navigate(`/customize?product=${product._id}`)}
-              className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-gray-200 bg-white hover:border-yellow-600/89 transition-colors text-left"
-            >
-              <span className="flex items-center gap-3 text-sm font-medium text-neutral-800">
-                <span className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0">
-                  <Palette size={15} className="text-yellow-600/89" />
-                </span>
-                Customize this design
-              </span>
-              <ChevronRight size={15} className="text-gray-400" />
-            </button>
-          )}
 
           {/* Size selector */}
           {needsSize && (
