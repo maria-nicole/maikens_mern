@@ -138,7 +138,10 @@ export default function MessagesView({ conversations, loaded, onRefresh }) {
                                             </div>
                                         )}
                                         {msg.body}
-                                        <p className={`mt-1 text-[10px] ${msg.sender === "admin" ? "text-[#C9BFAF]" : "text-[#9C8C74]"}`}>{formatWhen(msg.createdAt)}</p>
+                                        <p className={`mt-1 text-[10px] ${msg.sender === "admin" ? "text-[#C9BFAF]" : "text-[#9C8C74]"}`}>
+                                            {formatWhen(msg.createdAt)}
+                                            {msg.editedAt && <span className="italic"> · edited</span>}
+                                        </p>
                                     </div>
                                 </div>
                             ))}

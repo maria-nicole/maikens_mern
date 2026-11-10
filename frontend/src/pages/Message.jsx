@@ -115,7 +115,8 @@ export default function Message() {
     },
     onDeleted: ({ id }) => {
       setMessages((prev) => prev.filter((m) => m._id !== id));
-      setEditing((cur) => (cur?._id === id ? null : cur));
+      // If the message being edited was deleted elsewhere, leave edit mode cleanly
+      if (editing?._id === id) cancelEdit();
     },
     onReconnect: () => reloadRef.current?.(),
   });

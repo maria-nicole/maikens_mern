@@ -295,8 +295,9 @@ router.post("/", protect, uploadPhotos, async (req, res) => {
 /* --------------------------- EDIT AND DELETE --------------------------- */
 
 // Only typed messages can change. A quick-reply and its auto-ack are part of
-// the question-and-answer record, so they are left alone.
-const changeable = (msg) => msg.kind === "message";
+// the question-and-answer record, so they are left alone. Messages from before
+// the field existed have no kind, and those were all typed.
+const changeable = (msg) => (msg.kind || "message") === "message";
 
 // A customer may only touch messages they typed themselves.
 const ownsMessage = (msg, user) =>

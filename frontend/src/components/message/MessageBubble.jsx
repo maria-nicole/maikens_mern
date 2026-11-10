@@ -20,8 +20,9 @@ export default function MessageBubble({ message, onZoom, onImageLoad, onEdit, on
     return () => document.removeEventListener("pointerdown", onDown);
   }, [menuOpen]);
 
-  // Only the customer's own typed messages can change; canned replies stay put
-  const canManage = mine && message.kind === "message" && (onEdit || onDelete);
+  // Only the customer's own typed messages can change; canned replies stay put.
+  // Messages from before the kind field existed are typed ones.
+  const canManage = mine && (message.kind ?? "message") === "message" && (onEdit || onDelete);
 
   return (
     <div className={`group flex items-center gap-1 ${mine ? "justify-end" : "justify-start"}`}>

@@ -4,7 +4,7 @@
 // on each other nor on the specs that ran before them.
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
-import { By } from "selenium-webdriver";
+import { By, Key } from "selenium-webdriver";
 import { ADMIN, API_URL, FRONTEND_URL } from "../config.mjs";
 import {
     getDriver, waitFor, waitForVisible, waitForText, waitForGone, typeInto, clickText,
@@ -34,6 +34,14 @@ const openOptions = async (d) => {
     await options.click();
 };
 
+// clear() sets the value without firing React's input event, so the controlled
+// box can put the old text back. Selecting all and deleting uses real keys.
+const replaceText = async (box, text) => {
+    await box.sendKeys(Key.CONTROL, "a");
+    await box.sendKeys(Key.BACK_SPACE);
+    await box.sendKeys(text);
+};
+
 describe("Messages", () => {
     it("lets a customer edit and delete their own message", async () => {
         const d = getDriver();
@@ -46,8 +54,7 @@ describe("Messages", () => {
         await openOptions(d);
         await clickText(d, "Edit");
         const box = await waitForVisible(d, By.css('textarea[placeholder^="Edit your message"]'));
-        await box.clear();
-        await box.sendKeys("Corrected question");
+        await replaceText(box, "Corrected question");
         const save = await waitForVisible(d, By.css('button[aria-label="Save changes"]'));
         await save.click();
 
@@ -87,6 +94,75 @@ describe("Messages", () => {
         await openOptions(d);
         await clickText(d, "Delete");
         await waitForGone(d, "Please remove this message");
+    });
+
+    it("lets the owner edit their own reply, and the API keeps canned replies safe", async () => {
+        const d = getDriver();
+        const shopper = newShopper();
+        await clearSession(d);
+        await signUpAndVerify(d, shopper);
+        await sendMessage(d, "Question for the owner");
+        const customerToken = await d.executeScript("return localStorage.getItem('token')");
+
+        // The owner answers, then fixes a typo in that answer
+        await clearSession(d);
+        await login(d, ADMIN);
+        await waitForText(d, /admin console/i);
+        await d.get(`${FRONTEND_URL}/admin?tab=messages`);
+        const row = await waitFor(d, By.xpath(`//button[contains(., '${shopper.username}')]`));
+        await row.click();
+        await typeInto(d, 'textarea[aria-label="Reply"]', "Yees it is available");
+        await clickText(d, "Send");
+        await waitForText(d, "Yees it is available");
+
+        const replyMenu = await waitForVisible(
+            d,
+            By.xpath(
+                "//p[normalize-space(.)='Yees it is available']/ancestor::div[contains(@class,'group')][1]//button[@aria-label='Message options']"
+            )
+        );
+        await replyMenu.click();
+        await clickText(d, "Edit");
+        const box = await waitForVisible(d, By.css('textarea[aria-label="Reply"]'));
+        await replaceText(box, "Yes, it is available");
+        await clickText(d, "Save");
+
+        await waitForText(d, "Yes, it is available");
+        await waitForGone(d, "Yees it is available");
+        await waitForText(d, "edited");
+
+        // The rules the menu hides are enforced by the API too
+        const adminToken = await d.executeScript("return localStorage.getItem('token')");
+        const headers = { Authorization: `Bearer ${adminToken}` };
+        const list = await (await fetch(`${API_URL}/api/messages/conversations`, { headers })).json();
+        const conversation = list.find((c) => c.customerName === shopper.username);
+        assert.ok(conversation, "the conversation should be listed");
+        const thread = await (await fetch(`${API_URL}/api/messages/thread/${conversation.customerId}`, { headers })).json();
+
+        const canned = thread.find((m) => m.kind !== "message");
+        assert.ok(canned, "the auto-ack should be in the thread");
+        const cannedEdit = await fetch(`${API_URL}/api/messages/${canned._id}`, {
+            method: "PATCH",
+            headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify({ body: "changed" }),
+        });
+        assert.equal(cannedEdit.status, 400, "canned replies should not be editable");
+        const cannedDelete = await fetch(`${API_URL}/api/messages/${canned._id}`, { method: "DELETE", headers });
+        assert.equal(cannedDelete.status, 400, "canned replies should not be deletable");
+
+        const ownerReply = thread.find((m) => m.sender === "admin" && m.kind === "message");
+        assert.ok(ownerReply, "the owner's edited reply should be in the thread");
+        const customerEdit = await fetch(`${API_URL}/api/messages/${ownerReply._id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${customerToken}` },
+            body: JSON.stringify({ body: "not mine" }),
+        });
+        assert.equal(customerEdit.status, 403, "a customer should not edit the owner's reply");
+        const customerDelete = await fetch(`${API_URL}/api/messages/${ownerReply._id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${customerToken}` },
+        });
+        assert.equal(customerDelete.status, 403, "a customer should not delete the owner's reply");
     });
 
     it("delivers a reply without waiting for the poll", async () => {

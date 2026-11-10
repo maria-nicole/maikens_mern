@@ -34,11 +34,18 @@ export default function MessagesView({ notify, onChanged }) {
 
     // Open a thread. The server marks the customer's messages as read.
     const loadThread = useCallback(
-        async (customerId, { quiet } = {}) => {
+        async (customerId, { quiet, force } = {}) => {
             if (!quiet) setLoadingThread(true);
             try {
                 const { data } = await api.get(`/messages/thread/${customerId}`);
-                setThread((prev) => (prev.length === data.length && prev[prev.length - 1]?._id === data[data.length - 1]?._id ? prev : data));
+                // The poll skips a needless re-render when nothing new arrived, but
+                // a reconnect must replace the thread so edits made while the socket
+                // was away show up too.
+                setThread((prev) =>
+                    force || prev.length !== data.length || prev[prev.length - 1]?._id !== data[data.length - 1]?._id
+                        ? data
+                        : prev
+                );
                 loadConversations();
                 onChanged?.();
             } catch (err) {
@@ -98,7 +105,7 @@ export default function MessagesView({ notify, onChanged }) {
         },
         onReconnect: () => {
             loadConversations();
-            if (activeId) loadThread(activeId, { quiet: true });
+            if (!document.hidden && activeId) loadThread(activeId, { quiet: true, force: true });
         },
     });
 
@@ -216,7 +223,7 @@ export default function MessagesView({ notify, onChanged }) {
                             {thread.map((msg) => {
                                 const mine = msg.sender === "admin";
                                 // Only typed messages can change; the canned auto-ack stays put
-                                const menu = msg.kind === "message" ? (
+                                const menu = (msg.kind ?? "message") === "message" ? (
                                     <MessageMenu
                                         align={mine ? "right" : "left"}
                                         canEdit={mine && !!msg.body}
