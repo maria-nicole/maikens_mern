@@ -5,12 +5,12 @@ import { font, STATUS_TONE, PAYMENT_TONE, PRODUCT_TONE, DESIGN_TONE } from "./ad
 export const inputCls =
     "w-full rounded-lg border border-[#E3DACB] bg-white px-3 py-2 text-sm text-[#241F1A] outline-none transition placeholder:text-[#B4A88F] focus:border-[#9C7A3C] focus:ring-2 focus:ring-[#9C7A3C]/20 disabled:bg-[#FBF8F3] disabled:text-[#B4A88F]";
 
-export function StatCard({ label, value, sub, accent, onClick }) {
+export function StatCard({ label, value, sub, accent, onClick, className = "" }) {
     const Tag = onClick ? "button" : "div";
     return (
         <Tag
             onClick={onClick}
-            className={`rounded-2xl border border-[#E3DACB] bg-white p-5 text-left ${onClick ? "transition hover:border-[#C9BBA3]" : ""}`}
+            className={`rounded-2xl border border-[#E3DACB] bg-white p-5 text-left ${onClick ? "transition hover:border-[#C9BBA3]" : ""} ${className}`}
         >
             <p className="text-xs uppercase tracking-wide text-[#8B8072]">{label}</p>
             <p className="mt-2 text-3xl" style={{ ...font.display, color: "#241F1A" }}>{value}</p>
