@@ -1,27 +1,52 @@
 import { PALETTE, hexForName, normalizeHex } from "../../lib/colors";
+import { DEFAULT_CATEGORY_OPTIONS, uniqueNames } from "../../lib/categories";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// IMPORTANT: these options must match the lists in your admin ProductForm
-// (event types, sleeves, sizes). If they differ, filters won't match anything.
-// The color group is filled in at runtime from the products themselves (see
+// Event types and sleeves are whatever the admin maintains in the console's
+// Categories tab; Catalog.jsx injects them into these groups at runtime, so
+// the fallbacks below only show before the fetch lands (or if it fails).
+// The color group is filled in from the products themselves (see
 // colorOptionsFrom below), so a custom shade an admin added also becomes filterable.
 export const FILTER_GROUPS = [
     { key: "category", label: "Category", options: ["Gown", "Barong"] },
     {
         key: "eventType",
         label: "Event type",
-        options: ["Wedding", "Ninang / Sponsor", "Debut", "Prom / School event", "Party", "Formal"],
+        options: DEFAULT_CATEGORY_OPTIONS.common.eventType,
     },
     {
         key: "sleeve",
         label: "Sleeve style",
-        options: ["Sleeveless", "Cap sleeve", "Short sleeve", "Long sleeve", "Off-shoulder", "Barrel cuff"],
+        options: uniqueNames(
+            DEFAULT_CATEGORY_OPTIONS.Gown.sleeve,
+            DEFAULT_CATEGORY_OPTIONS.Barong.sleeve
+        ),
     },
     { key: "color", label: "Color", options: [] }, // filled in from the products, see below
     { key: "size", label: "Size", options: ["XS", "S", "M", "L", "XL", "XXL"] },
 ];
+
+// Options for the event type / sleeve groups: the admin's list first (in the
+// order they keep it in), then anything the products still carry — an option
+// deleted from the console shouldn't strand the products that use it from being
+// filtered at all.
+export const carriedOptionsFrom = (managed = [], carried = []) => {
+    const seen = new Set();
+    const out = [];
+    const add = (name) => {
+        const clean = String(name || "").trim();
+        if (!clean) return;
+        const key = clean.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push(clean);
+    };
+    managed.forEach(add);
+    carried.forEach(add);
+    return out;
+};
 
 // The color filter lists the colors the shop actually carries: every product's own
 // swatches, in palette order, then any custom shade the admin added. Falls back to the

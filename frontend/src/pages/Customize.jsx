@@ -3,7 +3,8 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 
 import { API_URL, imageUrl } from "../components/customize/customizeShared";
-import { GROUPS, buildRows, prefillFromProduct } from "../components/customize/designOptions";
+import { buildGroups, buildRows, prefillFromProduct } from "../components/customize/designOptions";
+import { fetchCategoryOptions, optionsForGarment } from "../lib/categories";
 import { hexForName, normalizeHex } from "../lib/colors";
 import CustomizeHeader from "../components/customize/CustomizeHeader";
 import StartStep from "../components/customize/StartStep";
@@ -37,6 +38,10 @@ export default function Customize() {
   const [productsLoading, setProductsLoading] = useState(false);
   const [productsError, setProductsError] = useState("");
 
+  // One fetch, shared by the UI and by the prefill of a redesign.
+  const [optionsPromise] = useState(() => fetchCategoryOptions());
+  const [categoryOptions, setCategoryOptions] = useState(null);
+
   const [selections, setSelections] = useState({});
   const [notes, setNotes] = useState("");
   const [refs, setRefs] = useState({ content: EMPTY_REF, style: EMPTY_REF });
@@ -58,8 +63,16 @@ export default function Customize() {
 
   const token = localStorage.getItem("token");
   const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
-  const groups = GROUPS[category];
+  const groups = buildGroups(category, categoryOptions && optionsForGarment(categoryOptions, category));
   const locked = !!editId && !EDITABLE.includes(editStatus);
+
+  useEffect(() => {
+    let ignore = false;
+    optionsPromise.then((options) => !ignore && setCategoryOptions(options));
+    return () => {
+      ignore = true;
+    };
+  }, [optionsPromise]);
 
   /* ---- load: edit an existing request, start from a product, or restore a draft ---- */
   useEffect(() => {
@@ -73,7 +86,10 @@ export default function Customize() {
       setCategory(data.category);
       setMode("redesign");
       setBaseProduct(data);
-      if (prefill) setSelections(prefillFromProduct(data));
+      if (prefill) {
+        const options = await optionsPromise;
+        if (!ignore) setSelections(prefillFromProduct(data, optionsForGarment(options, data.category)));
+      }
       return data;
     };
 
@@ -173,7 +189,7 @@ export default function Customize() {
   }, [toast]);
 
   /* ---- derived ---- */
-  const missing = groups.filter((g) => g.required && !selections[g.key]);
+  const missing = groups.filter((g) => g.required && g.options.length > 0 && !selections[g.key]);
   const startReady = mode === "scratch" || !!baseProduct;
   const styleReady = missing.length === 0;
   const canReach = (i) => i === 0 || (startReady && (i === 1 || styleReady));
@@ -210,7 +226,9 @@ export default function Customize() {
       }
       return next;
     });
-  const resetChoices = () => setSelections(baseProduct ? prefillFromProduct(baseProduct) : {});
+  const prefill = (product) =>
+    prefillFromProduct(product, categoryOptions && optionsForGarment(categoryOptions, product.category));
+  const resetChoices = () => setSelections(baseProduct ? prefill(baseProduct) : {});
   const goToSection = (id) => {
     setSection(id);
     setStep(1);
@@ -231,7 +249,7 @@ export default function Customize() {
 
   const chooseProduct = (p) => {
     setBaseProduct(p);
-    setSelections(prefillFromProduct(p));
+    setSelections(prefill(p));
   };
 
   const pickRef = (role) => (file) => {

@@ -5,6 +5,7 @@ import { protect } from "../middleware/auth.js";
 import { upload, fileUrl } from "../middleware/upload.js";
 import {
   normalizeCategory,
+  getDesignOptions,
   sanitizeSelections,
   missingRequired,
   buildPrompt,
@@ -62,8 +63,9 @@ router.post("/generate-gown", protect, parseRefs, async (req, res) => {
     } catch {
       return fail(400, "Your selections couldn't be read. Please try again.");
     }
-    const selections = sanitizeSelections(category, rawSelections);
-    const missing = missingRequired(category, selections);
+    const options = await getDesignOptions(category);
+    const selections = sanitizeSelections(category, rawSelections, options);
+    const missing = missingRequired(category, selections, options);
     if (missing.length) return fail(400, `Choose a ${missing.join(" and a ")} first.`);
 
     // Images, in the order the prompt describes them: base, shape reference, style reference
@@ -87,12 +89,13 @@ router.post("/generate-gown", protect, parseRefs, async (req, res) => {
     counted = true;
 
     const notes = String(input.notes || "").trim().slice(0, 300);
-    const prompt = buildPrompt({
+    const prompt = await buildPrompt({
       category,
       mode,
       baseName: product?.name,
       selections,
       notes,
+      options,
       roles: { base: !!base, content: !!content, style: !!style },
     });
 

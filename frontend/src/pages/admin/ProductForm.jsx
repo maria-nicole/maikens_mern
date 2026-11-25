@@ -3,7 +3,8 @@ import { ArrowLeft, ImagePlus, X, ChevronLeft, ChevronRight, Check, Loader2, Ale
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { font, api, errMsg, assetUrl, peso } from "./adminLib";
 import { Spinner } from "./ui";
-import { PALETTE } from "../../lib/colors";
+import { PALETTE, hexForName } from "../../lib/colors";
+import { fetchCategoryOptions, DEFAULT_CATEGORY_OPTIONS, optionsForGarment, withCurrent } from "../../lib/categories";
 
 /**
  * Add a product (/admin/products/new) or edit one (/admin/products/:id/edit).
@@ -17,9 +18,8 @@ const SIZES_BY_CATEGORY = {
     Gown: ["XS", "S", "M", "L", "XL", "XXL"],
     Barong: ["S", "M", "L", "XL", "XXL"],
 };
-const EVENT_TYPES = ["Wedding", "Ninang / Sponsor", "Debut", "Prom / School event", "Party", "Formal"];
-const SLEEVES = ["Sleeveless", "Cap sleeve", "Short sleeve", "Long sleeve", "Off-shoulder", "Barrel cuff"];
-const LENGTHS = ["Mini", "Knee", "Midi", "Maxi", "Floor-length", "Cathedral train"];
+// Event types, sleeves and lengths come from the Categories tab in the console
+// (fetched below). DEFAULT_CATEGORY_OPTIONS is only the offline fallback.
 const LOW_STOCK_AT = 2; // matches the rule in product.route.js
 const MAX_IMAGES = 5;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -68,6 +68,7 @@ function Chip({ active, onClick, children }) {
 
 const EMPTY_FORM = {
     name: "", category: "Gown", description: "", material: "", sleeve: "", length: "", price: "",
+    silhouette: "", neckline: "", design: "", fit: "",
     fulfillment: "Ready-to-wear", customizable: true,
 };
 
@@ -84,6 +85,8 @@ export default function ProductForm() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [eventTypes, setEventTypes] = useState([]);
     const [colors, setColors] = useState([]);
+    // The admin's own event types / sleeves / lengths, from the Categories tab
+    const [categoryOptions, setCategoryOptions] = useState(DEFAULT_CATEGORY_OPTIONS);
     const [customHex, setCustomHex] = useState("#9C7A3C");
     const [customName, setCustomName] = useState("");
     const [sizeStock, setSizeStock] = useState({}); // { M: 3, L: 1 }
@@ -100,6 +103,16 @@ export default function ProductForm() {
     // Free object URLs when the page unmounts
     useEffect(() => () => imagesRef.current.forEach((i) => i.file && URL.revokeObjectURL(i.url)), []);
 
+    // Event types, sleeves and lengths are whatever the admin has set up in the
+    // console. Falls back to the starting lists if the server can't be reached.
+    useEffect(() => {
+        let ignore = false;
+        fetchCategoryOptions().then((options) => !ignore && setCategoryOptions(options));
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
     // Editing: load the product, drafts and archived items included
     useEffect(() => {
         if (!editing) return;
@@ -113,6 +126,7 @@ export default function ProductForm() {
                 setForm({
                     name: p.name || "", category: p.category || "Gown", description: p.description || "", material: p.material || "",
                     sleeve: p.sleeve || "", length: p.length || "", price: p.price ? String(p.price) : "",
+                    silhouette: p.silhouette || "", neckline: p.neckline || "", design: p.design || "", fit: p.fit || "",
                     fulfillment: p.fulfillment || "Ready-to-wear", customizable: p.customizable !== false,
                 });
                 setEventTypes(p.eventTypes || []);
@@ -130,6 +144,28 @@ export default function ProductForm() {
     const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
     const availableSizes = SIZES_BY_CATEGORY[form.category];
 
+    // The design lists are the same ones the customizer uses for this garment.
+    const designOptions = optionsForGarment(categoryOptions, form.category);
+    // A product saved with an option that's since been removed keeps its value:
+    // keep offering it so it stays visible (and changeable) instead of silently
+    // dropping out of the form.
+    const sleeveOptions = withCurrent(designOptions.sleeve || [], form.sleeve);
+    const fabricOptions = withCurrent(designOptions.fabric || [], form.material);
+    const silhouetteOptions = withCurrent(designOptions.silhouette || [], form.silhouette);
+    const necklineOptions = withCurrent(designOptions.neckline || [], form.neckline);
+    const designChoices = withCurrent(designOptions.design || [], form.design);
+    const fitOptions = withCurrent(designOptions.fit || [], form.fit);
+    const lengthOptions = withCurrent(categoryOptions.common.length, form.length);
+    const eventTypeOptions = [
+        ...categoryOptions.common.eventType,
+        ...eventTypes.filter((t) => !categoryOptions.common.eventType.some((o) => o.toLowerCase() === t.toLowerCase())),
+    ];
+    // Admin-managed colors, with the shared palette's hex where we know it.
+    const colorSwatches = (designOptions.color || []).map((name) => {
+        const preset = PALETTE.find((c) => c.name.toLowerCase() === name.toLowerCase());
+        return preset || { name, hex: hexForName(name) };
+    });
+
     const totalStock = useMemo(() => Object.values(sizeStock).reduce((s, n) => s + (Number(n) || 0), 0), [sizeStock]);
     const selectedSizes = availableSizes.filter((s) => s in sizeStock);
     const derivedStatus =
@@ -137,7 +173,18 @@ export default function ProductForm() {
 
     /* ---- handlers ---- */
     function changeCategory(cat) {
-        setForm((f) => ({ ...f, category: cat }));
+        const opts = optionsForGarment(categoryOptions, cat);
+        const usable = (key, value) =>
+            !value || (opts[key] || []).some((o) => String(o).toLowerCase() === String(value).toLowerCase());
+        setForm((f) => ({
+            ...f,
+            category: cat,
+            // Only keep design choices that also exist for the new garment
+            silhouette: usable("silhouette", f.silhouette) ? f.silhouette : "",
+            neckline: usable("neckline", f.neckline) ? f.neckline : "",
+            design: usable("design", f.design) ? f.design : "",
+            fit: usable("fit", f.fit) ? f.fit : "",
+        }));
         // Drop sizes that don't exist for the new category
         setSizeStock((prev) => Object.fromEntries(Object.entries(prev).filter(([s]) => SIZES_BY_CATEGORY[cat].includes(s))));
     }
@@ -157,11 +204,11 @@ export default function ProductForm() {
     // saved with a palette name but a slightly different hex still shows as selected)
     const hasColor = (c) =>
         colors.some(
-            (x) => (x.hex || "").toLowerCase() === c.hex.toLowerCase() || (x.name || "").toLowerCase() === c.name.toLowerCase()
+            (x) => (x.hex || "").toLowerCase() === (c.hex || "").toLowerCase() || (x.name || "").toLowerCase() === c.name.toLowerCase()
         );
 
     function togglePaletteColor(c) {
-        if (hasColor(c)) setColors(colors.filter((x) => (x.hex || "").toLowerCase() !== c.hex.toLowerCase() && (x.name || "").toLowerCase() !== c.name.toLowerCase()));
+        if (hasColor(c)) setColors(colors.filter((x) => (x.hex || "").toLowerCase() !== (c.hex || "").toLowerCase() && (x.name || "").toLowerCase() !== c.name.toLowerCase()));
         else addColor(c);
     }
 
@@ -233,6 +280,10 @@ export default function ProductForm() {
             material: form.material.trim(),
             sleeve: form.sleeve,
             length: form.length,
+            silhouette: form.silhouette,
+            neckline: form.neckline,
+            design: form.design,
+            fit: form.fit,
             price: Number(form.price) || 0,
             eventTypes,
             colors,
@@ -451,48 +502,100 @@ export default function ProductForm() {
                                 <textarea id="p-desc" rows={4} value={form.description} onChange={set("description")} placeholder="A floor-length gown in soft imported lace with a fitted bodice…" className={`${inputCls} resize-y leading-relaxed`} />
                             </Field>
 
-                            <Field label="Event type" hint="Used by the catalog's event filter. Pick all that apply.">
+                            <Field
+                                label="Event type"
+                                hint={
+                                    <>
+                                        Used by the catalog&apos;s event filter. Pick all that apply.{" "}
+                                        <Link to="/admin?tab=categories" target="_blank" className="font-medium text-[#9C7A3C] hover:underline">
+                                            Manage categories
+                                        </Link>
+                                    </>
+                                }
+                            >
                                 <div className="flex flex-wrap gap-2">
-                                    {EVENT_TYPES.map((t) => (
+                                    {eventTypeOptions.map((t) => (
                                         <Chip key={t} active={eventTypes.includes(t)} onClick={() => toggle(eventTypes, setEventTypes, t)}>{t}</Chip>
                                     ))}
                                 </div>
                             </Field>
                         </Section>
 
-                        <Section title="Design attributes" description="These also feed the customization tool's predefined design elements.">
+                        <Section
+                            title="Design attributes"
+                            description={
+                                <>
+                                    These are the same options customers see in the customization tool, and are used to prefill a redesign.{" "}
+                                    <Link to="/admin?tab=categories" target="_blank" className="font-medium text-[#9C7A3C] hover:underline">
+                                        Manage option lists
+                                    </Link>
+                                </>
+                            }
+                        >
                             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                                <Field label="Material" htmlFor="p-mat">
-                                    <input id="p-mat" value={form.material} onChange={set("material")} placeholder="Imported lace" className={inputCls} />
+                                <Field label="Fabric" htmlFor="p-fabric">
+                                    <select id="p-fabric" value={form.material} onChange={set("material")} className={inputCls}>
+                                        <option value="">Select…</option>
+                                        {fabricOptions.map((f) => <option key={f}>{f}</option>)}
+                                    </select>
                                 </Field>
                                 <Field label="Sleeve style" htmlFor="p-sleeve">
                                     <select id="p-sleeve" value={form.sleeve} onChange={set("sleeve")} className={inputCls}>
                                         <option value="">Select…</option>
-                                        {SLEEVES.map((s) => <option key={s}>{s}</option>)}
+                                        {sleeveOptions.map((s) => <option key={s}>{s}</option>)}
                                     </select>
                                 </Field>
                                 <Field label="Length" htmlFor="p-length">
                                     <select id="p-length" value={form.length} onChange={set("length")} className={inputCls}>
                                         <option value="">Select…</option>
-                                        {LENGTHS.map((s) => <option key={s}>{s}</option>)}
+                                        {lengthOptions.map((s) => <option key={s}>{s}</option>)}
+                                    </select>
+                                </Field>
+                                {form.category === "Gown" ? (
+                                    <>
+                                        <Field label="Silhouette" htmlFor="p-silhouette">
+                                            <select id="p-silhouette" value={form.silhouette} onChange={set("silhouette")} className={inputCls}>
+                                                <option value="">Select…</option>
+                                                {silhouetteOptions.map((s) => <option key={s}>{s}</option>)}
+                                            </select>
+                                        </Field>
+                                        <Field label="Neckline" htmlFor="p-neckline">
+                                            <select id="p-neckline" value={form.neckline} onChange={set("neckline")} className={inputCls}>
+                                                <option value="">Select…</option>
+                                                {necklineOptions.map((s) => <option key={s}>{s}</option>)}
+                                            </select>
+                                        </Field>
+                                    </>
+                                ) : (
+                                    <Field label="Fit" htmlFor="p-fit">
+                                        <select id="p-fit" value={form.fit} onChange={set("fit")} className={inputCls}>
+                                            <option value="">Select…</option>
+                                            {fitOptions.map((f) => <option key={f}>{f}</option>)}
+                                        </select>
+                                    </Field>
+                                )}
+                                <Field label={form.category === "Gown" ? "Design details" : "Embroidery style"} htmlFor="p-design">
+                                    <select id="p-design" value={form.design} onChange={set("design")} className={inputCls}>
+                                        <option value="">Select…</option>
+                                        {designChoices.map((d) => <option key={d}>{d}</option>)}
                                     </select>
                                 </Field>
                             </div>
 
                             <Field label="Colors" hint="Tap a swatch to add it, or pick a shade of your own. These are the same colors customers can choose in the customizer.">
                                 <div className="flex flex-wrap items-center gap-2.5">
-                                    {PALETTE.map((c) => {
+                                    {colorSwatches.map((c) => {
                                         const on = hasColor(c);
                                         return (
                                             <button
-                                                key={c.hex}
+                                                key={c.name}
                                                 type="button"
                                                 onClick={() => togglePaletteColor(c)}
                                                 aria-pressed={on}
                                                 title={c.name}
                                                 className={`flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-xs transition ${on ? "border-[#241F1A] bg-[#FBF8F3]" : "border-[#E3DACB] bg-white hover:border-[#C9BBA3]"}`}
                                             >
-                                                <span className="h-5 w-5 rounded-full border border-black/10" style={{ background: c.hex }} />
+                                                {c.hex && <span className="h-5 w-5 rounded-full border border-black/10" style={{ background: c.hex }} />}
                                                 {c.name}
                                                 {on && <Check size={12} />}
                                             </button>

@@ -13,9 +13,11 @@ import {
   EMPTY_SELECTION,
   FILTER_GROUPS,
   PALETTE_OPTIONS,
+  carriedOptionsFrom,
   colorOptionsFrom,
   normalizeProduct,
 } from "../components/catalog/catalogConfig";
+import { fetchCategoryOptions, DEFAULT_CATEGORY_OPTIONS, uniqueNames } from "../lib/categories";
 import { NAVBAR_PT } from "../components/account/accountShared";
 
 const Catalog = () => {
@@ -59,13 +61,41 @@ const Catalog = () => {
     };
   }, []);
 
+  // The event types and sleeves the admin maintains (the starting lists while
+  // the fetch is in flight, or if the server can't be reached).
+  const [categoryOptions, setCategoryOptions] = useState(DEFAULT_CATEGORY_OPTIONS);
+  useEffect(() => {
+    let ignore = false;
+    fetchCategoryOptions().then((options) => !ignore && setCategoryOptions(options));
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   // The Color filter is built from what the products actually carry, so a shade the admin
   // added in the product form can be filtered too. The palette is the safe fallback.
+  // Event types and sleeves come from the admin's category lists, plus anything the
+  // products still carry, so a deleted option doesn't strand the products using it.
   const filterGroups = useMemo(() => {
     const carried = colorOptionsFrom(products);
     const colorOptions = carried.length > 0 ? carried : PALETTE_OPTIONS;
-    return FILTER_GROUPS.map((group) => (group.key === "color" ? { ...group, options: colorOptions } : group));
-  }, [products]);
+    return FILTER_GROUPS.map((group) => {
+      if (group.key === "color") return { ...group, options: colorOptions };
+      if (group.key === "eventType") {
+        return { ...group, options: carriedOptionsFrom(categoryOptions.common.eventType, products.flatMap((p) => p.eventType)) };
+      }
+      if (group.key === "sleeve") {
+        return {
+          ...group,
+          options: carriedOptionsFrom(
+            uniqueNames(categoryOptions.Gown.sleeve, categoryOptions.Barong.sleeve),
+            products.flatMap((p) => p.sleeve)
+          ),
+        };
+      }
+      return group;
+    });
+  }, [products, categoryOptions]);
 
   // Back to page 1 whenever the result set could change shape
   useEffect(() => {

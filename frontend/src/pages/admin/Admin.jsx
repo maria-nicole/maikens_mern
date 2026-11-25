@@ -4,6 +4,7 @@ import axios from "axios";
 import {
   LayoutDashboard,
   Shirt,
+  Tags,
   ClipboardList,
   Sparkles,
   MessageSquare,
@@ -24,6 +25,7 @@ import Forbidden from "../../components/Forbidden";
 import NotificationBell from "../../components/notifications/NotificationBell";
 import DashboardView from "./DashboardView";
 import ProductsView from "./ProductsView";
+import CategoriesView from "./CategoriesView";
 import OrdersView from "./OrdersView";
 import CustomizationsView from "./CustomizationsView";
 import MessagesView from "./MessagesView";
@@ -43,6 +45,7 @@ import SettingsView from "./SettingsView";
 const NAV = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { key: "products", label: "Products", icon: Shirt },
+  { key: "categories", label: "Categories", icon: Tags },
   { key: "orders", label: "Orders", icon: ClipboardList },
   { key: "customizations", label: "Customizations", icon: Sparkles },
   { key: "messages", label: "Messages", icon: MessageSquare },
@@ -248,6 +251,7 @@ export default function Admin({ setUser }) {
             <DashboardView data={overview} error={overviewError} onRefresh={loadOverview} onNavigate={setTab} />
           )}
           {tab === "products" && <ProductsView notify={notify} onChanged={loadOverview} />}
+          {tab === "categories" && <CategoriesView notify={notify} />}
           {tab === "orders" && <OrdersView notify={notify} onChanged={loadOverview} />}
           {tab === "customizations" && <CustomizationsView notify={notify} onChanged={loadOverview} />}
           {tab === "messages" && <MessagesView notify={notify} onChanged={loadOverview} />}

@@ -6,6 +6,7 @@ import { Message } from "../models/message.model.js";
 import { protect, adminOnly } from "../middleware/auth.js";
 import {
   normalizeCategory,
+  getDesignOptions,
   sanitizeSelections,
   missingRequired,
   describeSelections,
@@ -35,8 +36,9 @@ async function buildFields(body) {
     category = normalizeCategory(product.category);
   }
 
-  const selections = sanitizeSelections(category, body.selections);
-  const missing = missingRequired(category, selections);
+  const options = await getDesignOptions(category);
+  const selections = sanitizeSelections(category, body.selections, options);
+  const missing = missingRequired(category, selections, options);
   if (missing.length) throw httpError(400, `Choose a ${missing.join(" and a ")} first.`);
 
   const customerNotes = String(body.notes || "").trim().slice(0, 500);
@@ -56,7 +58,7 @@ async function buildFields(body) {
     product: product?._id,
     base: product ? `Redesign: ${product.name}` : `Full custom ${category.toLowerCase()} design`,
     // Single readable line for the admin console
-    notes: [describeSelections(category, selections).join(" · "), customerNotes && `Customer notes: ${customerNotes}`]
+    notes: [describeSelections(category, selections, options).join(" · "), customerNotes && `Customer notes: ${customerNotes}`]
       .filter(Boolean)
       .join(" | "),
     source:

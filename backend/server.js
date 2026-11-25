@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import productRoutes from "./routes/product.route.js";
+import categoryRoutes from "./routes/category.route.js";
 import generateRouter from "./routes/generate.js";
 import orderRoutes from "./routes/order.route.js";
 
@@ -109,6 +110,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/contact", contactRoutes);
 
 app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/customizations", customizationRoutes);
 app.use("/api/messages", messageRoutes);

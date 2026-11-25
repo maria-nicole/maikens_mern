@@ -8,6 +8,11 @@ const productSchema = new mongoose.Schema(
     material: { type: String, default: "" },
     sleeve: { type: String, default: "" },
     length: { type: String, default: "" },
+    // Optional design choices, shared with the customizer's option lists
+    silhouette: { type: String, default: "" },
+    neckline: { type: String, default: "" },
+    design: { type: String, default: "" },
+    fit: { type: String, default: "" },
     price: { type: Number, default: 0, min: 0 },
     eventTypes: [String],
     colors: [{ name: String, hex: String, _id: false }],

@@ -10,7 +10,7 @@
    Tip: the "Design details" labels are just names. Rename them (here AND in the backend)
    to match the pattern photos in /images/design.
 ------------------------------------------------------------------------------------------ */
-import { PALETTE, isHex, normalizeHex, swatchFor } from "../../lib/colors";
+import { PALETTE, isHex, normalizeHex, swatchFor } from "../../lib/colors.js";
 
 const o = (value, extra = {}) => ({ value, ...extra });
 
@@ -132,11 +132,37 @@ export const GROUPS = {
 
 export const EXTRAS_ID = "extras";
 
-const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z]/g, "");
+const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const same = (a, b) => norm(a) === norm(b);
+
+/* The admin maintains the option names in the Categories tab; this file keeps
+   the thumbnails, descriptions, order and required flags. Options the owner adds
+   there show up as plain labelled buttons until a matching image is added here. */
+export function buildGroups(category, options = null) {
+    const base = GROUPS[category] || [];
+    if (!options || !Object.keys(options).length) return base;
+    return base
+        .filter((group) => Array.isArray(options[group.key]))
+        .map((group) => {
+            const seen = new Set();
+            const values = options[group.key].filter((name) => {
+                const clean = String(name || "").trim();
+                if (!clean || seen.has(norm(clean))) return false;
+                seen.add(norm(clean));
+                return true;
+            });
+            return {
+                ...group,
+                // A list the owner emptied out can't be required any more.
+                required: group.required && values.length > 0,
+                options: values.map((name) => group.options.find((opt) => same(opt.value, name)) || o(name)),
+            };
+        });
+}
 
 // Pre-fills a redesign with what the chosen product already is, so customers only change what they want
-export function prefillFromProduct(product) {
-    const groups = GROUPS[product.category] || [];
+export function prefillFromProduct(product, options = null) {
+    const groups = buildGroups(product.category, options);
     const out = {};
 
     // Color first: keep the product's exact shade, even when it isn't one of our presets
@@ -166,6 +192,10 @@ export function prefillFromProduct(product) {
     };
     find("sleeve", product.sleeve);
     find("fabric", product.material, true);
+    find("silhouette", product.silhouette);
+    find("neckline", product.neckline);
+    find("design", product.design);
+    find("fit", product.fit);
     return out;
 }
 
