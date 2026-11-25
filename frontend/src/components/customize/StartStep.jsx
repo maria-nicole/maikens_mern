@@ -60,7 +60,7 @@ export default function StartStep({
         <div className="rounded-lg border border-gray-200 bg-white p-5 sm:p-8">
             <div className="space-y-10">
                 <section>
-                    <h2 className="text-xl font-bold text-neutral-800">What are you designing?</h2>
+                    <h2 className="font-display text-xl font-bold text-neutral-800">What are you designing?</h2>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <ChoiceCard
                             icon={Shirt}
@@ -82,7 +82,7 @@ export default function StartStep({
                 </section>
 
                 <section>
-                    <h2 className="text-xl font-bold text-neutral-800">How do you want to start?</h2>
+                    <h2 className="font-display text-xl font-bold text-neutral-800">How do you want to start?</h2>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         <ChoiceCard
                             icon={Shirt}
@@ -105,7 +105,7 @@ export default function StartStep({
 
                 {mode === "redesign" && (
                     <section>
-                        <h2 className="mb-3 text-base font-semibold text-neutral-800">Pick a design to start from</h2>
+                        <h2 className="font-display mb-3 text-base font-semibold text-neutral-800">Pick a design to start from</h2>
                         {productsError && (
                             <p role="alert" className="rounded-md border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
                                 {productsError}

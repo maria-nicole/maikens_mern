@@ -147,6 +147,13 @@ export default function useAccountData({ setUser } = {}) {
   );
 
   // ── Custom designs ──
+  // The try-on route has already saved the image; this just keeps the visible
+  // card and open preview in step with it.
+  const recordTryOn = useCallback((id, imageUrl) => {
+    if (!id || !imageUrl) return;
+    setDesigns((prev) => prev.map((d) => (d._id === id ? { ...d, tryOnImage: imageUrl } : d)));
+  }, []);
+
   const removeDesign = useCallback(
     async (design) => {
       try {
@@ -243,6 +250,7 @@ export default function useAccountData({ setUser } = {}) {
     saveProfile,
     removeFavorite,
     removeDesign,
+    recordTryOn,
     changeQty,
     removeItem,
     saveReview,

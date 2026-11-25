@@ -9,7 +9,7 @@ export default function Footer() {
         <footer className="w-full border-t border-gray-200 bg-white px-6 py-10">
             <div className="flex flex-col sm:flex-row sm:justify-between">
                 <div className="my-5 mb-6 gap-2 sm:mb-0 lg:mx-5">
-                    <span className="text-2xl font-bold text-gray-800">MAIKENS</span>
+                    <span className="font-display text-2xl font-bold text-gray-800">MAIKENS</span>
                     <p className="py-5 text-gray-400">
                         Stall A18 Disenyo Pandi
                         <br />

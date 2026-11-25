@@ -51,7 +51,7 @@ const ForgotPassword = () => {
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-600/10 text-yellow-700/89">
                 <MailCheck size={22} />
               </span>
-              <h1 className="mt-5 text-3xl font-bold tracking-tight text-neutral-800">Check your email</h1>
+              <h1 className="font-display mt-5 text-3xl font-bold tracking-tight text-neutral-800">Check your email</h1>
               <p className="mt-2 text-zinc-600">
                 If that email has an account, we&rsquo;ve sent a reset link. It expires in 1 hour.
               </p>
@@ -69,7 +69,7 @@ const ForgotPassword = () => {
             </>
           ) : (
             <>
-              <h1 className="text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">Forgot your password?</h1>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">Forgot your password?</h1>
               <p className="mt-2 mb-8 text-zinc-600">
                 Enter the email on your account and we&rsquo;ll send you a link to set a new password.
               </p>

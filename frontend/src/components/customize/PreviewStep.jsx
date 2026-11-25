@@ -24,7 +24,7 @@ export default function PreviewStep({
     return (
         <div className="rounded-lg border border-gray-200 bg-white p-5 sm:p-8">
             <div className="mb-6">
-                <h2 className="text-xl font-bold text-neutral-800">Preview and send</h2>
+                <h2 className="font-display text-xl font-bold text-neutral-800">Preview and send</h2>
                 <p className="mt-1 text-sm text-gray-500">
                     The AI makes a front-facing preview to help you and the tailors see the idea. The boutique confirms the final
                     details with you.

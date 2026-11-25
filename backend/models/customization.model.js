@@ -25,6 +25,7 @@ const customizationSchema = new mongoose.Schema(
       color: { type: String, default: "" },
       colorHex: { type: String, default: "" },
       silhouette: { type: String, default: "" },
+      length: { type: String, default: "" },
       fit: { type: String, default: "" },
       neckline: { type: String, default: "" },
       sleeve: { type: String, default: "" },
@@ -34,6 +35,7 @@ const customizationSchema = new mongoose.Schema(
     customerNotes: { type: String, default: "", maxlength: 500 },
 
     previewImage: { type: String, default: "" }, // AI preview, e.g. "/uploads/abc.png"
+    tryOnImage: { type: String, default: "" },   // customer's saved virtual try-on result
     references: {
       content: { type: String, default: "" }, // shape photo / sketch
       style: { type: String, default: "" }, // pattern / design photo

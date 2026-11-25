@@ -53,7 +53,7 @@ const PrivacyPolicy = () => {
           </ol>
         </nav>
 
-        <h1 className="font-serif text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
+        <h1 className="font-display text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
           Privacy
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-stone-600">
@@ -64,7 +64,7 @@ const PrivacyPolicy = () => {
       <main className="px-6 py-14 md:px-10 lg:px-24">
         <div className="mx-auto max-w-3xl space-y-8">
           <section>
-            <h2 className="font-serif text-2xl font-bold text-neutral-800">What we collect</h2>
+            <h2 className="font-display text-2xl font-bold text-neutral-800">What we collect</h2>
             <div className="mt-4 space-y-5">
               {COLLECTED.map((item) => (
                 <div key={item.title}>
@@ -76,7 +76,7 @@ const PrivacyPolicy = () => {
           </section>
 
           <section>
-            <h2 className="font-serif text-2xl font-bold text-neutral-800">What we use it for</h2>
+            <h2 className="font-display text-2xl font-bold text-neutral-800">What we use it for</h2>
             <ul className="mt-4 list-disc space-y-2 pl-5 text-base leading-relaxed text-[#4A4136]">
               {USES.map((use) => (
                 <li key={use}>{use}</li>
@@ -85,7 +85,7 @@ const PrivacyPolicy = () => {
           </section>
 
           <section className="rounded-2xl border border-[#E3DACB] bg-[#FBF8F3] p-6">
-            <h2 className="font-serif text-lg font-bold text-[#241F1A]">Who can see it</h2>
+            <h2 className="font-display text-lg font-bold text-[#241F1A]">Who can see it</h2>
             <p className="mt-2 text-base leading-relaxed text-[#4A4136]">
               Only the boutique's own staff and owner, and only for the reasons above. We do not sell or rent
               your details to anyone. Deliveries are carried by Lalamove, so a courier receives the delivery

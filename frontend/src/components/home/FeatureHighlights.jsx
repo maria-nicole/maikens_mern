@@ -32,7 +32,7 @@ export default function FeatureHighlights() {
     return (
         <section className="bg-orange-100/89 px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
             <div className="mb-8 max-w-xl sm:mb-10">
-                <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
+                <h2 className="font-display text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
                     Everything in one place
                 </h2>
                 <p className="mt-3 text-sm text-stone-600 sm:text-base">
@@ -50,7 +50,7 @@ export default function FeatureHighlights() {
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-100/89">
                                 <Icon size={18} className="text-yellow-700/89" />
                             </div>
-                            <h3 className="font-serif text-lg font-bold leading-tight text-neutral-800 sm:text-xl">
+                            <h3 className="font-display text-lg font-bold leading-tight text-neutral-800 sm:text-xl">
                                 {title}
                             </h3>
                         </div>

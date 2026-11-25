@@ -9,7 +9,7 @@ export default function CatalogPreview({ loading, loadError, products, skeletonC
     return (
         <section className="bg-stone-50 px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
             <div className="mb-6 sm:mb-8">
-                <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
+                <h2 className="font-display text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
                     From our catalog
                 </h2>
                 <p className="mt-2 text-sm text-stone-600 sm:text-base">
@@ -32,7 +32,7 @@ export default function CatalogPreview({ loading, loadError, products, skeletonC
             ) : products.length === 0 ? (
                 !loadError && (
                     <div className="py-10 text-center">
-                        <p className="font-serif text-xl font-bold text-neutral-800">Nothing in the catalog yet</p>
+                        <p className="font-sans text-xl font-bold text-neutral-800">Nothing in the catalog yet</p>
                         <p className="mt-1 text-sm text-stone-500">New gowns and barong will show up here once they're published.</p>
                     </div>
                 )

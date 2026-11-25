@@ -61,7 +61,7 @@ export function LoggedOutScreen({ message }) {
         <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
           <Lock size={24} className="text-yellow-600/89" />
         </div>
-        <h1 className="text-2xl font-bold text-neutral-800">Please log in first</h1>
+        <h1 className="font-display text-2xl font-bold text-neutral-800">Please log in first</h1>
         <p className="text-sm text-zinc-600 mt-2 mb-6">
           {message || "Log in to see your orders, custom designs, favorites and cart."}
         </p>

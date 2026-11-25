@@ -52,7 +52,7 @@ export default function ProductCard({ product, viewMode }) {
 
             {/* Info */}
             <div className={`flex flex-col gap-1 p-4 ${isList ? "flex-1 justify-center" : ""}`}>
-                <h3 className="font-serif text-lg font-bold leading-snug text-neutral-800 group-hover:text-yellow-700/89 transition-colors">
+                <h3 className="font-display text-lg font-bold leading-snug text-neutral-800 group-hover:text-yellow-700/89 transition-colors">
                     {product.name}
                 </h3>
 

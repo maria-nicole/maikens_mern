@@ -201,7 +201,7 @@ export default function Product() {
     return (
       <div className={`min-h-screen bg-gray-50 ${NAVBAR_PT} px-4 flex items-center justify-center`}>
         <div className="bg-white rounded-lg border border-gray-200 p-10 text-center w-full max-w-md">
-          <h1 className="text-2xl font-bold text-neutral-800">
+          <h1 className="font-display text-2xl font-bold text-neutral-800">
             {notFound ? "This item isn't available" : "Couldn't load this item"}
           </h1>
           <p className="text-sm text-zinc-600 mt-2 mb-6">
@@ -485,7 +485,7 @@ export default function Product() {
                 {product.category}
                 {product.eventTypes?.[0] ? ` · ${product.eventTypes[0]}` : ""}
               </p>
-              <h1 className="text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">{product.name}</h1>
+              <h1 className="font-display text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">{product.name}</h1>
             </div>
             <div className="flex gap-2 mt-1">
               <button
@@ -750,7 +750,7 @@ export default function Product() {
       {/* Related products — the same card used in the catalog and home preview */}
       {related.length > 0 && (
         <section className="bg-stone-50 px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
-          <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl">You may also like</h2>
+          <h2 className="font-display text-2xl font-bold text-neutral-800 sm:text-3xl">You may also like</h2>
           <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} viewMode="grid" />
@@ -773,7 +773,7 @@ export default function Product() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-neutral-800">Size guide (inches)</h2>
+              <h2 className="font-display text-lg font-bold text-neutral-800">Size guide (inches)</h2>
               <button onClick={() => setShowSizeGuide(false)} aria-label="Close">
                 <X size={18} className="text-gray-400 hover:text-gray-600" />
               </button>

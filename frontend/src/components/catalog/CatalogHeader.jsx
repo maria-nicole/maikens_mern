@@ -18,7 +18,7 @@ export default function CatalogHeader() {
                 </ol>
             </nav>
 
-            <h1 className="font-serif text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
+            <h1 className="font-display text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
                 Gowns &amp; Barong
             </h1>
             <p className="mt-3 max-w-xl text-base leading-relaxed text-stone-600">

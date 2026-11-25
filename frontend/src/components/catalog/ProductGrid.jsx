@@ -44,12 +44,12 @@ export default function ProductGrid({
             <div className="py-20 text-center">
                 {catalogIsEmpty ? (
                     <>
-                        <p className="font-serif text-xl font-bold text-neutral-800">Nothing in the catalog yet</p>
+                        <p className="font-sans text-xl font-bold text-neutral-800">Nothing in the catalog yet</p>
                         <p className="mt-1 text-sm text-stone-500">New gowns and barong will show up here once they're published.</p>
                     </>
                 ) : (
                     <>
-                        <p className="font-serif text-xl font-bold text-neutral-800">No matches found</p>
+                        <p className="font-sans text-xl font-bold text-neutral-800">No matches found</p>
                         <p className="mt-1 text-sm text-stone-500">Try removing a filter or searching a different name.</p>
                         {hasActiveFilters && (
                             <button

@@ -77,7 +77,12 @@ export default function Profile({ setUser }) {
           )}
 
           {section === "designs" && (
-            <DesignsPanel designs={account.designs} loading={account.activityLoading} onRemove={account.removeDesign} />
+            <DesignsPanel
+              designs={account.designs}
+              loading={account.activityLoading}
+              onRemove={account.removeDesign}
+              onTryOnSaved={account.recordTryOn}
+            />
           )}
 
           {section === "favorites" && (

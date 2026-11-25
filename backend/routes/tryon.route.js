@@ -4,7 +4,7 @@ import { Product } from "../models/product.model.js";
 import { Customization } from "../models/customization.model.js";
 import { protect } from "../middleware/auth.js";
 import { uploadTryOnPhoto } from "../middleware/upload.js";
-import { readUpload } from "../utils/uploads.js";
+import { readUpload, removeUpload, saveImage } from "../utils/uploads.js";
 import { HIDDEN_FROM_PUBLIC } from "../utils/stock.js";
 import { generateWithGemini, createLimiter } from "../utils/gemini.js";
 
@@ -75,10 +75,11 @@ router.post("/", protect, parsePhoto, async (req, res) => {
         const { productId, customizationId } = req.body;
         let garment;
         let prompt;
+        let customization = null;
 
         if (customizationId) {
             if (!mongoose.isValidObjectId(customizationId)) return fail(404, "That design isn't available.");
-            const customization = await Customization.findOne({ _id: customizationId });
+            customization = await Customization.findOne({ _id: customizationId });
             if (!customization) return fail(404, "That design isn't available.");
             // Allow owner or admin/staff? For now require ownership
             if (String(customization.customer) !== userId && req.user.role !== "admin" && req.user.role !== "staff") {
@@ -116,9 +117,26 @@ router.post("/", protect, parsePhoto, async (req, res) => {
             { inlineData: { mimeType: garment.mimeType, data: garment.data } },
         ]);
 
-        // Returned inline and never stored
+        // Save the result on the design when one was supplied, so it is still
+        // there when the customer comes back to My Designs. A storage failure
+        // shouldn't throw away the image we just generated.
+        let savedUrl = "";
+        if (customizationId) {
+            try {
+                savedUrl = await saveImage(result.data, result.mimeType);
+                await Customization.updateOne({ _id: customization._id }, { $set: { tryOnImage: savedUrl } });
+                if (customization.tryOnImage && customization.tryOnImage !== savedUrl) {
+                    removeUpload(customization.tryOnImage);
+                }
+            } catch (err) {
+                console.error("Couldn't save try-on result:", err.message);
+                savedUrl = "";
+            }
+        }
+
         res.json({
             imageData: `data:${result.mimeType};base64,${result.data}`,
+            imageUrl: savedUrl,
             remaining: slot.remaining,
         });
     } catch (err) {

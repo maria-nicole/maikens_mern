@@ -31,7 +31,7 @@ export default function FacebookGallery() {
                 <BsFacebook className="h-7 w-7 shrink-0 text-yellow-700/89" aria-hidden="true" />
                 <div>
                     <p className="text-sm text-stone-500">Follow us on Facebook</p>
-                    <h2 className="font-serif text-xl font-bold text-neutral-800 group-hover:underline sm:text-2xl md:text-3xl">
+                    <h2 className="font-display text-xl font-bold text-neutral-800 group-hover:underline sm:text-2xl md:text-3xl">
                         M&amp;N Gowns and Suits
                     </h2>
                 </div>

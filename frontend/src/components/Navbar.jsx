@@ -180,7 +180,7 @@ const Navbar = ({ user, error, setUser }) => {
         {/* Brand. It may shrink (and the wordmark may clip) rather than push the bar
             onto a second line, which would make the fixed header taller. */}
         <Link to="/" onClick={closeMenus} className="flex min-w-0 items-center gap-2.5">
-          <span className="truncate whitespace-nowrap font-serif text-xl font-bold tracking-wide text-stone-800 sm:text-2xl lg:text-[1.7rem]">
+          <span className="truncate whitespace-nowrap font-display text-xl font-bold tracking-wide text-stone-800 sm:text-2xl lg:text-[1.7rem]">
             Maikens <span className="text-amber-700">Gown &amp; Barong</span>
           </span>
         </Link>

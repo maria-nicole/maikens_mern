@@ -71,7 +71,7 @@ export default function FilterSidebar({ selected, onToggle, onClear, activeCount
             <aside className="hidden w-64 shrink-0 lg:block" aria-label="Filters">
                 <div className="sticky top-32 max-h-[calc(100vh-9rem)] overflow-y-auto pr-2">
                     <div className="mb-4 flex items-center justify-between">
-                        <h2 className="font-serif text-lg font-bold text-neutral-800">Filters</h2>
+                        <h2 className="font-display text-lg font-bold text-neutral-800">Filters</h2>
                         {activeCount > 0 && (
                             <button onClick={onClear} className="text-xs text-stone-500 underline hover:text-stone-700">
                                 Clear all
@@ -88,7 +88,7 @@ export default function FilterSidebar({ selected, onToggle, onClear, activeCount
                     <div className="absolute inset-0 bg-black/40" onClick={onClose} />
                     <div className="absolute inset-y-0 left-0 flex w-[85%] max-w-sm flex-col bg-white shadow-xl">
                         <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
-                            <h2 className="font-serif text-lg font-bold text-neutral-800">Filters</h2>
+                            <h2 className="font-display text-lg font-bold text-neutral-800">Filters</h2>
                             <button onClick={onClose} aria-label="Close filters" className="text-stone-400 hover:text-stone-600">
                                 <X size={18} />
                             </button>

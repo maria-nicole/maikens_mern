@@ -42,6 +42,8 @@ const Login = ({ setUser }) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    const from = location.state?.from;
+    const statePath = from ? `${from.pathname || ""}${from.search || ""}${from.hash || ""}` : "";
     try {
       const res = await axios.post("/api/users/login", {
         email: formData.email.trim().toLowerCase(),
@@ -52,15 +54,19 @@ const Login = ({ setUser }) => {
       axios.defaults.headers.common.Authorization = `Bearer ${res.data.token}`;
       setUser(res.data);
 
-      // Send people back to the page they were trying to reach (e.g. checkout),
-      // otherwise to their role's home.
-      const cameFrom = location.state?.from?.pathname;
+      // Send people back to the page they were trying to reach. Router state is
+      // preferred; the ?redirect= fallback is for older links opened as a URL.
+      const redirect = new URLSearchParams(location.search).get("redirect");
+      const cameFrom = statePath.startsWith("/") ? statePath : redirect?.startsWith("/") ? redirect : "";
       navigate(cameFrom || ROLE_HOME[res.data.role] || "/", { replace: true });
 
     } catch (err) {
       if (err.response?.data?.needsVerification) {
         navigate("/verify-email", {
-          state: { email: err.response.data.email, from: location.state?.from?.pathname },
+          state: {
+            email: err.response.data.email,
+            from: statePath.startsWith("/") ? statePath : "",
+          },
         });
         return;
       }
@@ -81,7 +87,7 @@ const Login = ({ setUser }) => {
           <p className="text-xs uppercase tracking-widest text-orange-100/89 font-semibold mb-3">
             Maikens Gown &amp; Barong
           </p>
-          <h2 className="text-4xl xl:text-5xl font-bold tracking-tight mb-8 max-w-md">
+          <h2 className="font-display text-4xl xl:text-5xl font-bold tracking-tight mb-8 max-w-md">
             Your perfect gown, made for you.
           </h2>
           <ul className="space-y-3">
@@ -111,7 +117,7 @@ const Login = ({ setUser }) => {
 
         <div className="flex-1 flex items-center justify-center px-6 py-10 sm:px-10">
           <div className="w-full max-w-sm">
-            <h1 className="mt-6 text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">Welcome back</h1>
+            <h1 className="font-display mt-6 text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">Welcome back</h1>
             <p className="mt-2 mb-8 text-zinc-600">Log in to order, track, and customize your gowns.</p>
 
             {error && (

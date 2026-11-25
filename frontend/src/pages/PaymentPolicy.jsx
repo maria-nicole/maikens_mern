@@ -31,7 +31,7 @@ const PaymentPolicy = () => {
           </ol>
         </nav>
 
-        <h1 className="font-serif text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
+        <h1 className="font-display text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
           Payment Options
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-stone-600">
@@ -43,7 +43,7 @@ const PaymentPolicy = () => {
         <div className="mx-auto max-w-3xl space-y-5">
           {PAYMENT_POLICY.map((rule) => (
             <section key={rule.title} className="rounded-2xl border border-[#E3DACB] bg-[#FBF8F3] p-6">
-              <h2 className="font-serif text-xl font-bold text-[#241F1A]">{rule.title}</h2>
+              <h2 className="font-display text-xl font-bold text-[#241F1A]">{rule.title}</h2>
               <p className="mt-2 text-base leading-relaxed text-[#4A4136]">{rule.body}</p>
             </section>
           ))}

@@ -45,7 +45,7 @@ const About = () => {
           </ol>
         </nav>
 
-        <h1 className="font-serif text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
+        <h1 className="font-display text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">
           About Maikens
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-stone-600">
@@ -62,7 +62,7 @@ const About = () => {
               <section key={point.title} className="flex gap-4 rounded-2xl border border-[#E3DACB] bg-[#FBF8F3] p-6">
                 <Icon size={22} className="mt-0.5 shrink-0 text-[#9C7A3C]" />
                 <div>
-                  <h2 className="font-serif text-lg font-bold text-[#241F1A]">{point.title}</h2>
+                  <h2 className="font-display text-lg font-bold text-[#241F1A]">{point.title}</h2>
                   <p className="mt-1.5 text-base leading-relaxed text-[#4A4136]">{point.body}</p>
                 </div>
               </section>

@@ -6,7 +6,7 @@ export default function CustomizeHeader({ editing, steps, current, canReach, onG
             <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-4 sm:px-6">
                 <Sparkles size={20} className="text-yellow-700/89" />
                 <div>
-                    <h1 className="text-lg font-semibold text-gray-800">{editing ? "Edit your design" : "Design your own"}</h1>
+                    <h1 className="font-display text-lg font-semibold text-gray-800">{editing ? "Edit your design" : "Design your own"}</h1>
                     <p className="text-xs text-gray-400">Pick your details, preview them with AI, then send to the boutique.</p>
                 </div>
             </div>

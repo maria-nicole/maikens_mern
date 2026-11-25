@@ -58,7 +58,7 @@ export default function DesignStep({
             <section className="rounded-lg border border-gray-200 bg-white p-5 sm:p-8">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 className="text-xl font-bold text-neutral-800">{row.title}</h2>
+                        <h2 className="font-display text-xl font-bold text-neutral-800">{row.title}</h2>
                         <p className="mt-1 text-sm text-gray-500">{group ? group.hint : EXTRAS_HINT}</p>
                     </div>
                     <div className="flex items-center gap-3">

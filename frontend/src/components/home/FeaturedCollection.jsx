@@ -8,7 +8,7 @@ export default function FeaturedCollection({ loading, items, count }) {
         <section className="px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3 sm:mb-8">
                 <div>
-                    <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
+                    <h2 className="font-display text-2xl font-bold text-neutral-800 sm:text-3xl md:text-4xl">
                         Newest arrivals
                     </h2>
                     <p className="mt-2 text-sm text-stone-600 sm:text-base">
@@ -42,7 +42,7 @@ export default function FeaturedCollection({ loading, items, count }) {
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
-                                <p className="font-serif text-base font-bold leading-snug text-white sm:text-lg">
+                                <p className="font-sans text-base font-bold leading-snug text-white sm:text-lg">
                                     {item.name}
                                 </p>
                                 <p className="text-sm text-white/85">{formatPrice(item.price)}</p>

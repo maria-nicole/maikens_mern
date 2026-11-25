@@ -25,7 +25,7 @@ export default function AccountNav({ section, counts = {} }) {
     <div className="bg-white border-b border-gray-200">
       <div className="px-4 sm:px-6 lg:px-10 py-4 flex items-center gap-3">
         <User size={20} className="text-yellow-700/89" />
-        <h1 className="text-lg font-semibold text-gray-800">My Account</h1>
+        <h1 className="font-display text-lg font-semibold text-gray-800">My Account</h1>
       </div>
 
       <div className="lg:hidden px-4 sm:px-6 flex gap-6 overflow-x-auto">

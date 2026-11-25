@@ -1,3 +1,15 @@
 @import "tailwindcss";
 @plugin "flowbite/plugin";
 @source "../node_modules/flowbite";
+
+/* One font system for the storefront: a serif display face for headings and a
+   system sans for everything else. Font-mono stays for codes like the OTP. */
+@theme {
+  --font-display: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+}

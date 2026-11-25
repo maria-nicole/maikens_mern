@@ -83,7 +83,7 @@ export default function VerifyEmail({ setUser }) {
                     <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
                         <MailCheck size={24} className="text-yellow-600/89" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight text-neutral-800">Verify your email</h1>
+                    <h1 className="font-display text-2xl font-bold tracking-tight text-neutral-800">Verify your email</h1>
                     <p className="text-sm text-zinc-600 mt-2 mb-6">
                         We sent a 6-digit code to <span className="font-medium text-neutral-800 break-all">{email}</span>.
                         Enter it below to continue.

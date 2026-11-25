@@ -14,8 +14,9 @@ export default function GoogleAuthButton({ setUser, onError }) {
             localStorage.setItem("token", res.data.token);
             axios.defaults.headers.common.Authorization = `Bearer ${res.data.token}`;
             setUser(res.data);
-            const cameFrom = location.state?.from?.pathname;
-            navigate(cameFrom || ROLE_HOME[res.data.role] || "/", { replace: true });
+            const from = location.state?.from;
+            const path = from ? `${from.pathname || ""}${from.search || ""}${from.hash || ""}` : "";
+            navigate(path.startsWith("/") ? path : ROLE_HOME[res.data.role] || "/", { replace: true });
         } catch (err) {
             onError(err.response?.data?.message || "Google sign-in failed. Please try again.");
         }

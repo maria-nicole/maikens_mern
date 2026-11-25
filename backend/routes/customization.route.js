@@ -11,7 +11,7 @@ import {
   missingRequired,
   describeSelections,
 } from "../utils/designOptions.js";
-import { uploadExists } from "../utils/uploads.js";
+import { removeUpload, uploadExists } from "../utils/uploads.js";
 import { notifyStaff, notifyCustomer } from "../utils/notifications.js";
 
 const router = express.Router();
@@ -137,7 +137,13 @@ router.put("/:id", protect, async (req, res) => {
       });
     }
 
-    item.set({ ...(await buildFields(req.body || {})), status: "Pending review" }); // edited, so it needs another look
+    const fields = await buildFields(req.body || {});
+    // A new design preview makes any earlier try-on outdated.
+    if (fields.previewImage !== item.previewImage && item.tryOnImage) {
+      removeUpload(item.tryOnImage);
+      fields.tryOnImage = "";
+    }
+    item.set({ ...fields, status: "Pending review" }); // edited, so it needs another look
     await item.save();
     res.json(item);
   } catch (err) {
@@ -154,6 +160,7 @@ router.delete("/:id", protect, async (req, res) => {
     if (!EDITABLE.includes(item.status)) {
       return res.status(409).json({ message: "This design is already approved and can't be deleted. Message the boutique if you need a change." });
     }
+    if (item.tryOnImage) removeUpload(item.tryOnImage);
     await item.deleteOne();
     res.json({ message: "Deleted" });
   } catch (err) {

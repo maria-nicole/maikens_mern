@@ -366,7 +366,7 @@ export default function Message() {
               M
             </div>
             <div>
-              <p className="font-semibold leading-tight text-neutral-800">
+              <p className="font-display font-semibold leading-tight text-neutral-800">
                 <span className="lg:hidden">MAIKENS Gown &amp; Barong</span>
                 <span className="hidden lg:inline">Chat with the boutique</span>
               </p>

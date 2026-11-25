@@ -24,7 +24,7 @@ const Contact = () => {
           </ol>
         </nav>
 
-        <h1 className="font-serif text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">Get in touch</h1>
+        <h1 className="font-display text-4xl font-bold tracking-tight text-neutral-800 md:text-5xl">Get in touch</h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-stone-600">
           Send us a message about a gown, a barong or a custom request. Our staff is always happy to help.
         </p>

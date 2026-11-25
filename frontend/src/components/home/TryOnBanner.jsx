@@ -10,7 +10,7 @@ export default function TryOnBanner() {
                     AI-powered try-on
                 </div>
 
-                <h2 className="mx-auto max-w-2xl font-serif text-2xl font-bold leading-tight text-neutral-800 sm:text-4xl md:text-5xl">
+                <h2 className="mx-auto max-w-2xl font-display text-2xl font-bold leading-tight text-neutral-800 sm:text-4xl md:text-5xl">
                     See it on you before you wear it
                 </h2>
                 <p className="mx-auto mt-3 max-w-lg text-sm text-stone-700 sm:mt-4 sm:text-base md:text-lg">

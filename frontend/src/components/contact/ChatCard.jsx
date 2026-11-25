@@ -14,7 +14,7 @@ export default function ChatCard() {
                 <HiOutlineChatBubbleLeftRight className="h-5 w-5 text-yellow-700/89" />
             </div>
 
-            <h3 className="font-serif text-2xl font-bold text-neutral-800">Prefer to chat?</h3>
+            <h3 className="font-display text-2xl font-bold text-neutral-800">Prefer to chat?</h3>
             <p className="mb-6 mt-2 text-sm leading-relaxed text-stone-700">
                 Skip the form and message us directly for a faster reply. Common questions get instant answers, and the
                 boutique can chat with you live.

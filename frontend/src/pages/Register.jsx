@@ -103,7 +103,7 @@ const Register = ({ setUser }) => {
           <p className="text-xs uppercase tracking-widest text-orange-100/89 font-semibold mb-3">
             Maikens Gown &amp; Barong
           </p>
-          <h2 className="text-4xl xl:text-5xl font-bold tracking-tight mb-8 max-w-md">
+          <h2 className="font-display text-4xl xl:text-5xl font-bold tracking-tight mb-8 max-w-md">
             Join us and start designing.
           </h2>
           <ul className="space-y-3">
@@ -133,7 +133,7 @@ const Register = ({ setUser }) => {
 
         <div className="flex-1 flex items-center justify-center px-6 py-8 sm:px-10">
           <div className="w-full max-w-sm">
-            <h1 className="mt-6 mb-5 text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">Create your account</h1>
+            <h1 className="font-display mt-6 mb-5 text-3xl font-bold tracking-tight text-neutral-800 md:text-4xl">Create your account</h1>
 
 
             {error && (
