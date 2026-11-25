@@ -5,10 +5,11 @@ import { Customization } from "./customization.model.js";
 /* The option lists the owner can edit from the admin console. One document per
    option, grouped by `type` and `garment`.
 
-   `eventType` and `length` are product/catalog-only lists (garment "All"). The
-   design lists are per garment, and are the same values the customizer offers:
-   color, silhouette, neckline, sleeve, fabric, design and fit. The product form,
-   the catalog filters, the customizer and the AI prompt all read these lists. */
+   `eventType` is a catalog-only list and `length` is shared (garment "All"), but
+   both appear on the product form. The other design lists are per garment and
+   are the same values the customizer offers: color, silhouette, neckline, sleeve,
+   fabric, design and fit. The product form, catalog filters, customizer and AI
+   prompt all read these lists. */
 
 // The three product-only lists still live here too, so existing installs keep
 // their event filters and lengths.

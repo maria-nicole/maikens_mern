@@ -68,6 +68,7 @@ const PRODUCT_FIELDS = {
 
 const SELECTION_FIELDS = {
   color: "color",
+  length: "length",
   silhouette: "silhouette",
   neckline: "neckline",
   sleeve: "sleeve",

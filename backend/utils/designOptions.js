@@ -13,9 +13,15 @@ export const CATEGORIES = ["Gown", "Barong"];
 
 // Static fallback: identical to what a fresh install seeds, so the shop still
 // works before the first DB read (or if the DB is briefly unreachable).
+// Length is a shared list, but customers can pick it in the customizer too.
+const withLength = (garment) => ({
+  length: [...DEFAULT_CATEGORY_OPTIONS.common.length],
+  ...Object.fromEntries(Object.entries(DEFAULT_CATEGORY_OPTIONS[garment])),
+});
+
 export const CATEGORY_OPTIONS = {
-  Gown: Object.fromEntries(Object.entries(DEFAULT_CATEGORY_OPTIONS.Gown)),
-  Barong: Object.fromEntries(Object.entries(DEFAULT_CATEGORY_OPTIONS.Barong)),
+  Gown: withLength("Gown"),
+  Barong: withLength("Barong"),
 };
 
 // Minimum a customer must choose before the AI can produce something useful
@@ -26,6 +32,7 @@ export const REQUIRED = {
 
 export const LABELS = {
   color: "Color",
+  length: "Length",
   silhouette: "Silhouette",
   fit: "Fit",
   neckline: "Neckline",
@@ -44,8 +51,13 @@ export async function getDesignOptions(category) {
   const garment = normalizeCategory(category);
   try {
     await ensureDefaultCategories();
-    const docs = await Category.find({ garment }).sort({ type: 1, createdAt: 1 }).lean();
     const out = Object.fromEntries(Object.keys(CATEGORY_OPTIONS[garment]).map((key) => [key, []]));
+    // Design lists belong to the garment; `length` is shared ("All"). Filtering
+    // by the keys above keeps `eventType` out of the customer's choices.
+    const docs = await Category.find({
+      garment: { $in: [garment, "All"] },
+      type: { $in: Object.keys(out) },
+    }).sort({ type: 1, createdAt: 1 }).lean();
     for (const doc of docs) {
       if (Array.isArray(out[doc.type]) && doc.name) out[doc.type].push(doc.name);
     }

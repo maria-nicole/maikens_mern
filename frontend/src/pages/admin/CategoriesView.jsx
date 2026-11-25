@@ -28,7 +28,7 @@ const SCOPES = [
 const LISTS = {
     common: [
         { type: "eventType", label: "Event types", one: "event type", hint: "The occasions a product suits. Customers filter the catalog by these." },
-        { type: "length", label: "Lengths", one: "length", hint: "Where the hem falls — set per product on the product form." },
+        { type: "length", label: "Lengths", one: "length", hint: "Where the hem falls — used by the product form and the customizer." },
     ],
     Gown: [
         { type: "color", label: "Colors", one: "color", hint: "The shades offered on gowns in the product form and customizer." },
@@ -92,7 +92,11 @@ const ARTWORK = Object.fromEntries(
         ])
     )
 );
-const artworkFor = (scope, type, name) => ARTWORK[`${scope}|${type}`]?.[optionKey(name)] || null;
+const artworkFor = (scope, type, name) => {
+    // Length lives in the shared list, but its drawings are keyed to Gown.
+    const artworkScope = scope === "common" ? "Gown" : scope;
+    return ARTWORK[`${artworkScope}|${type}`]?.[optionKey(name)] || null;
+};
 
 const SCOPE_FILTERS = [
     { value: "all", label: "All" },

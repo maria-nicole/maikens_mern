@@ -3,7 +3,7 @@
    drops anything it doesn't recognise). Thumbnails are optional: if an image is missing,
    the option still shows as a labelled button.
    Images live in frontend/public/images/<group>/<name>.svg|jpg
-   - Silhouette / Neckline / Sleeves / Barong Fit: line drawings (SVG) so the shape is unmistakable.
+   - Silhouette / Neckline / Sleeves / Length / Barong Fit: line drawings (SVG) so the shape is unmistakable.
    - Fabric / Design details: close-up reference photos.
    - Barong Sleeves reuse the gown sleeve drawings (the values are the same); the Barong
      fabric + embroidery photos are barong-specific (pina/jusi/cotton, barong-*.jpg).
@@ -36,9 +36,25 @@ const SLEEVES = [
 // The barong only offers the two basic sleeves, so it reuses the gown's line drawings
 const BARONG_SLEEVES = ["Long Sleeve", "Short Sleeve"].map((v) => SLEEVES.find((s) => s.value === v));
 
+// Shared by both garments. The values match the common `length` list the owner
+// edits in the Categories tab.
+const LENGTHS = [
+    o("Mini", { img: "/images/length/mini.svg", desc: "Hem well above the knee" }),
+    o("Knee", { img: "/images/length/knee.svg", desc: "Hem falls at the knee" }),
+    o("Midi", { img: "/images/length/midi.svg", desc: "Hem falls below the knee" }),
+    o("Maxi", { img: "/images/length/maxi.svg", desc: "Hem reaches the ankles" }),
+    o("Floor-length", { img: "/images/length/floor-length.svg", desc: "Hem skims the floor" }),
+    o("Cathedral train", { img: "/images/length/cathedral-train.svg", desc: "Long train that pools behind" }),
+];
+
+const LENGTH_GROUP = {
+    key: "length", title: "Length", hint: "Where the hem falls.", kind: "image", options: LENGTHS,
+};
+
 export const GROUPS = {
     Gown: [
         { key: "color", title: "Color", hint: "The main color of the gown. Pick a swatch, or add a shade of your own.", required: true, kind: "swatch", options: COLORS },
+        LENGTH_GROUP,
         {
             key: "silhouette", title: "Silhouette", hint: "The overall shape of the gown.", required: true, kind: "image",
             options: [
@@ -96,6 +112,7 @@ export const GROUPS = {
     ],
     Barong: [
         { key: "color", title: "Color", hint: "The main color of the barong. Pick a swatch, or add a shade of your own.", required: true, kind: "swatch", options: BARONG_COLORS },
+        LENGTH_GROUP,
         {
             key: "fit", title: "Fit", hint: "How the barong sits on the body.", required: true, kind: "image",
             options: [
@@ -191,6 +208,7 @@ export function prefillFromProduct(product, options = null) {
         if (hit) out[key] = hit.value;
     };
     find("sleeve", product.sleeve);
+    find("length", product.length);
     find("fabric", product.material, true);
     find("silhouette", product.silhouette);
     find("neckline", product.neckline);

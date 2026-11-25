@@ -63,7 +63,11 @@ export default function Customize() {
 
   const token = localStorage.getItem("token");
   const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
-  const groups = buildGroups(category, categoryOptions && optionsForGarment(categoryOptions, category));
+  // Length is a shared list, but it is a customization choice too, so add it to
+  // the garment's design options before building the step list.
+  const groupsFor = (options, garment) =>
+    options ? { ...optionsForGarment(options, garment), length: options.common.length } : null;
+  const groups = buildGroups(category, groupsFor(categoryOptions, category));
   const locked = !!editId && !EDITABLE.includes(editStatus);
 
   useEffect(() => {
@@ -88,7 +92,7 @@ export default function Customize() {
       setBaseProduct(data);
       if (prefill) {
         const options = await optionsPromise;
-        if (!ignore) setSelections(prefillFromProduct(data, optionsForGarment(options, data.category)));
+        if (!ignore) setSelections(prefillFromProduct(data, groupsFor(options, data.category)));
       }
       return data;
     };
@@ -227,7 +231,7 @@ export default function Customize() {
       return next;
     });
   const prefill = (product) =>
-    prefillFromProduct(product, categoryOptions && optionsForGarment(categoryOptions, product.category));
+    prefillFromProduct(product, groupsFor(categoryOptions, product.category));
   const resetChoices = () => setSelections(baseProduct ? prefill(baseProduct) : {});
   const goToSection = (id) => {
     setSection(id);

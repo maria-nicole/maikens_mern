@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ImagePlus, X, ChevronLeft, ChevronRight, Check, Loader2, AlertCircle, Star } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, ImagePlus, X, ChevronLeft, ChevronRight, Check, Loader2, AlertCircle, Star } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { font, api, errMsg, assetUrl, peso } from "./adminLib";
 import { Spinner } from "./ui";
 import { PALETTE, hexForName } from "../../lib/colors";
 import { fetchCategoryOptions, DEFAULT_CATEGORY_OPTIONS, optionsForGarment, withCurrent } from "../../lib/categories";
+import { GROUPS as DESIGN_GROUPS } from "../../components/customize/designOptions.js";
 
 /**
  * Add a product (/admin/products/new) or edit one (/admin/products/:id/edit).
@@ -18,6 +19,21 @@ const SIZES_BY_CATEGORY = {
     Gown: ["XS", "S", "M", "L", "XL", "XXL"],
     Barong: ["S", "M", "L", "XL", "XXL"],
 };
+
+// Reuse the customizer's thumbnails so the admin picks the exact picture a
+// customer will see. Options without artwork stay labelled tiles.
+const optionKey = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const ARTWORK = Object.fromEntries(
+    CATEGORIES.flatMap((garment) =>
+        (DESIGN_GROUPS[garment] || []).map((group) => [
+            `${garment}|${group.key}`,
+            Object.fromEntries(
+                (group.options || []).filter((opt) => opt.img).map((opt) => [optionKey(opt.value), opt])
+            ),
+        ])
+    )
+);
+const artworkFor = (garment, type, name) => ARTWORK[`${garment}|${type}`]?.[optionKey(name)] || null;
 // Event types, sleeves and lengths come from the Categories tab in the console
 // (fetched below). DEFAULT_CATEGORY_OPTIONS is only the offline fallback.
 const LOW_STOCK_AT = 2; // matches the rule in product.route.js
@@ -42,11 +58,16 @@ function Field({ label, hint, error, children, htmlFor }) {
 const inputCls =
     "w-full rounded-lg border border-[#E3DACB] bg-white px-3 py-2 text-sm text-[#241F1A] outline-none transition placeholder:text-[#B4A88F] focus:border-[#9C7A3C] focus:ring-2 focus:ring-[#9C7A3C]/20";
 
-function Section({ title, description, children }) {
+function Section({ title, description, action, children }) {
     return (
         <section className="rounded-2xl border border-[#E3DACB] bg-white p-5 sm:p-6">
-            <h3 className="text-lg text-[#241F1A]" style={font.display}>{title}</h3>
-            {description && <p className="mt-1 text-sm text-[#8B8072]">{description}</p>}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <h3 className="text-lg text-[#241F1A]" style={font.display}>{title}</h3>
+                    {description && <p className="mt-1 text-sm text-[#8B8072]">{description}</p>}
+                </div>
+                {action}
+            </div>
             <div className="mt-5 space-y-5">{children}</div>
         </section>
     );
@@ -63,6 +84,69 @@ function Chip({ active, onClick, children }) {
         >
             {children}
         </button>
+    );
+}
+
+function OptionPicker({ id, type, value, options, onChange, onPick, artworkFor, showImages }) {
+    if (!showImages) {
+        return (
+            <select id={id} value={value} onChange={onChange} className={inputCls}>
+                <option value="">Select…</option>
+                {options.map((name) => <option key={name}>{name}</option>)}
+            </select>
+        );
+    }
+
+    const tileClass = (active) =>
+        `flex items-center gap-2 rounded-lg border p-1.5 text-left text-xs transition ${active
+            ? "border-[#241F1A] bg-[#FBF8F3] text-[#241F1A]"
+            : "border-[#E3DACB] bg-white text-[#6B6153] hover:border-[#C9BBA3]"
+        }`;
+
+    // These need a closer look. Sleeve drawings are mostly empty torso, so
+    // enlarge them and crop to the shoulders/sleeves instead of showing the whole chart.
+    // Silhouettes and lengths are 3:4 drawings, so give them a portrait frame.
+    const enlarged = ["fabric", "neckline", "design", "sleeve"].includes(type);
+    const portrait = type === "silhouette" || type === "length";
+    const frameSize = portrait ? "h-16 w-12" : enlarged ? "h-14 w-14" : "h-9 w-9";
+    const sleeveCrop = type === "sleeve" ? { transform: "scale(1.8)", transformOrigin: "50% 0%" } : undefined;
+
+    return (
+        <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => onPick("")} aria-pressed={!value} className={`${tileClass(!value)} px-2.5 py-2`}>
+                <span className={`flex ${frameSize} shrink-0 items-center justify-center rounded-md bg-[#F3EEE4] text-[10px] text-[#9C8C74]`}>—</span>
+                None
+            </button>
+            {options.map((name) => {
+                const art = artworkFor?.(name);
+                const active = value === name;
+                return (
+                    <button
+                        key={name}
+                        type="button"
+                        onClick={() => onPick(name)}
+                        aria-pressed={active}
+                        title={art?.desc || name}
+                        className={tileClass(active)}
+                    >
+                        <span className={`flex ${frameSize} shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#F3EEE4] ${type === "sleeve" ? "" : "p-0.5"}`}>
+                            {art ? (
+                                <img
+                                    src={art.img}
+                                    alt=""
+                                    style={sleeveCrop}
+                                    className={`h-full w-full ${/\.svg$/i.test(art.img) ? "object-contain" : "object-cover rounded"}`}
+                                />
+                            ) : (
+                                <span className="text-[10px] text-[#B4A88F]">—</span>
+                            )}
+                        </span>
+                        <span className="min-w-0 max-w-[9rem] truncate">{name}</span>
+                        {active && <Check size={12} className="shrink-0 text-[#9C7A3C]" />}
+                    </button>
+                );
+            })}
+        </div>
     );
 }
 
@@ -87,6 +171,7 @@ export default function ProductForm() {
     const [colors, setColors] = useState([]);
     // The admin's own event types / sleeves / lengths, from the Categories tab
     const [categoryOptions, setCategoryOptions] = useState(DEFAULT_CATEGORY_OPTIONS);
+    const [showDesignImages, setShowDesignImages] = useState(false);
     const [customHex, setCustomHex] = useState("#9C7A3C");
     const [customName, setCustomName] = useState("");
     const [sizeStock, setSizeStock] = useState({}); // { M: 3, L: 1 }
@@ -147,6 +232,7 @@ export default function ProductForm() {
     }, [editing, id]);
 
     const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+    const setValue = (key) => (value) => setForm((f) => ({ ...f, [key]: value }));
     const availableSizes = SIZES_BY_CATEGORY[form.category];
 
     // The design lists are the same ones the customizer uses for this garment.
@@ -536,54 +622,109 @@ export default function ProductForm() {
                                     </Link>
                                 </>
                             }
+                            action={
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDesignImages((on) => !on)}
+                                    aria-pressed={showDesignImages}
+                                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${showDesignImages
+                                        ? "border-[#9C7A3C] bg-[#F4ECDB] text-[#6B5426]"
+                                        : "border-[#E3DACB] bg-white text-[#6B6153] hover:bg-[#FBF8F3]"
+                                        }`}
+                                >
+                                    <ImageIcon size={14} /> Pictures
+                                </button>
+                            }
                         >
-                            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div className={`grid grid-cols-1 gap-5 ${showDesignImages ? "" : "sm:grid-cols-2"}`}>
                                 <Field label="Fabric" htmlFor="p-fabric">
-                                    <select id="p-fabric" value={form.material} onChange={set("material")} className={inputCls}>
-                                        <option value="">Select…</option>
-                                        {fabricOptions.map((f) => <option key={f}>{f}</option>)}
-                                    </select>
+                                    <OptionPicker
+                                        id="p-fabric"
+                                        type="fabric"
+                                        value={form.material}
+                                        options={fabricOptions}
+                                        onChange={set("material")}
+                                        onPick={setValue("material")}
+                                        artworkFor={(name) => artworkFor(form.category, "fabric", name)}
+                                        showImages={showDesignImages}
+                                    />
                                 </Field>
                                 <Field label="Sleeve style" htmlFor="p-sleeve">
-                                    <select id="p-sleeve" value={form.sleeve} onChange={set("sleeve")} className={inputCls}>
-                                        <option value="">Select…</option>
-                                        {sleeveOptions.map((s) => <option key={s}>{s}</option>)}
-                                    </select>
+                                    <OptionPicker
+                                        id="p-sleeve"
+                                        type="sleeve"
+                                        value={form.sleeve}
+                                        options={sleeveOptions}
+                                        onChange={set("sleeve")}
+                                        onPick={setValue("sleeve")}
+                                        artworkFor={(name) => artworkFor(form.category, "sleeve", name)}
+                                        showImages={showDesignImages}
+                                    />
                                 </Field>
                                 <Field label="Length" htmlFor="p-length">
-                                    <select id="p-length" value={form.length} onChange={set("length")} className={inputCls}>
-                                        <option value="">Select…</option>
-                                        {lengthOptions.map((s) => <option key={s}>{s}</option>)}
-                                    </select>
+                                    <OptionPicker
+                                        id="p-length"
+                                        type="length"
+                                        value={form.length}
+                                        options={lengthOptions}
+                                        onChange={set("length")}
+                                        onPick={setValue("length")}
+                                        artworkFor={(name) => artworkFor(form.category, "length", name)}
+                                        showImages={showDesignImages}
+                                    />
                                 </Field>
                                 {form.category === "Gown" ? (
                                     <>
                                         <Field label="Silhouette" htmlFor="p-silhouette">
-                                            <select id="p-silhouette" value={form.silhouette} onChange={set("silhouette")} className={inputCls}>
-                                                <option value="">Select…</option>
-                                                {silhouetteOptions.map((s) => <option key={s}>{s}</option>)}
-                                            </select>
+                                            <OptionPicker
+                                                id="p-silhouette"
+                                                type="silhouette"
+                                                value={form.silhouette}
+                                                options={silhouetteOptions}
+                                                onChange={set("silhouette")}
+                                                onPick={setValue("silhouette")}
+                                                artworkFor={(name) => artworkFor("Gown", "silhouette", name)}
+                                                showImages={showDesignImages}
+                                            />
                                         </Field>
                                         <Field label="Neckline" htmlFor="p-neckline">
-                                            <select id="p-neckline" value={form.neckline} onChange={set("neckline")} className={inputCls}>
-                                                <option value="">Select…</option>
-                                                {necklineOptions.map((s) => <option key={s}>{s}</option>)}
-                                            </select>
+                                            <OptionPicker
+                                                id="p-neckline"
+                                                type="neckline"
+                                                value={form.neckline}
+                                                options={necklineOptions}
+                                                onChange={set("neckline")}
+                                                onPick={setValue("neckline")}
+                                                artworkFor={(name) => artworkFor("Gown", "neckline", name)}
+                                                showImages={showDesignImages}
+                                            />
                                         </Field>
                                     </>
                                 ) : (
                                     <Field label="Fit" htmlFor="p-fit">
-                                        <select id="p-fit" value={form.fit} onChange={set("fit")} className={inputCls}>
-                                            <option value="">Select…</option>
-                                            {fitOptions.map((f) => <option key={f}>{f}</option>)}
-                                        </select>
+                                        <OptionPicker
+                                            id="p-fit"
+                                            type="fit"
+                                            value={form.fit}
+                                            options={fitOptions}
+                                            onChange={set("fit")}
+                                            onPick={setValue("fit")}
+                                            artworkFor={(name) => artworkFor("Barong", "fit", name)}
+                                            showImages={showDesignImages}
+                                        />
                                     </Field>
                                 )}
                                 <Field label={form.category === "Gown" ? "Design details" : "Embroidery style"} htmlFor="p-design">
-                                    <select id="p-design" value={form.design} onChange={set("design")} className={inputCls}>
-                                        <option value="">Select…</option>
-                                        {designChoices.map((d) => <option key={d}>{d}</option>)}
-                                    </select>
+                                    <OptionPicker
+                                        id="p-design"
+                                        type="design"
+                                        value={form.design}
+                                        options={designChoices}
+                                        onChange={set("design")}
+                                        onPick={setValue("design")}
+                                        artworkFor={(name) => artworkFor(form.category, "design", name)}
+                                        showImages={showDesignImages}
+                                    />
                                 </Field>
                             </div>
 
