@@ -19,19 +19,12 @@ import {
 import { announceCart, NAVBAR_PT } from "../components/account/accountShared";
 import Footer from "../components/Footer";
 import ReviewsSection from "../components/reviews/ReviewsSection";
+import ProductCard from "../components/catalog/ProductCard";
+import { normalizeProduct } from "../components/catalog/catalogConfig";
+import { DEFAULT_SIZE_GUIDE, toSizeChart, measurement } from "../lib/sizeGuide";
 
 // Backend base URL. Set VITE_API_URL in frontend/.env when you deploy.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-// Measurements in inches. Swap for real fitting data once available.
-const SIZE_CHART = {
-  XS: { bust: 32, waist: 25, hip: 35, length: 56 },
-  S: { bust: 34, waist: 27, hip: 37, length: 57 },
-  M: { bust: 36, waist: 29, hip: 39, length: 58 },
-  L: { bust: 38, waist: 31, hip: 41, length: 59 },
-  XL: { bust: 40, waist: 33, hip: 43, length: 60 },
-  XXL: { bust: 42, waist: 35, hip: 45, length: 61 },
-};
 
 const MAX_MADE_TO_ORDER_QTY = 10;
 
@@ -71,8 +64,9 @@ export default function Product() {
   const [toast, setToast] = useState("");
   const [wishlisted, setWishlisted] = useState(false);
 
-  // Size guide
+  // Size guide (editable from the admin console)
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [sizeGuide, setSizeGuide] = useState(DEFAULT_SIZE_GUIDE);
 
   // Cart request in flight
   const [adding, setAdding] = useState(false);
@@ -122,6 +116,22 @@ export default function Product() {
     };
   }, [id]);
 
+  // The owner can edit the guide in Settings; fall back to the bundled defaults
+  useEffect(() => {
+    let ignore = false;
+    axios
+      .get(`${API_URL}/api/settings`)
+      .then((res) => {
+        if (!ignore && Array.isArray(res.data?.sizeGuide) && res.data.sizeGuide.length) {
+          setSizeGuide(res.data.sizeGuide);
+        }
+      })
+      .catch(() => { });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   // "You may also like": same category, from the public catalog route
   useEffect(() => {
     if (!product?.category) return;
@@ -130,7 +140,12 @@ export default function Product() {
       .get(`${API_URL}/api/products`, { params: { category: product.category } })
       .then((res) => {
         if (ignore || !Array.isArray(res.data)) return;
-        setRelated(res.data.filter((p) => p._id !== product._id).slice(0, 4));
+        setRelated(
+          res.data
+            .filter((p) => p._id !== product._id)
+            .slice(0, 4)
+            .map(normalizeProduct)
+        );
       })
       .catch(() => { });
     return () => {
@@ -234,7 +249,8 @@ export default function Product() {
         ? { label: `Only ${product.totalStock} left`, color: "text-amber-700 bg-amber-50 border-amber-200" }
         : { label: "In stock", color: "text-green-700 bg-green-50 border-green-200" };
 
-  const sizeGuideRows = (needsSize ? sizes.map((s) => s.size) : Object.keys(SIZE_CHART)).filter((s) => SIZE_CHART[s]);
+  const sizeChart = toSizeChart(sizeGuide);
+  const sizeGuideRows = sizeGuide.map((row) => row.size).filter(Boolean);
 
   const details = [
     ["Category", product.category],
@@ -731,34 +747,16 @@ export default function Product() {
       {/* Customer reviews (keyed by product so switching pages starts clean) */}
       <ReviewsSection key={id} productId={id} />
 
-      {/* Related products */}
+      {/* Related products — the same card used in the catalog and home preview */}
       {related.length > 0 && (
-        <div className="px-6 md:px-10 lg:px-24 pb-16">
-          <h2 className="text-2xl font-bold text-neutral-800 mb-5">You may also like</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <section className="bg-stone-50 px-5 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-24">
+          <h2 className="font-serif text-2xl font-bold text-neutral-800 sm:text-3xl">You may also like</h2>
+          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
             {related.map((p) => (
-              <div key={p._id} className="bg-zinc-100">
-                {p.images?.[0] ? (
-                  <img className="h-70 w-full object-cover" src={imageUrl(p.images[0])} alt={p.name} />
-                ) : (
-                  <div className="h-70 w-full flex items-center justify-center bg-zinc-200 text-xs text-zinc-400">
-                    No photo
-                  </div>
-                )}
-                <div className="p-3">
-                  <h3 className="text-xl font-bold pb-1 text-neutral-800">{p.name}</h3>
-                  <p className="text-zinc-800 font-semibold pb-2">{formatPrice(p.price)}</p>
-                  <Link
-                    to={`/product/${p._id}`}
-                    className="font-bold mb-3 text-neutral-800 hover:text-yellow-700/89 duration-200 cursor-pointer inline-block"
-                  >
-                    VIEW
-                  </Link>
-                </div>
-              </div>
+              <ProductCard key={p.id} product={p} viewMode="grid" />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Size guide modal */}
@@ -784,20 +782,18 @@ export default function Product() {
               <thead>
                 <tr className="border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   <th className="py-2">Size</th>
-                  <th className="py-2">Bust / chest</th>
-                  <th className="py-2">Waist</th>
-                  <th className="py-2">Hip</th>
-                  <th className="py-2">Length</th>
+                  <th className="py-2">Waistline</th>
+                  <th className="py-2">Bust</th>
+                  <th className="py-2">Hips</th>
                 </tr>
               </thead>
               <tbody>
                 {sizeGuideRows.map((s) => (
                   <tr key={s} className="border-b border-gray-100">
                     <td className="py-2 font-medium text-yellow-700/89">{s}</td>
-                    <td className="py-2 text-gray-700">{SIZE_CHART[s].bust}&quot;</td>
-                    <td className="py-2 text-gray-700">{SIZE_CHART[s].waist}&quot;</td>
-                    <td className="py-2 text-gray-700">{SIZE_CHART[s].hip}&quot;</td>
-                    <td className="py-2 text-gray-700">{SIZE_CHART[s].length}&quot;</td>
+                    <td className="py-2 text-gray-700">{measurement(sizeChart[s]?.waistline)}</td>
+                    <td className="py-2 text-gray-700">{measurement(sizeChart[s]?.bust)}</td>
+                    <td className="py-2 text-gray-700">{measurement(sizeChart[s]?.hips)}</td>
                   </tr>
                 ))}
               </tbody>

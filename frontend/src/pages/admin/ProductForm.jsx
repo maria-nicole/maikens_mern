@@ -98,7 +98,12 @@ export default function ProductForm() {
     const [result, setResult] = useState(null);
     const fileRef = useRef(null);
     const imagesRef = useRef(images);
-    imagesRef.current = images;
+
+    // Keep the latest images available to the unmount cleanup without writing to
+    // the ref during render (which React 19 flags).
+    useEffect(() => {
+        imagesRef.current = images;
+    }, [images]);
 
     // Free object URLs when the page unmounts
     useEffect(() => () => imagesRef.current.forEach((i) => i.file && URL.revokeObjectURL(i.url)), []);

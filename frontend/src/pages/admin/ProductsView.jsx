@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Search, Plus, Pencil, Archive, ArchiveRestore, Trash2, Send, RefreshCw,
-    Copy, Package, MoreHorizontal, ChevronLeft, ChevronRight, Check,
+    Copy, Package, MoreHorizontal, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { font, api, errMsg, assetUrl, peso, shortId } from "./adminLib";
 import {
@@ -212,6 +212,13 @@ export default function ProductsView({ notify, onChanged }) {
             return next;
         });
 
+    const toggleVisible = (checked) =>
+        setSelected((prev) => {
+            const next = new Set(prev);
+            for (const p of paged) checked ? next.add(p._id) : next.delete(p._id);
+            return next;
+        });
+
     const openMenu = (e, id) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setMenu((prev) =>
@@ -312,82 +319,70 @@ export default function ProductsView({ notify, onChanged }) {
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {paged.map((p) => (
-                        <article key={p._id} className={`overflow-hidden rounded-2xl bg-white shadow-sm ${selected.has(p._id) ? "ring-2 ring-[#9C7A3C]" : ""}`}>
-                            <div className="relative aspect-square bg-white">
-                                {p.images?.[0] ? (
-                                    <img src={assetUrl(p.images[0])} alt="" className="h-full w-full object-contain" />
-                                ) : (
-                                    <div className="flex h-full items-center justify-center text-xs text-[#9C8C74]">No photo yet</div>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={() => toggleSelect(p._id)}
-                                    aria-label={`Select ${p.name}`}
-                                    aria-pressed={selected.has(p._id)}
-                                    className={`absolute left-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition ${selected.has(p._id)
-                                        ? "border-[#241F1A] bg-[#241F1A] text-[#F5EFE4]"
-                                        : "border-white/80 bg-white/90 text-transparent hover:bg-white"
-                                        }`}
-                                >
-                                    <Check size={13} />
-                                </button>
-                                <div className="absolute right-3 top-3 rounded-full bg-white/90">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => openMenu(e, p._id)}
-                                        aria-label={`Actions for ${p.name}`}
-                                        aria-expanded={menu?.id === p._id}
-                                        className="rounded-full p-1.5 text-[#6B6153] transition hover:bg-white"
-                                    >
-                                        <MoreHorizontal size={16} />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="space-y-3 p-4">
-                                <div>
-                                    <p className="truncate font-medium text-[#241F1A]">{p.name}</p>
-                                    <p className="text-xs text-[#9C8C74]" style={font.mono}>{shortId("MK", p._id)}</p>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                    <Tag>{p.category}</Tag>
-                                    {p.fulfillment === "Made-to-order" && <Tag>Made-to-order</Tag>}
-                                    {p.customizable && <Tag tone="gold">Customizable</Tag>}
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-sm" style={font.mono}>{peso(p.price)}</span>
-                                    <ProductPill status={p.status} />
-                                </div>
-                                <div className="rounded-lg border border-[#E3DACB] px-3 py-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[10px] uppercase tracking-wide text-[#9C8C74]">Stock by size</span>
+                <div className="overflow-x-auto rounded-2xl border border-[#E3DACB] bg-white">
+                    <table className="w-full min-w-[900px] text-left text-sm">
+                        <thead>
+                            <tr className="border-b border-[#EFE9E3] text-xs uppercase tracking-wide text-[#9C8C74]">
+                                <th className="w-10 px-4 py-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={paged.length > 0 && paged.every((p) => selected.has(p._id))}
+                                        onChange={(e) => toggleVisible(e.target.checked)}
+                                        aria-label="Select products on this page"
+                                        className="h-4 w-4 accent-[#9C7A3C]"
+                                    />
+                                </th>
+                                <th className="px-3 py-3 font-medium">Product</th>
+                                <th className="px-3 py-3 font-medium">Price</th>
+                                <th className="px-3 py-3 font-medium">Stock by size</th>
+                                <th className="px-3 py-3 font-medium">Status</th>
+                                <th className="px-3 py-3" />
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paged.map((p) => (
+                                <tr key={p._id} className={`border-b border-[#F3EEE4] last:border-0 hover:bg-[#FBF8F3] ${busyId === p._id || selected.has(p._id) ? "bg-[#FBF8F3]" : ""}`}>
+                                    <td className="px-4 py-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selected.has(p._id)}
+                                            onChange={() => toggleSelect(p._id)}
+                                            aria-label={`Select ${p.name}`}
+                                            className="h-4 w-4 accent-[#9C7A3C]"
+                                        />
+                                    </td>
+                                    <td className="px-3 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <ProductThumb product={p} />
+                                            <div className="min-w-0">
+                                                <p className="truncate font-medium text-[#241F1A]">{p.name}</p>
+                                                <p className="text-xs text-[#9C8C74]" style={font.mono}>{shortId("MK", p._id)}</p>
+                                                <div className="mt-1 flex flex-wrap gap-1">
+                                                    <Tag>{p.category}</Tag>
+                                                    {p.fulfillment === "Made-to-order" && <Tag>Made-to-order</Tag>}
+                                                    {p.customizable && <Tag tone="gold">Customizable</Tag>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-3" style={font.mono}>{peso(p.price)}</td>
+                                    <td className="px-3 py-3"><StockCell product={p} onEdit={() => setStocking(p)} /></td>
+                                    <td className="px-3 py-3"><ProductPill status={p.status} /></td>
+                                    <td className="px-3 py-3 text-right">
                                         <button
                                             type="button"
-                                            onClick={() => setStocking(p)}
-                                            disabled={p.fulfillment === "Made-to-order"}
-                                            className="inline-flex items-center gap-1 text-xs text-[#6B6153] transition hover:text-[#241F1A] disabled:cursor-not-allowed disabled:opacity-40"
+                                            onClick={(e) => openMenu(e, p._id)}
+                                            aria-label={`Actions for ${p.name}`}
+                                            aria-expanded={menu?.id === p._id}
+                                            className="rounded-lg border border-[#E3DACB] p-1.5 text-[#6B6153] transition hover:border-[#C9BBA3] hover:bg-white"
                                         >
-                                            <Pencil size={11} /> Edit
+                                            <MoreHorizontal size={16} />
                                         </button>
-                                    </div>
-                                    {p.fulfillment === "Made-to-order" ? (
-                                        <p className="mt-1.5 text-xs text-[#9C8C74]">Made to order — no tracked stock</p>
-                                    ) : p.sizes?.length ? (
-                                        <div className="mt-1.5 flex flex-wrap gap-1">
-                                            {p.sizes.map((s) => (
-                                                <span key={s.size} className="rounded-full bg-[#FBF8F3] px-2 py-0.5 text-[11px] text-[#4A4136]">
-                                                    <span className="font-medium text-[#241F1A]">{s.size}</span> {s.stock ?? 0}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="mt-1.5 text-xs text-[#9C8C74]">No sizes tracked</p>
-                                    )}
-                                </div>
-                            </div>
-                        </article>
-                    ))}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 
@@ -470,6 +465,29 @@ export default function ProductsView({ notify, onChanged }) {
 }
 
 const itemsReady = (products) => Array.isArray(products);
+
+function ProductThumb({ product }) {
+    return product.images?.[0] ? (
+        <img src={assetUrl(product.images[0])} alt="" className="h-14 w-11 shrink-0 rounded-lg object-cover" />
+    ) : (
+        <div className="h-14 w-11 shrink-0 rounded-lg bg-[#F3EEE4]" />
+    );
+}
+
+function StockCell({ product, onEdit }) {
+    if (product.fulfillment === "Made-to-order") return <span className="text-[#9C8C74]">—</span>;
+    if (!product.sizes?.length) return <span className="text-[#9C8C74]">No sizes</span>;
+    return (
+        <button type="button" onClick={onEdit} className="group flex flex-wrap items-center gap-1 text-left" title="Edit stock">
+            {product.sizes.map((s) => (
+                <span key={s.size} className="rounded-full bg-[#FBF8F3] px-2 py-0.5 text-[11px] text-[#4A4136]">
+                    <span className="font-medium text-[#241F1A]">{s.size}</span> {s.stock ?? 0}
+                </span>
+            ))}
+            <Pencil size={11} className="text-[#B4A88F] opacity-0 transition group-hover:opacity-100" />
+        </button>
+    );
+}
 
 function Tag({ children, tone }) {
     return (

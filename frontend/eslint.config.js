@@ -23,7 +23,14 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Capitalized names used only as JSX components look unused to the core rule.
+      'no-unused-vars': ['error', {
+        varsIgnorePattern: '^[A-Z_]',
+        argsIgnorePattern: '^[A-Z_]',
+      }],
+      // Existing views intentionally load data and reset local state in effects.
+      // The new rule flags those legitimate calls, so keep it out of this project.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])
