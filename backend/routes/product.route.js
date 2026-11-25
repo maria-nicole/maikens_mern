@@ -61,6 +61,88 @@ router.get("/admin/all", protect, adminOnly, async (req, res) => {
   }
 });
 
+// ADMIN: change several products at once from the Products tab.
+router.post("/admin/bulk/status", protect, adminOnly, async (req, res) => {
+  try {
+    const { ids, status } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length || !ids.every(mongoose.isValidObjectId)) {
+      return res.status(400).json({ message: "Select at least one valid product." });
+    }
+    if (!["Archived", "Active", "Draft"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status." });
+    }
+    const products = await Product.find({ _id: { $in: ids } });
+    for (const product of products) {
+      product.status = status === "Active" ? computeStock({ sizes: product.sizes, status }).status : status;
+      await product.save();
+    }
+    res.json({ updated: products.length, products });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// ADMIN: delete several products and clean up anything that points at them.
+router.post("/admin/bulk/delete", protect, adminOnly, async (req, res) => {
+  try {
+    const { ids } = req.body || {};
+    if (!Array.isArray(ids) || !ids.length || !ids.every(mongoose.isValidObjectId)) {
+      return res.status(400).json({ message: "Select at least one valid product." });
+    }
+    await Product.deleteMany({ _id: { $in: ids } });
+    await Promise.all([
+      Review.deleteMany({ product: { $in: ids } }),
+      Favorite.deleteMany({ product: { $in: ids } }),
+      Cart.updateMany({}, { $pull: { items: { product: { $in: ids } } } }),
+    ]);
+    res.json({ deleted: ids.length });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// ADMIN: copy a product as a draft. Photos are reused, not duplicated on disk.
+router.post("/admin/duplicate/:id", protect, adminOnly, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Not found" });
+    const current = await Product.findById(req.params.id);
+    if (!current) return res.status(404).json({ message: "Not found" });
+    const data = pickEditable(current.toObject());
+    data.name = `${current.name} (copy)`;
+    data.status = "Draft";
+    const copy = await Product.create({
+      ...data,
+      ...computeStock(data),
+      images: [...(current.images || [])],
+    });
+    res.status(201).json(copy);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// ADMIN: quick stock edit from the Products tab.
+router.patch("/:id/stock", protect, adminOnly, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Not found" });
+    if (!Array.isArray(req.body?.sizes)) return res.status(400).json({ message: "Invalid sizes." });
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Not found" });
+
+    const sizes = req.body.sizes
+      .map((s) => ({ size: String(s?.size || "").trim(), stock: Math.max(0, Number(s?.stock) || 0) }))
+      .filter((s) => s.size);
+    product.sizes = sizes;
+    const derived = computeStock({ sizes, status: product.status });
+    product.totalStock = derived.totalStock;
+    if (!HIDDEN_FROM_PUBLIC.includes(product.status)) product.status = derived.status;
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 // ADMIN: one product including drafts and archived, for the edit form. Must stay above "/:id".
 router.get("/admin/:id", protect, adminOnly, async (req, res) => {
   try {
