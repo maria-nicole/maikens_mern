@@ -49,7 +49,6 @@ export default function ProductsView({ notify, onChanged }) {
     const [status, setStatus] = useState("All");
     const [query, setQuery] = useState("");
     const [sort, setSort] = useState("newest");
-    const [view, setView] = useState("table");
     const [page, setPage] = useState(1);
     const [busyId, setBusyId] = useState(null);
     const [deleting, setDeleting] = useState(null); // the product awaiting delete confirmation
@@ -213,13 +212,6 @@ export default function ProductsView({ notify, onChanged }) {
             return next;
         });
 
-    const toggleVisible = (checked) =>
-        setSelected((prev) => {
-            const next = new Set(prev);
-            for (const p of paged) checked ? next.add(p._id) : next.delete(p._id);
-            return next;
-        });
-
     const openMenu = (e, id) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setMenu((prev) =>
@@ -278,12 +270,6 @@ export default function ProductsView({ notify, onChanged }) {
                         ))}
                     </select>
                 </div>
-                <Segmented
-                    label="View"
-                    value={view}
-                    options={[{ value: "table", label: "Table" }, { value: "cards", label: "Image" }]}
-                    onChange={setView}
-                />
             </div>
 
             <div className="mb-5 flex flex-wrap gap-2">
@@ -325,79 +311,13 @@ export default function ProductsView({ notify, onChanged }) {
                         action={products.length === 0 && <PrimaryButton icon={Plus} onClick={() => navigate("/admin/products/new")}>Add product</PrimaryButton>}
                     />
                 </div>
-            ) : view === "table" ? (
-                <div className="overflow-x-auto rounded-2xl border border-[#E3DACB] bg-white">
-                    <table className="w-full min-w-[900px] text-left text-sm">
-                        <thead>
-                            <tr className="border-b border-[#EFE9E3] text-xs uppercase tracking-wide text-[#9C8C74]">
-                                <th className="w-10 px-4 py-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={paged.length > 0 && paged.every((p) => selected.has(p._id))}
-                                        onChange={(e) => toggleVisible(e.target.checked)}
-                                        aria-label="Select products on this page"
-                                        className="h-4 w-4 accent-[#9C7A3C]"
-                                    />
-                                </th>
-                                <th className="px-3 py-3 font-medium">Product</th>
-                                <th className="px-3 py-3 font-medium">Price</th>
-                                <th className="px-3 py-3 font-medium">Stock</th>
-                                <th className="px-3 py-3 font-medium">Status</th>
-                                <th className="px-3 py-3" />
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {paged.map((p) => (
-                                <tr key={p._id} className={`border-b border-[#F3EEE4] last:border-0 hover:bg-[#FBF8F3] ${busyId === p._id || selected.has(p._id) ? "bg-[#FBF8F3]" : ""}`}>
-                                    <td className="px-4 py-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selected.has(p._id)}
-                                            onChange={() => toggleSelect(p._id)}
-                                            aria-label={`Select ${p.name}`}
-                                            className="h-4 w-4 accent-[#9C7A3C]"
-                                        />
-                                    </td>
-                                    <td className="px-3 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <ProductThumb product={p} />
-                                            <div className="min-w-0">
-                                                <p className="truncate font-medium text-[#241F1A]">{p.name}</p>
-                                                <p className="text-xs text-[#9C8C74]" style={font.mono}>{shortId("MK", p._id)}</p>
-                                                <div className="mt-1 flex flex-wrap gap-1">
-                                                    <Tag>{p.category}</Tag>
-                                                    {p.fulfillment === "Made-to-order" && <Tag>Made-to-order</Tag>}
-                                                    {p.customizable && <Tag tone="gold">Customizable</Tag>}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-3 py-3" style={font.mono}>{peso(p.price)}</td>
-                                    <td className="px-3 py-3"><StockCell product={p} onEdit={() => setStocking(p)} /></td>
-                                    <td className="px-3 py-3"><ProductPill status={p.status} /></td>
-                                    <td className="px-3 py-3 text-right">
-                                        <button
-                                            type="button"
-                                            onClick={(e) => openMenu(e, p._id)}
-                                            aria-label={`Actions for ${p.name}`}
-                                            aria-expanded={menu?.id === p._id}
-                                            className="rounded-lg border border-[#E3DACB] p-1.5 text-[#6B6153] transition hover:border-[#C9BBA3] hover:bg-white"
-                                        >
-                                            <MoreHorizontal size={16} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
             ) : (
                 <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {paged.map((p) => (
                         <article key={p._id} className={`overflow-hidden rounded-2xl bg-white shadow-sm ${selected.has(p._id) ? "ring-2 ring-[#9C7A3C]" : ""}`}>
-                            <div className="relative aspect-[4/5] bg-[#F3EEE4]">
+                            <div className="relative aspect-square bg-white">
                                 {p.images?.[0] ? (
-                                    <img src={assetUrl(p.images[0])} alt="" className="h-full w-full object-contain p-2" />
+                                    <img src={assetUrl(p.images[0])} alt="" className="h-full w-full object-contain" />
                                 ) : (
                                     <div className="flex h-full items-center justify-center text-xs text-[#9C8C74]">No photo yet</div>
                                 )}
@@ -439,15 +359,32 @@ export default function ProductsView({ notify, onChanged }) {
                                     <span className="text-sm" style={font.mono}>{peso(p.price)}</span>
                                     <ProductPill status={p.status} />
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setStocking(p)}
-                                    disabled={p.fulfillment === "Made-to-order"}
-                                    className="flex w-full items-center justify-between rounded-lg border border-[#E3DACB] px-3 py-2 text-xs text-[#6B6153] transition hover:border-[#C9BBA3] disabled:opacity-50"
-                                >
-                                    <span>Stock</span>
-                                    <span className="font-medium text-[#241F1A]">{p.fulfillment === "Made-to-order" ? "—" : `${p.totalStock || 0} units`}</span>
-                                </button>
+                                <div className="rounded-lg border border-[#E3DACB] px-3 py-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] uppercase tracking-wide text-[#9C8C74]">Stock by size</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setStocking(p)}
+                                            disabled={p.fulfillment === "Made-to-order"}
+                                            className="inline-flex items-center gap-1 text-xs text-[#6B6153] transition hover:text-[#241F1A] disabled:cursor-not-allowed disabled:opacity-40"
+                                        >
+                                            <Pencil size={11} /> Edit
+                                        </button>
+                                    </div>
+                                    {p.fulfillment === "Made-to-order" ? (
+                                        <p className="mt-1.5 text-xs text-[#9C8C74]">Made to order — no tracked stock</p>
+                                    ) : p.sizes?.length ? (
+                                        <div className="mt-1.5 flex flex-wrap gap-1">
+                                            {p.sizes.map((s) => (
+                                                <span key={s.size} className="rounded-full bg-[#FBF8F3] px-2 py-0.5 text-[11px] text-[#4A4136]">
+                                                    <span className="font-medium text-[#241F1A]">{s.size}</span> {s.stock ?? 0}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="mt-1.5 text-xs text-[#9C8C74]">No sizes tracked</p>
+                                    )}
+                                </div>
                             </div>
                         </article>
                     ))}
@@ -534,14 +471,6 @@ export default function ProductsView({ notify, onChanged }) {
 
 const itemsReady = (products) => Array.isArray(products);
 
-function ProductThumb({ product }) {
-    return product.images?.[0] ? (
-        <img src={assetUrl(product.images[0])} alt="" className="h-14 w-11 shrink-0 rounded-lg object-cover" />
-    ) : (
-        <div className="h-14 w-11 shrink-0 rounded-lg bg-[#F3EEE4]" />
-    );
-}
-
 function Tag({ children, tone }) {
     return (
         <span
@@ -553,23 +482,6 @@ function Tag({ children, tone }) {
         >
             {children}
         </span>
-    );
-}
-
-function StockCell({ product, onEdit }) {
-    if (product.fulfillment === "Made-to-order") return <span className="text-[#9C8C74]">—</span>;
-    const total = product.totalStock || 0;
-    return (
-        <button type="button" onClick={onEdit} className="group flex items-center gap-2 text-left" title="Edit stock">
-            <span className="font-medium text-[#241F1A]">{total}</span>
-            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-[#EFE9E3]">
-                <span
-                    className="block h-full rounded-full"
-                    style={{ width: `${Math.min(100, total * 10)}%`, background: total <= 2 ? "#9C7A3C" : "#5B6E58" }}
-                />
-            </span>
-            <Pencil size={11} className="text-[#B4A88F] opacity-0 transition group-hover:opacity-100" />
-        </button>
     );
 }
 
