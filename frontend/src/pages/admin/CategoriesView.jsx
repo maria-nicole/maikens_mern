@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Plus, RefreshCw, Pencil, Trash2, Search, Info, CalendarDays, Ruler,
-    Palette, Shirt, Scissors, Layers, Sparkles, Tags,
+    Palette, Shirt, Scissors, Layers, Sparkles, Tags, Image as ImageIcon,
 } from "lucide-react";
 import { api, errMsg } from "./adminLib";
+import { hexForName } from "../../lib/colors";
+import { GROUPS as DESIGN_GROUPS } from "../../components/customize/designOptions.js";
 import {
     SectionHeader, PrimaryButton, GhostButton, StatCard, Segmented, EmptyState, Spinner,
     ErrorNote, ConfirmDialog, Modal, ModalHeader, Field, inputCls,
@@ -73,9 +75,24 @@ const TYPE_ICONS = {
 
 const TYPE_LABELS = Object.fromEntries(ALL_GROUPS.map((group) => [group.type, group.one]));
 
+const optionKey = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const scopeOf = (item) => (item.garment === "Gown" || item.garment === "Barong" ? item.garment : "common");
-const usageKey = (scope, type, name) =>
-    `${scope}|${type}|${String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+const usageKey = (scope, type, name) => `${scope}|${type}|${optionKey(name)}`;
+
+// Reuse the customizer's thumbnails/descriptions so the admin sees the exact
+// picture a customer would for the same option. Options with no artwork stay
+// as plain names.
+const ARTWORK = Object.fromEntries(
+    ["Gown", "Barong"].flatMap((garment) =>
+        DESIGN_GROUPS[garment].map((group) => [
+            `${garment}|${group.key}`,
+            Object.fromEntries(
+                group.options.filter((opt) => opt.img).map((opt) => [optionKey(opt.value), opt])
+            ),
+        ])
+    )
+);
+const artworkFor = (scope, type, name) => ARTWORK[`${scope}|${type}`]?.[optionKey(name)] || null;
 
 const SCOPE_FILTERS = [
     { value: "all", label: "All" },
@@ -119,6 +136,7 @@ export default function CategoriesView({ notify }) {
     const [error, setError] = useState("");
     const [scopeFilter, setScopeFilter] = useState("all");
     const [query, setQuery] = useState("");
+    const [showImages, setShowImages] = useState(false);
     const [adding, setAdding] = useState(null); // null or { scope, type }
     const [renaming, setRenaming] = useState(null); // option being renamed
     const [confirming, setConfirming] = useState(null); // option about to be removed
@@ -261,6 +279,18 @@ export default function CategoriesView({ notify }) {
                         className={`${inputCls} pl-8`}
                     />
                 </div>
+                <button
+                    type="button"
+                    onClick={() => setShowImages((shown) => !shown)}
+                    aria-pressed={showImages}
+                    title="Show the pictures customers see for these options"
+                    className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${showImages
+                        ? "border-[#241F1A] bg-[#241F1A] text-[#F5EFE4]"
+                        : "border-[#E3DACB] bg-white text-[#6B6153] hover:border-[#C9BBA3] hover:bg-[#FBF8F3]"
+                        }`}
+                >
+                    <ImageIcon size={14} /> Pictures
+                </button>
                 {(q || scopeFilter !== "all") && (
                     <GhostButton onClick={clearFilters}>Clear filters</GhostButton>
                 )}
@@ -281,14 +311,14 @@ export default function CategoriesView({ notify }) {
                     />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                <div className="columns-1 gap-4 md:columns-2 2xl:columns-3">
                     {visibleGroups.map((group) => {
                         const tone = SCOPE_TONE[group.scope];
                         const IconEl = TYPE_ICONS[group.type] || Tags;
                         return (
                             <section
                                 key={`${group.scope}-${group.type}`}
-                                className="flex flex-col overflow-hidden rounded-2xl border border-[#E3DACB] border-t-2 bg-white"
+                                className="mb-4 break-inside-avoid overflow-hidden rounded-2xl border border-[#E3DACB] border-t-2 bg-white"
                                 style={{ borderTopColor: tone.dot }}
                             >
                                 <div className="flex items-start gap-3 px-4 py-3.5">
@@ -322,18 +352,73 @@ export default function CategoriesView({ notify }) {
                                     </button>
                                 </div>
 
-                                <div className="flex-1 border-t border-[#F3EEE4] px-4 py-3">
+                                <div className="border-t border-[#F3EEE4] px-4 py-3">
                                     {group.shown.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {group.shown.map((item) => {
                                                 const count = usageOf(item);
                                                 const busy = busyId === item._id;
+                                                const hex = group.type === "color" ? hexForName(item.name) : "";
+                                                const art = showImages ? artworkFor(group.scope, group.type, item.name) : null;
+                                                const label = art?.desc ? `${item.name} — ${art.desc}` : item.name;
+                                                const actions = (
+                                                    <OptionActions
+                                                        item={item}
+                                                        floating={!!art}
+                                                        onRename={() => setRenaming(item)}
+                                                        onRemove={() => setConfirming(item)}
+                                                    />
+                                                );
+
+                                                if (art) {
+                                                    const drawing = /\.svg$/i.test(art.img || "");
+                                                    return (
+                                                        <div
+                                                            key={item._id}
+                                                            title={label}
+                                                            className={`group relative w-[92px] overflow-hidden rounded-xl border border-[#E3DACB] bg-white transition hover:border-[#C9BBA3] ${busy ? "opacity-60" : ""}`}
+                                                        >
+                                                            <div className="flex h-[72px] items-center justify-center overflow-hidden bg-[#FBF8F3]">
+                                                                <img
+                                                                    src={art.img}
+                                                                    alt=""
+                                                                    loading="lazy"
+                                                                    className={`h-full w-full ${drawing ? "object-contain p-1.5" : "object-cover"}`}
+                                                                    onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
+                                                                />
+                                                            </div>
+                                                            <div className="flex items-center justify-between gap-1 px-2 py-1.5">
+                                                                <span className="min-w-0 truncate text-[11px] font-medium text-[#241F1A]">
+                                                                    {item.name}
+                                                                </span>
+                                                                {count > 0 && (
+                                                                    <span
+                                                                        className="rounded-full bg-[#F4ECDB] px-1.5 py-0.5 text-[10px] font-medium text-[#6B5426]"
+                                                                        title={`Used ${count} ${count === 1 ? "time" : "times"}`}
+                                                                    >
+                                                                        {count}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {actions}
+                                                        </div>
+                                                    );
+                                                }
+
                                                 return (
                                                     <div
                                                         key={item._id}
+                                                        title={label}
                                                         className={`group flex items-center gap-1 rounded-full border border-[#E3DACB] bg-[#FBF8F3] py-1 pl-3 pr-1 text-xs text-[#241F1A] transition hover:border-[#C9BBA3] ${busy ? "opacity-60" : ""}`}
                                                     >
-                                                        <span className="max-w-[170px] truncate" title={item.name}>{item.name}</span>
+                                                        {group.type === "color" && (
+                                                            <span
+                                                                className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/10"
+                                                                style={{ background: hex || "#F3EEE4" }}
+                                                                title={hex || "No preset shade"}
+                                                            />
+                                                        )}
+                                                        <span className="max-w-[170px] truncate">{item.name}</span>
                                                         {count > 0 && (
                                                             <span
                                                                 className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#6B5426]"
@@ -342,26 +427,7 @@ export default function CategoriesView({ notify }) {
                                                                 {count}
                                                             </span>
                                                         )}
-                                                        <div className="flex items-center gap-0.5 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setRenaming(item)}
-                                                                aria-label={`Rename ${item.name}`}
-                                                                title="Rename"
-                                                                className="rounded-full p-1 text-[#8B8072] hover:bg-white hover:text-[#241F1A]"
-                                                            >
-                                                                <Pencil size={11} />
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setConfirming(item)}
-                                                                aria-label={`Remove ${item.name}`}
-                                                                title="Remove"
-                                                                className="rounded-full p-1 text-[#8B8072] hover:bg-[#F3E4E2] hover:text-[#6B3838]"
-                                                            >
-                                                                <Trash2 size={11} />
-                                                            </button>
-                                                        </div>
+                                                        {actions}
                                                     </div>
                                                 );
                                             })}
@@ -436,6 +502,37 @@ export default function CategoriesView({ notify }) {
                     }}
                 />
             )}
+        </div>
+    );
+}
+
+function OptionActions({ item, floating, onRename, onRemove }) {
+    return (
+        <div
+            className={
+                floating
+                    ? "absolute right-1 top-1 flex gap-0.5 rounded-lg bg-white/90 p-0.5 shadow-sm opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
+                    : "flex items-center gap-0.5 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            }
+        >
+            <button
+                type="button"
+                onClick={onRename}
+                aria-label={`Rename ${item.name}`}
+                title="Rename"
+                className="rounded-full p-1 text-[#8B8072] hover:bg-white hover:text-[#241F1A]"
+            >
+                <Pencil size={11} />
+            </button>
+            <button
+                type="button"
+                onClick={onRemove}
+                aria-label={`Remove ${item.name}`}
+                title="Remove"
+                className="rounded-full p-1 text-[#8B8072] hover:bg-[#F3E4E2] hover:text-[#6B3838]"
+            >
+                <Trash2 size={11} />
+            </button>
         </div>
     );
 }
